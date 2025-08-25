@@ -12,6 +12,7 @@ import Checkout from './pages/Checkout';
 import FAQ from './pages/FAQ';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import Terms from './pages/Terms';
+import EmailVerification from './pages/EmailVerification';
 import EmailVerificationSuccess from './pages/EmailVerificationSuccess';
 import ScrollToTop from './components/ScrollToTop';
 import { useAuth } from './hooks/useAuth';
@@ -60,6 +61,7 @@ function App() {
         <Route path="/faq" element={<Layout><FAQ /></Layout>} />
         <Route path="/privacy-policy" element={<Layout><PrivacyPolicy /></Layout>} />
         <Route path="/terms" element={<Layout><Terms /></Layout>} />
+        <Route path="/email-verification" element={<Layout showFooter={false}><EmailVerification /></Layout>} />
         <Route path="/email-verification-success" element={<Layout showFooter={false}><EmailVerificationSuccess /></Layout>} />
         
         {/* Auth Routes (no footer) */}

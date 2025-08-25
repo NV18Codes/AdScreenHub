@@ -41,9 +41,67 @@ export default function Signup() {
   const [messages, setMessages] = useState({});
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  
+  // OTP Timer state
+  const [otpTimer, setOtpTimer] = useState(0);
+  const [canResendOtp, setCanResendOtp] = useState(false);
 
   // Check if can proceed to next step
   const canProceedToStep2 = verificationState.emailVerified && verificationState.phoneVerified;
+
+  // OTP Timer effect
+  useEffect(() => {
+    let interval;
+    if (otpTimer > 0) {
+      interval = setInterval(() => {
+        setOtpTimer(prev => {
+          if (prev <= 1) {
+            setCanResendOtp(true);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [otpTimer]);
+
+  // Start OTP timer
+  const startOtpTimer = () => {
+    setOtpTimer(30);
+    setCanResendOtp(false);
+  };
+
+  // Resend OTP
+  const handleResendOtp = async () => {
+    if (!canResendOtp) return;
+    
+    setLoading(true);
+    try {
+      const result = await sendPhoneOtp(formData.phoneNumber);
+      
+      if (result.success) {
+        startOtpTimer();
+        setMessages(prev => ({
+          ...prev,
+          phone: 'OTP resent successfully! Please check your SMS.'
+        }));
+        
+        // Clear any previous errors
+        setErrors(prev => ({ ...prev, phoneNumber: '' }));
+        
+      } else {
+        setErrors(prev => ({ ...prev, phoneNumber: result.error }));
+        setMessages(prev => ({ ...prev, phone: '' }));
+      }
+      
+    } catch (error) {
+      setErrors(prev => ({ ...prev, phoneNumber: 'Failed to resend OTP. Please try again.' }));
+      setMessages(prev => ({ ...prev, phone: '' }));
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Handle input changes
   const handleInputChange = (e) => {
@@ -105,6 +163,9 @@ export default function Signup() {
       const result = await startEmailVerification(formData.email);
       
       if (result.success) {
+        // Store email in localStorage for verification link handling
+        localStorage.setItem('pending_email_verification', formData.email);
+        
         setMessages(prev => ({
           ...prev,
           email: 'Verification email sent successfully! Check your inbox and click the verification link to verify your email.'
@@ -128,6 +189,12 @@ export default function Signup() {
 
   // Send phone OTP using real API
   const sendPhoneOtpWithAPI = async () => {
+    // Check if email is verified first
+    if (!verificationState.emailVerified) {
+      setErrors(prev => ({ ...prev, phoneNumber: 'Please verify your email first before verifying phone number' }));
+      return;
+    }
+    
     if (!formData.phoneNumber || formData.phoneNumber.length !== 10) {
       setErrors(prev => ({ ...prev, phoneNumber: 'Please enter a valid 10-digit phone number' }));
       return;
@@ -139,6 +206,7 @@ export default function Signup() {
       
       if (result.success) {
         setShowPhoneOtp(true);
+        startOtpTimer(); // Start the 30-second timer
         setMessages(prev => ({
           ...prev,
           phone: result.message || 'OTP sent to your phone number. Please check your SMS.'
@@ -174,14 +242,16 @@ export default function Signup() {
           phoneVerified: true
         }));
         
-        setMessages(prev => ({
-          ...prev,
-          phone: result.message || 'Phone number verified successfully! ✓'
-        }));
-        
-        // Clear OTP input
+        // Clear OTP timer and input
+        setOtpTimer(0);
+        setCanResendOtp(false);
         setPhoneOtp(['', '', '', '', '', '']);
         setShowPhoneOtp(false);
+        
+        setMessages(prev => ({
+          ...prev,
+          phone: 'Phone number verified successfully! ✓'
+        }));
         
         // Clear any previous errors
         setErrors(prev => ({ ...prev, phoneNumber: '' }));
@@ -342,14 +412,14 @@ export default function Signup() {
                   name="phoneNumber"
                   value={formData.phoneNumber}
                   onChange={handlePhoneChange}
-                  placeholder="Enter 10-digit number"
-                  disabled={verificationState.phoneVerified}
+                  placeholder={verificationState.emailVerified ? "Enter 10-digit number" : "Verify email first"}
+                  disabled={verificationState.phoneVerified || !verificationState.emailVerified}
                   className={errors.phoneNumber ? styles.errorInput : ''}
                 />
                 <button
                   type="button"
                   onClick={sendPhoneOtpWithAPI}
-                  disabled={loading || verificationState.phoneVerified}
+                  disabled={loading || verificationState.phoneVerified || !verificationState.emailVerified}
                   className={styles.verifyButton}
                 >
                   {loading ? 'Sending...' : 'Get OTP'}
@@ -359,6 +429,11 @@ export default function Signup() {
               {messages.phone && (
                 <div className={styles.successMessage}>
                   {messages.phone}
+                </div>
+              )}
+              {!verificationState.emailVerified && (
+                <div className={styles.infoMessage}>
+                  ⚠️ Please verify your email first before verifying your phone number
                 </div>
               )}
             </div>
@@ -383,18 +458,57 @@ export default function Signup() {
                 <div className={styles.otpNote}>
                   Enter the 6-digit OTP sent to your phone
                 </div>
+                
+                {/* OTP Timer and Resend */}
+                <div className={styles.otpTimerSection}>
+                  {otpTimer > 0 ? (
+                    <div className={styles.timer}>
+                      Resend OTP in: <span className={styles.timerCount}>{otpTimer}s</span>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={handleResendOtp}
+                      disabled={loading || !canResendOtp}
+                      className={styles.resendButton}
+                    >
+                      {loading ? 'Sending...' : 'Resend OTP'}
+                    </button>
+                  )}
+                </div>
               </div>
             )}
 
-            {/* Next Button */}
-            <button
-              type="button"
-              onClick={proceedToStep2}
-              disabled={!canProceedToStep2}
-              className={styles.primaryButton}
-            >
-              Next
-            </button>
+            {/* Verify Button (instead of Next) */}
+            {showPhoneOtp && !verificationState.phoneVerified && (
+              <button
+                type="button"
+                onClick={() => {
+                  const otpString = phoneOtp.join('');
+                  if (otpString.length === 6) {
+                    verifyPhoneOtpWithAPI(otpString);
+                  } else {
+                    setErrors(prev => ({ ...prev, phoneNumber: 'Please enter the complete 6-digit OTP' }));
+                  }
+                }}
+                disabled={phoneOtp.join('').length !== 6 || loading}
+                className={styles.primaryButton}
+              >
+                {loading ? 'Verifying...' : 'Verify OTP'}
+              </button>
+            )}
+
+            {/* Next Button (only show when both verifications are complete) */}
+            {!showPhoneOtp && (
+              <button
+                type="button"
+                onClick={proceedToStep2}
+                disabled={!canProceedToStep2}
+                className={styles.primaryButton}
+              >
+                Next
+              </button>
+            )}
           </div>
         )}
 

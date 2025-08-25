@@ -80,6 +80,25 @@
   font-weight: 500;
 }
 
+.infoMessage {
+  background: #fef3c7;
+  border: 1px solid #f59e0b;
+  color: #92400e;
+  padding: 10px 15px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  margin-top: 10px;
+  text-align: left;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.infoMessage::before {
+  content: "ℹ️";
+  font-size: 1rem;
+}
+
 /* Form Groups */
 .formGroup {
   margin-bottom: 20px;
@@ -207,7 +226,49 @@
   text-align: center;
   color: #6b7280;
   font-size: 0.9rem;
-  margin-top: 5px;
+  margin-top: 10px;
+}
+
+.otpTimerSection {
+  margin-top: 15px;
+  text-align: center;
+}
+
+.timer {
+  color: #6b7280;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.timerCount {
+  color: #ef4444;
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.resendButton {
+  background: transparent;
+  color: #1319B3;
+  border: 2px solid #1319B3;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.resendButton:hover:not(:disabled) {
+  background: #1319B3;
+  color: white;
+}
+
+.resendButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 /* Verification Check */
