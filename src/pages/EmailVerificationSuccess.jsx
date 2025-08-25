@@ -1,13 +1,28 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import styles from '../styles/EmailVerificationSuccess.module.css';
 
 export default function EmailVerificationSuccess() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const [email, setEmail] = useState('');
   
-  // Get email from URL params if available
-  const email = searchParams.get('email') || 'your email';
+  useEffect(() => {
+    // Get email from URL params or localStorage
+    const emailFromParams = searchParams.get('email');
+    const emailFromStorage = localStorage.getItem('pending_email_verification');
+    
+    if (emailFromParams) {
+      setEmail(emailFromParams);
+      localStorage.setItem('pending_email_verification', emailFromParams);
+    } else if (emailFromStorage) {
+      setEmail(emailFromStorage);
+    } else {
+      // If no email found, redirect to signup
+      navigate('/signup');
+      return;
+    }
+  }, [searchParams, navigate]);
 
   const handleProceed = () => {
     // Navigate to signup with verified email
@@ -22,6 +37,18 @@ export default function EmailVerificationSuccess() {
     // Navigate back to signup to resend verification
     navigate('/signup');
   };
+
+  // Show loading while determining email
+  if (!email) {
+    return (
+      <div className={styles.container}>
+        <div className={styles.content}>
+          <div className={styles.loadingSpinner}></div>
+          <p>Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.container}>
