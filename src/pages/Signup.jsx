@@ -1,399 +1,544 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
-import { validateEmail, validatePassword, validateMobile } from '../utils/validation';
 import styles from '../styles/Auth.module.css';
 
 export default function Signup() {
-  const { signup } = useAuth();
   const navigate = useNavigate();
-  const [step, setStep] = useState(1); // 1: form, 2: OTP
+  const [searchParams] = useSearchParams();
+  const { signup, startEmailVerification, sendPhoneOtp, verifyPhoneOtp } = useAuth();
+  
+  // Check if coming from email verification
+  const isFromEmailVerification = searchParams.get('verified') === 'true';
+  
+  // Step management
+  const [currentStep, setCurrentStep] = useState(isFromEmailVerification ? 2 : 1);
+  
+  // Form data
   const [formData, setFormData] = useState({
-    fullName: '',
     email: '',
-    mobile: '+91',
+    phoneNumber: '',
+    fullName: '',
     password: '',
     confirmPassword: '',
-    terms: false
+    address: '',
+    termsAccepted: false
   });
+  
+  // Verification state
+  const [verificationState, setVerificationState] = useState({
+    emailVerified: isFromEmailVerification,
+    phoneVerified: false,
+    emailToken: null,
+    phoneOtp: null
+  });
+  
+  // UI state
+  const [showPhoneOtp, setShowPhoneOtp] = useState(false);
+  const [phoneOtp, setPhoneOtp] = useState(['', '', '', '', '', '']);
+  const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
-  const [isLoading, setIsLoading] = useState(false);
-  const [otp, setOtp] = useState('');
+  const [messages, setMessages] = useState({});
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
+  // Check if can proceed to next step
+  const canProceedToStep2 = verificationState.emailVerified && verificationState.phoneVerified;
+
+  // Handle input changes
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
     
-    let processedValue = value;
-    
-    // Handle mobile number formatting
-    if (name === 'mobile') {
-      // Remove all spaces and ensure it starts with +91
-      processedValue = value.replace(/\s/g, '');
-      if (!processedValue.startsWith('+91')) {
-        processedValue = '+91' + processedValue.replace('+91', '');
-      }
-      // Limit to +91 + 10 digits
-      if (processedValue.length > 13) {
-        processedValue = processedValue.substring(0, 13);
-      }
+    // Clear errors when user types
+    if (errors[name]) {
+      setErrors(prev => ({
+        ...prev,
+        [name]: ''
+      }));
     }
+  };
+
+  // Handle phone number input
+  const handlePhoneChange = (e) => {
+    let value = e.target.value.replace(/\D/g, '');
+    if (value.length > 10) value = value.slice(0, 10);
     
     setFormData(prev => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : processedValue
+      phoneNumber: value
     }));
+  };
+
+  // Handle OTP input
+  const handleOtpChange = (index, value) => {
+    if (value.length > 1) return;
     
-    // Clear error when user starts typing
-    if (errors[name]) {
-      setErrors(prev => ({ ...prev, [name]: '' }));
+    const newOtp = [...phoneOtp];
+    newOtp[index] = value;
+    setPhoneOtp(newOtp);
+    
+    // Auto-focus next input
+    if (value && index < 5) {
+      const nextInput = document.querySelector(`input[data-otp-index="${index + 1}"]`);
+      if (nextInput) nextInput.focus();
+    }
+    
+    // Check if OTP is complete
+    if (newOtp.every(digit => digit !== '')) {
+      verifyPhoneOtpWithAPI(newOtp.join(''));
     }
   };
 
-  const getPasswordStrength = (password) => {
-    if (!password) return { strength: 'none', text: '', class: '' };
-    
-    const validation = validatePassword(password);
-    if (validation.isValid) {
-      return { strength: 'strong', text: 'Strong password', class: styles.strengthStrong };
-    } else if (password.length >= 6) {
-      return { strength: 'medium', text: 'Medium strength', class: styles.strengthMedium };
-    } else {
-      return { strength: 'weak', text: 'Weak password', class: styles.strengthWeak };
-    }
-  };
-
-  const validateForm = () => {
-    const newErrors = {};
-
-    if (!formData.fullName.trim()) {
-      newErrors.fullName = 'Full name is required';
-    }
-
+  // Send email verification
+  const sendEmailVerification = async () => {
     if (!formData.email) {
-      newErrors.email = 'Email is required';
-    } else if (!validateEmail(formData.email)) {
-      newErrors.email = 'Please enter a valid email';
-    }
-
-    if (!formData.mobile || formData.mobile === '+91') {
-      newErrors.mobile = 'Mobile number is required';
-    } else if (!validateMobile(formData.mobile)) {
-      newErrors.mobile = 'Please enter a valid Indian mobile number (+91 format)';
-    }
-
-    if (!formData.password) {
-      newErrors.password = 'Password is required';
-    } else {
-      const passwordValidation = validatePassword(formData.password);
-      if (!passwordValidation.isValid) {
-        newErrors.password = Object.values(passwordValidation.errors).filter(Boolean).join(', ');
-      }
-    }
-
-    if (!formData.confirmPassword) {
-      newErrors.confirmPassword = 'Please confirm your password';
-    } else if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = 'Passwords do not match';
-    }
-
-    if (!formData.terms) {
-      newErrors.terms = 'You must accept the Terms & Conditions';
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    
-    if (!validateForm()) return;
-
-    setIsLoading(true);
-    
-    try {
-      // Simulate OTP step
-      setStep(2);
-    } catch (error) {
-      setErrors({ general: 'An error occurred. Please try again.' });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleOTPSubmit = async (e) => {
-    e.preventDefault();
-    
-    if (otp !== '1234') {
-      setErrors({ otp: 'Invalid OTP. Please enter 1234.' });
+      setErrors(prev => ({ ...prev, email: 'Email is required' }));
       return;
     }
-
-    setIsLoading(true);
     
+    setLoading(true);
     try {
-      const result = signup(formData);
+      const result = await startEmailVerification(formData.email);
       
       if (result.success) {
-        // Small delay to ensure state updates properly
-        setTimeout(() => {
-          navigate('/dashboard');
-        }, 100);
+        setMessages(prev => ({
+          ...prev,
+          email: 'Verification email sent successfully! Check your inbox and click the verification link to verify your email.'
+        }));
+        
+        // Clear any previous errors
+        setErrors(prev => ({ ...prev, email: '' }));
+        
       } else {
-        setErrors({ general: result.error });
-        setStep(1);
+        setErrors(prev => ({ ...prev, email: result.error }));
+        setMessages(prev => ({ ...prev, email: '' }));
       }
+      
     } catch (error) {
-      setErrors({ general: 'An error occurred. Please try again.' });
-      setStep(1);
+      setErrors(prev => ({ ...prev, email: 'Failed to send verification email. Please try again.' }));
+      setMessages(prev => ({ ...prev, email: '' }));
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
-  const passwordStrength = getPasswordStrength(formData.password);
+  // Send phone OTP using real API
+  const sendPhoneOtpWithAPI = async () => {
+    if (!formData.phoneNumber || formData.phoneNumber.length !== 10) {
+      setErrors(prev => ({ ...prev, phoneNumber: 'Please enter a valid 10-digit phone number' }));
+      return;
+    }
+    
+    setLoading(true);
+    try {
+      const result = await sendPhoneOtp(formData.phoneNumber);
+      
+      if (result.success) {
+        setShowPhoneOtp(true);
+        setMessages(prev => ({
+          ...prev,
+          phone: result.message || 'OTP sent to your phone number. Please check your SMS.'
+        }));
+        
+        // Clear any previous errors
+        setErrors(prev => ({ ...prev, phoneNumber: '' }));
+        
+      } else {
+        setErrors(prev => ({ ...prev, phoneNumber: result.error }));
+        setMessages(prev => ({ ...prev, phone: '' }));
+      }
+      
+    } catch (error) {
+      setErrors(prev => ({ ...prev, phoneNumber: 'Failed to send OTP. Please try again.' }));
+      setMessages(prev => ({ ...prev, phone: '' }));
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  if (step === 2) {
-    return (
-      <div className={styles.authContainer}>
-        <div className={styles.authCard}>
-          <div className={styles.authHeader}>
-            <h1>Verify Your Email</h1>
-            <p>We've sent a verification code to {formData.email}</p>
-          </div>
+  // Verify phone OTP using real API
+  const verifyPhoneOtpWithAPI = async (otp) => {
+    if (!otp || otp.length !== 6) return;
+    
+    setLoading(true);
+    try {
+      const result = await verifyPhoneOtp(formData.phoneNumber, otp);
+      
+      if (result.success) {
+        setVerificationState(prev => ({
+          ...prev,
+          phoneVerified: true
+        }));
+        
+        setMessages(prev => ({
+          ...prev,
+          phone: result.message || 'Phone number verified successfully! ✓'
+        }));
+        
+        // Clear OTP input
+        setPhoneOtp(['', '', '', '', '', '']);
+        setShowPhoneOtp(false);
+        
+        // Clear any previous errors
+        setErrors(prev => ({ ...prev, phoneNumber: '' }));
+        
+      } else {
+        setErrors(prev => ({ ...prev, phoneNumber: result.error }));
+        setMessages(prev => ({ ...prev, phone: '' }));
+      }
+      
+    } catch (error) {
+      setErrors(prev => ({ ...prev, phoneNumber: 'Failed to verify OTP. Please try again.' }));
+      setMessages(prev => ({ ...prev, phone: '' }));
+    } finally {
+      setLoading(false);
+    }
+  };
 
-          {errors.general && (
-            <div className={styles.errorMessage}>
-              {errors.general}
-            </div>
-          )}
+  // Proceed to step 2
+  const proceedToStep2 = () => {
+    if (canProceedToStep2) {
+      setCurrentStep(2);
+    }
+  };
 
-          <form onSubmit={handleOTPSubmit} className={styles.authForm}>
-            <div className={styles.formGroup}>
-              <label htmlFor="otp" className={styles.formLabel}>
-                Enter OTP
-              </label>
-              <input
-                type="text"
-                id="otp"
-                value={otp}
-                onChange={(e) => setOtp(e.target.value)}
-                className={`${styles.formInput} ${errors.otp ? styles.error : ''}`}
-                placeholder="Enter 1234"
-                maxLength="4"
-              />
-              {errors.otp && <span className={styles.formError}>{errors.otp}</span>}
-              <small style={{ color: 'var(--text-light)', fontSize: '0.75rem' }}>
-                For demo purposes, use OTP: 1234
-              </small>
-            </div>
-
-            <button
-              type="submit"
-              disabled={isLoading || !otp}
-              className={`${styles.btn} ${styles.btnPrimary} ${isLoading ? styles.loading : ''}`}
-            >
-              {isLoading ? 'Verifying...' : 'Verify OTP'}
-            </button>
-          </form>
-
-          <div className={styles.authFooter}>
-            <button
-              onClick={() => setStep(1)}
-              className={styles.link}
-              style={{ background: 'none', border: 'none', cursor: 'pointer' }}
-            >
-              ← Back to Sign Up
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  // Handle final signup
+  const handleSignup = async (e) => {
+    e.preventDefault();
+    
+    // Validation
+    const newErrors = {};
+    if (!formData.fullName.trim()) newErrors.fullName = 'Full name is required';
+    if (!formData.password) newErrors.password = 'Password is required';
+    if (formData.password !== formData.confirmPassword) newErrors.confirmPassword = 'Passwords do not match';
+    if (!formData.address.trim()) newErrors.address = 'Address is required';
+    if (!formData.termsAccepted) newErrors.termsAccepted = 'You must accept the terms and conditions';
+    
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+    
+    setLoading(true);
+    try {
+      // Create user account using real API
+      const result = await signup({
+        email: formData.email,
+        phoneNumber: formData.phoneNumber,
+        fullName: formData.fullName,
+        password: formData.password,
+        address: formData.address
+      });
+      
+      if (result.success) {
+        // Clear form data
+        setFormData({
+          email: '',
+          phoneNumber: '',
+          fullName: '',
+          password: '',
+          confirmPassword: '',
+          address: '',
+          termsAccepted: false
+        });
+        
+        // Clear verification state
+        setVerificationState({
+          emailVerified: false,
+          phoneVerified: false,
+          emailToken: null,
+          phoneOtp: null
+        });
+        
+        // Clear messages and errors
+        setMessages({});
+        setErrors({});
+        
+        // Redirect to dashboard after successful signup
+        navigate('/dashboard');
+      } else {
+        setErrors(prev => ({ ...prev, general: result.error }));
+      }
+      
+    } catch (error) {
+      setErrors(prev => ({ ...prev, general: error.message || 'Signup failed. Please try again.' }));
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
-    <div className={styles.authContainer}>
-      <div className={styles.authCard}>
-        <div className={styles.authHeader}>
+    <div className={styles.container}>
+      <div className={styles.formContainer}>
+        <div className={styles.logoSection}>
+          <img src="/logo-2.png" alt="AdScreenHub" className={styles.logo} />
           <h1>Create Account</h1>
-          <p>Join ADSCREENHUB and start advertising today</p>
         </div>
 
-        {errors.general && (
-          <div className={styles.errorMessage}>
-            {errors.general}
+        {/* Step 1: Verification */}
+        {currentStep === 1 && (
+          <div className={styles.stepContainer}>
+            <div className={styles.stepIndicator}>
+              <span className={styles.stepNumber}>1</span>
+              <span className={styles.stepText}>Verify Email & Phone</span>
+            </div>
+            
+            <div className={styles.infoBox}>
+              Step 1: Verify your email & mobile number to proceed
+            </div>
+
+            {/* Email Verification */}
+            <div className={styles.formGroup}>
+              <label htmlFor="email">
+                Verify Email 
+                {verificationState.emailVerified && (
+                  <span className={styles.verifiedCheck}>✓ Verified</span>
+                )}
+              </label>
+              <div className={styles.inputWithButton}>
+                <input
+                  type="email"
+                  id="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleInputChange}
+                  placeholder="Enter your email"
+                  disabled={verificationState.emailVerified}
+                  className={errors.email ? styles.errorInput : ''}
+                />
+                <button
+                  type="button"
+                  onClick={sendEmailVerification}
+                  disabled={loading || verificationState.emailVerified}
+                  className={styles.verifyButton}
+                >
+                  {loading ? 'Sending...' : 'Send Link'}
+                </button>
+              </div>
+              {errors.email && <span className={styles.errorText}>{errors.email}</span>}
+              {messages.email && (
+                <div className={styles.successMessage}>
+                  {messages.email}
+                </div>
+              )}
+            </div>
+
+            {/* Phone Verification */}
+            <div className={styles.formGroup}>
+              <label htmlFor="phoneNumber">
+                Verify Mobile Number 
+                {verificationState.phoneVerified && (
+                  <span className={styles.verifiedCheck}>✓ Verified</span>
+                )}
+              </label>
+              <div className={styles.inputWithButton}>
+                <input
+                  type="text"
+                  id="phoneNumber"
+                  name="phoneNumber"
+                  value={formData.phoneNumber}
+                  onChange={handlePhoneChange}
+                  placeholder="Enter 10-digit number"
+                  disabled={verificationState.phoneVerified}
+                  className={errors.phoneNumber ? styles.errorInput : ''}
+                />
+                <button
+                  type="button"
+                  onClick={sendPhoneOtpWithAPI}
+                  disabled={loading || verificationState.phoneVerified}
+                  className={styles.verifyButton}
+                >
+                  {loading ? 'Sending...' : 'Get OTP'}
+                </button>
+              </div>
+              {errors.phoneNumber && <span className={styles.errorText}>{errors.phoneNumber}</span>}
+              {messages.phone && (
+                <div className={styles.successMessage}>
+                  {messages.phone}
+                </div>
+              )}
+            </div>
+
+            {/* Phone OTP Input */}
+            {showPhoneOtp && !verificationState.phoneVerified && (
+              <div className={styles.formGroup}>
+                <label>Enter Phone OTP</label>
+                <div className={styles.otpContainer}>
+                  {phoneOtp.map((digit, index) => (
+                    <input
+                      key={index}
+                      type="text"
+                      maxLength="1"
+                      value={digit}
+                      onChange={(e) => handleOtpChange(index, e.target.value)}
+                      data-otp-index={index}
+                      className={styles.otpInput}
+                    />
+                  ))}
+                </div>
+                <div className={styles.otpNote}>
+                  Enter the 6-digit OTP sent to your phone
+                </div>
+              </div>
+            )}
+
+            {/* Next Button */}
+            <button
+              type="button"
+              onClick={proceedToStep2}
+              disabled={!canProceedToStep2}
+              className={styles.primaryButton}
+            >
+              Next
+            </button>
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className={styles.authForm}>
-          <div className={styles.formGroup}>
-            <label htmlFor="fullName" className={styles.formLabel}>
-              Full Name <span style={{ color: 'red' }}>*</span>
-            </label>
-            <input
-              type="text"
-              id="fullName"
-              name="fullName"
-              value={formData.fullName}
-              onChange={handleChange}
-              className={`${styles.formInput} ${errors.fullName ? styles.error : ''}`}
-              placeholder="Enter your full name"
-            />
-            {errors.fullName && <span className={styles.formError}>{errors.fullName}</span>}
-          </div>
-
-          <div className={styles.formGroup}>
-            <label htmlFor="email" className={styles.formLabel}>
-              Email Address <span style={{ color: 'red' }}>*</span>
-            </label>
-            <input
-              type="email"
-              id="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              className={`${styles.formInput} ${errors.email ? styles.error : ''}`}
-              placeholder="Enter your email"
-            />
-            {errors.email && <span className={styles.formError}>{errors.email}</span>}
-          </div>
-
-          <div className={styles.formGroup}>
-            <label htmlFor="mobile" className={styles.formLabel}>
-              Mobile Number <span style={{ color: 'red' }}>*</span>
-            </label>
-            <input
-              type="tel"
-              id="mobile"
-              name="mobile"
-              value={formData.mobile}
-              onChange={handleChange}
-              className={`${styles.formInput} ${errors.mobile ? styles.error : ''}`}
-              placeholder="+91 9876543210"
-            />
-            {errors.mobile && <span className={styles.formError}>{errors.mobile}</span>}
-            <small style={{ color: 'var(--text-light)', fontSize: '0.75rem' }}>
-              Only Indian numbers (+91) are supported
-            </small>
-          </div>
-
-          <div className={styles.formGroup}>
-            <label htmlFor="password" className={styles.formLabel}>
-              Password <span style={{ color: 'red' }}>*</span>
-            </label>
-            <div className="relative">
-              <input
-                type={showPassword ? "text" : "password"}
-                id="password"
-                name="password"
-                value={formData.password}
-                onChange={handleChange}
-                className={`${styles.formInput} ${errors.password ? styles.error : ''}`}
-                placeholder="Create a strong password"
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
-                style={{ background: 'none', border: 'none', cursor: 'pointer' }}
-              >
-                {showPassword ? (
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21" />
-                  </svg>
-                ) : (
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                  </svg>
-                )}
-              </button>
+        {/* Step 2: Enter Details */}
+        {currentStep === 2 && (
+          <div className={styles.stepContainer}>
+            <div className={styles.stepIndicator}>
+              <span className={styles.stepNumber}>2</span>
+              <span className={styles.stepText}>Complete Profile</span>
             </div>
-            {errors.password && <span className={styles.formError}>{errors.password}</span>}
-            {formData.password && (
-              <div className={styles.passwordStrength}>
-                <span>{passwordStrength.text}</span>
-                <div className={`${styles.strengthBar} ${passwordStrength.class}`}></div>
+            
+            <div className={styles.infoBox}>
+              Step 2: Complete your profile information
+            </div>
+
+            <form onSubmit={handleSignup}>
+              <div className={styles.formGroup}>
+                <label htmlFor="fullName">
+                  Full Name <span className={styles.required}>*</span>
+                </label>
+                <input
+                  type="text"
+                  id="fullName"
+                  name="fullName"
+                  value={formData.fullName}
+                  onChange={handleInputChange}
+                  placeholder="Enter your full name"
+                  className={errors.fullName ? styles.errorInput : ''}
+                />
+                {errors.fullName && <span className={styles.errorText}>{errors.fullName}</span>}
               </div>
-            )}
-          </div>
 
-          <div className={styles.formGroup}>
-            <label htmlFor="confirmPassword" className={styles.formLabel}>
-              Confirm Password <span style={{ color: 'red' }}>*</span>
-            </label>
-            <div className="relative">
-              <input
-                type={showConfirmPassword ? "text" : "password"}
-                id="confirmPassword"
-                name="confirmPassword"
-                value={formData.confirmPassword}
-                onChange={handleChange}
-                className={`${styles.formInput} ${errors.confirmPassword ? styles.error : ''}`}
-                placeholder="Confirm your password"
-              />
+              <div className={styles.formGroup}>
+                <label htmlFor="password">
+                  Create Password <span className={styles.required}>*</span>
+                </label>
+                <div className={styles.passwordInput}>
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    id="password"
+                    name="password"
+                    value={formData.password}
+                    onChange={handleInputChange}
+                    placeholder="Create a strong password"
+                    className={errors.password ? styles.errorInput : ''}
+                  />
+                  <button
+                    type="button"
+                    className={styles.passwordToggle}
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
+                    {showPassword ? "🙈" : "👁"}
+                  </button>
+                </div>
+                {errors.password && <span className={styles.errorText}>{errors.password}</span>}
+              </div>
+
+              <div className={styles.formGroup}>
+                <label htmlFor="confirmPassword">
+                  Confirm Password <span className={styles.required}>*</span>
+                </label>
+                <div className={styles.passwordInput}>
+                  <input
+                    type={showConfirmPassword ? "text" : "password"}
+                    id="confirmPassword"
+                    name="confirmPassword"
+                    value={formData.confirmPassword}
+                    onChange={handleInputChange}
+                    placeholder="Confirm your password"
+                    className={errors.confirmPassword ? styles.errorInput : ''}
+                  />
+                  <button
+                    type="button"
+                    className={styles.passwordToggle}
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  >
+                    {showConfirmPassword ? "🙈" : "👁"}
+                  </button>
+                </div>
+                {errors.confirmPassword && <span className={styles.errorText}>{errors.confirmPassword}</span>}
+              </div>
+
+              <div className={styles.formGroup}>
+                <label htmlFor="address">
+                  Address <span className={styles.required}>*</span>
+                </label>
+                <textarea
+                  id="address"
+                  name="address"
+                  value={formData.address}
+                  onChange={handleInputChange}
+                  placeholder="Enter your complete address"
+                  rows="3"
+                  className={errors.address ? styles.errorInput : ''}
+                />
+                {errors.address && <span className={styles.errorText}>{errors.address}</span>}
+              </div>
+
+              <div className={styles.formGroup}>
+                <label className={styles.checkboxLabel}>
+                  <input
+                    type="checkbox"
+                    name="termsAccepted"
+                    checked={formData.termsAccepted}
+                    onChange={(e) => setFormData(prev => ({
+                      ...prev,
+                      termsAccepted: e.target.checked
+                    }))}
+                    className={styles.checkbox}
+                  />
+                  <span className={styles.checkboxText}>
+                    I accept the{' '}
+                    <Link to="/terms" className={styles.link} target="_blank">
+                      Terms and Conditions
+                    </Link>{' '}
+                    and{' '}
+                    <Link to="/privacy-policy" className={styles.link} target="_blank">
+                      Privacy Policy
+                    </Link>{' '}
+                    <span className={styles.required}>*</span>
+                  </span>
+                </label>
+                {errors.termsAccepted && <span className={styles.errorText}>{errors.termsAccepted}</span>}
+              </div>
+
+              {errors.general && (
+                <div className={styles.errorMessage}>
+                  {errors.general}
+                </div>
+              )}
+
               <button
-                type="button"
-                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
-                style={{ background: 'none', border: 'none', cursor: 'pointer' }}
+                type="submit"
+                disabled={loading}
+                className={styles.primaryButton}
               >
-                {showConfirmPassword ? (
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21" />
-                  </svg>
-                ) : (
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                  </svg>
-                )}
+                {loading ? 'Creating Account...' : 'Create Account'}
               </button>
-            </div>
-            {errors.confirmPassword && <span className={styles.formError}>{errors.confirmPassword}</span>}
+            </form>
           </div>
+        )}
 
-          <div className={styles.formGroup}>
-            <label className={styles.checkboxLabel}>
-              <input
-                type="checkbox"
-                name="terms"
-                checked={formData.terms}
-                onChange={handleChange}
-                className={styles.checkbox}
-              />
-              <span>
-                I agree to the{' '}
-                <Link to="/terms" className={styles.link}>
-                  Terms & Conditions
-                </Link>
-                {' '}and{' '}
-                <Link to="/privacy-policy" className={styles.link}>
-                  Privacy Policy
-                </Link>
-              </span>
-            </label>
-            {errors.terms && <span className={styles.formError}>{errors.terms}</span>}
-          </div>
-
-          <button
-            type="submit"
-            disabled={isLoading}
-            className={`${styles.btn} ${styles.btnPrimary} ${isLoading ? styles.loading : ''}`}
-          >
-            {isLoading ? 'Creating Account...' : 'Create Account'}
-          </button>
-        </form>
-
-        <div className={styles.authFooter}>
-          <p>
-            Already have an account?{' '}
-            <Link to="/login" className={styles.link}>
-              Sign in here
-            </Link>
-          </p>
+        <div className={styles.loginLink}>
+          Already have an account? <Link to="/login">Log In</Link>
         </div>
       </div>
     </div>

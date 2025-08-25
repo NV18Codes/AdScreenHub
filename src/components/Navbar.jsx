@@ -53,7 +53,7 @@ export default function Navbar() {
     <nav className={styles.navbar}>
       <div className={styles.container}>
         <Link to="/" className={styles.logo} onClick={closeMenu}>
-          <img src="/logo.png" alt="AdScreenHub" className={styles.logoImage} />
+          <img src="/logo-2.png" alt="AdScreenHub" className={styles.logoImage} />
         </Link>
 
         {/* Desktop Navigation */}

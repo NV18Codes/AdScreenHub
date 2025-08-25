@@ -48,7 +48,7 @@ export default function Footer() {
         <div className={styles.footerContent}>
           <div className={styles.footerSection}>
             <div className={styles.logo}>
-              <img src="/logo.png" alt="AdScreenHub" className={styles.logoImage} />
+              <img src="/logo-2.png" alt="AdScreenHub" className={styles.logoImage} />
             </div>
             <p className={styles.description}>
               Your trusted partner for LED billboard advertising. Reach millions with impactful outdoor advertising campaigns.
@@ -69,7 +69,7 @@ export default function Footer() {
             <h3>Support</h3>
             <ul className={styles.footerLinks}>
               <li><Link to="/contact">Contact</Link></li>
-              <li><Link to="/faqs">FAQs</Link></li>
+              <li><Link to="/faq">FAQs</Link></li>
               <li><Link to="/help">Help Center</Link></li>
             </ul>
           </div>

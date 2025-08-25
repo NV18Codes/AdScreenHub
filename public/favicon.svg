@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <defs>
+    <style>
+      .logo-bg { fill: #1319B3; }
+      .logo-text { fill: white; font-family: Arial, sans-serif; font-weight: bold; font-size: 14px; }
+    </style>
+  </defs>
+  <rect class="logo-bg" width="32" height="32" rx="4"/>
+  <text x="16" y="22" class="logo-text" text-anchor="middle">AS</text>
+</svg>

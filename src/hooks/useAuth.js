@@ -1,155 +1,274 @@
-import { useState, useEffect } from 'react';
-import { mockUsers } from '../data/mockData';
+import { useState, useEffect, useCallback } from 'react';
+
+const API_BASE_URL = 'http://adscreenapi-production.up.railway.app';
 
 export const useAuth = () => {
   const [user, setUser] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Function to check and restore authentication state
-  const checkAuthState = () => {
-    const savedUser = localStorage.getItem('adscreenhub_user');
-    
-    if (savedUser) {
-      try {
-        const userData = JSON.parse(savedUser);
-        console.log('Restoring auth state from localStorage:', userData);
+  // Check authentication state on mount and storage changes
+  const checkAuthState = useCallback(() => {
+    try {
+      const storedUser = localStorage.getItem('adscreenhub_user');
+      if (storedUser) {
+        const userData = JSON.parse(storedUser);
         setUser(userData);
         setIsAuthenticated(true);
-        return true;
-      } catch (error) {
-        console.error('Error parsing saved user:', error);
-        localStorage.removeItem('adscreenhub_user');
+      } else {
         setUser(null);
         setIsAuthenticated(false);
-        return false;
       }
-    } else {
-      console.log('No saved user found in localStorage');
+    } catch (error) {
+      console.error('Error checking auth state:', error);
       setUser(null);
-      setIsAuthenticated(false);
-      return false;
+        setIsAuthenticated(false);
     }
-  };
-
-  // Load user from localStorage on mount
-  useEffect(() => {
-    checkAuthState();
-    setLoading(false);
+    setIsLoading(false);
   }, []);
 
-  // Listen for storage changes (when localStorage is modified from other tabs/windows)
+  // Refresh authentication state
+  const refreshAuthState = useCallback(() => {
+    checkAuthState();
+  }, [checkAuthState]);
+
+  // Initialize auth state
+  useEffect(() => {
+    checkAuthState();
+  }, [checkAuthState]);
+
+  // Listen for storage changes (for multi-tab sync)
   useEffect(() => {
     const handleStorageChange = (e) => {
       if (e.key === 'adscreenhub_user') {
-        console.log('Storage changed, checking auth state...');
         checkAuthState();
       }
     };
 
     window.addEventListener('storage', handleStorageChange);
     return () => window.removeEventListener('storage', handleStorageChange);
-  }, []);
+  }, [checkAuthState]);
 
-  // Login function
-  const login = (email, password, rememberMe) => {
-    console.log('Login attempt for email:', email);
-    const foundUser = mockUsers.find(u => u.email === email && u.password === password);
-    
-    if (foundUser) {
-      const userData = { ...foundUser };
-      delete userData.password; // Don't store password in state
+  // Start email verification
+  const startEmailVerification = async (email) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/v1/auth/start-email-verification`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email }),
+      });
+
+      const data = await response.json();
       
-      console.log('User authenticated successfully:', userData);
-      
-      // Always save to localStorage for demo purposes
-      localStorage.setItem('adscreenhub_user', JSON.stringify(userData));
-      if (rememberMe) {
-        localStorage.setItem('adscreenhub_rememberMe', 'true');
+      if (response.ok) {
+        return { success: true, message: data.message || 'Verification email sent successfully' };
       } else {
-        localStorage.removeItem('adscreenhub_rememberMe');
+        return { success: false, error: data.message || 'Failed to send verification email' };
       }
-      
-      // Update state immediately after localStorage
-      setUser(userData);
-      setIsAuthenticated(true);
-      
-      return { success: true, user: userData };
+    } catch (error) {
+      console.error('Email verification error:', error);
+      return { success: false, error: 'Network error. Please try again.' };
     }
-    
-    console.log('Login failed: Invalid credentials');
-    return { success: false, error: 'Invalid email or password' };
   };
 
-  // Signup function
-  const signup = (userData) => {
-    // Check if email already exists
-    const existingUser = mockUsers.find(u => u.email === userData.email);
-    if (existingUser) {
-      return { success: false, error: 'Email already exists' };
+  // Send phone OTP
+  const sendPhoneOtp = async (phoneNumber) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/auth/send-phone-otp`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ phoneNumber }),
+      });
+
+      const data = await response.json();
+      
+      if (response.ok) {
+        return { success: true, message: data.message || 'OTP sent successfully' };
+      } else {
+        return { success: false, error: data.message || 'Failed to send OTP' };
+      }
+    } catch (error) {
+      console.error('Phone OTP error:', error);
+      return { success: false, error: 'Network error. Please try again.' };
     }
-    
-    // Add new user to mock data
-    const newUser = {
-      id: mockUsers.length + 1,
-      ...userData
-    };
-    
-    mockUsers.push(newUser);
-    
-    // Auto-login after signup
-    const userDataForState = { ...newUser };
-    delete userDataForState.password;
-    
-    console.log('User signed up successfully:', userDataForState);
-    
-    // Save to localStorage for demo purposes
-    localStorage.setItem('adscreenhub_user', JSON.stringify(userDataForState));
-    
-    // Update state immediately after localStorage
-    setUser(userDataForState);
-    setIsAuthenticated(true);
-    
-    return { success: true, user: userDataForState };
+  };
+
+  // Verify phone OTP
+  const verifyPhoneOtp = async (phoneNumber, otp) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/auth/verify-phone-otp`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ phoneNumber, otp }),
+      });
+
+      const data = await response.json();
+      
+      if (response.ok) {
+        return { success: true, message: data.message || 'Phone number verified successfully' };
+      } else {
+        return { success: false, error: data.message || 'Invalid OTP' };
+      }
+    } catch (error) {
+      console.error('Phone OTP verification error:', error);
+      return { success: false, error: 'Network error. Please try again.' };
+    }
+  };
+
+  // Signup function with real API
+  const signup = async (userData) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/auth/register`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: userData.email,
+          password: userData.password,
+          fullName: userData.fullName,
+          phoneNumber: userData.phoneNumber,
+        }),
+      });
+
+      const data = await response.json();
+      
+      if (response.ok) {
+        // Create user object for local storage
+        const newUser = {
+          id: data.user?.id || Date.now().toString(),
+          email: userData.email.toLowerCase(),
+          phoneNumber: userData.phoneNumber,
+          fullName: userData.fullName,
+          address: userData.address,
+          createdAt: new Date().toISOString(),
+        };
+        
+        // Store user data
+        localStorage.setItem('adscreenhub_user', JSON.stringify(newUser));
+        
+        // Update state
+        setUser(newUser);
+        setIsAuthenticated(true);
+        
+        return { success: true, user: newUser, message: data.message || 'Registration successful' };
+      } else {
+        return { success: false, error: data.message || 'Registration failed' };
+      }
+    } catch (error) {
+      console.error('Signup error:', error);
+      return { success: false, error: 'Network error. Please try again.' };
+    }
+  };
+
+  // Login function with real API
+  const login = async (email, password) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: email.toLowerCase(),
+          password: password,
+        }),
+      });
+
+      const data = await response.json();
+      
+      if (response.ok) {
+        // Create user object for local storage
+        const userData = {
+          id: data.user?.id || Date.now().toString(),
+          email: email.toLowerCase(),
+          phoneNumber: data.user?.phoneNumber || '',
+          fullName: data.user?.fullName || '',
+          address: data.user?.address || '',
+          createdAt: new Date().toISOString(),
+          token: data.token || data.accessToken,
+        };
+        
+        // Store user data
+        localStorage.setItem('adscreenhub_user', JSON.stringify(userData));
+        
+        // Update state
+        setUser(userData);
+        setIsAuthenticated(true);
+        
+        return { success: true, user: userData, message: data.message || 'Login successful' };
+      } else {
+        return { success: false, error: data.message || 'Invalid email or password' };
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      return { success: false, error: 'Network error. Please try again.' };
+    }
   };
 
   // Logout function
   const logout = () => {
-    console.log('User logging out');
-    setUser(null);
-    setIsAuthenticated(false);
-    localStorage.removeItem('adscreenhub_user');
-    localStorage.removeItem('adscreenhub_rememberMe');
+    try {
+      localStorage.removeItem('adscreenhub_user');
+      setUser(null);
+      setIsAuthenticated(false);
+      return { success: true };
+    } catch (error) {
+      console.error('Logout error:', error);
+      return { success: false, error: error.message || 'Logout failed' };
+    }
   };
 
   // Update user profile
-  const updateProfile = (updatedData) => {
-    const updatedUser = { ...user, ...updatedData };
-    setUser(updatedUser);
-    
-    // Update localStorage if remember me is enabled
-    if (localStorage.getItem('adscreenhub_rememberMe') === 'true') {
+  const updateProfile = (updates) => {
+    try {
+      if (!user) {
+        return { success: false, error: 'No user logged in' };
+      }
+      
+      const updatedUser = { ...user, ...updates };
       localStorage.setItem('adscreenhub_user', JSON.stringify(updatedUser));
+      setUser(updatedUser);
+      
+      return { success: true, user: updatedUser };
+    } catch (error) {
+      console.error('Profile update error:', error);
+      return { success: false, error: error.message || 'Profile update failed' };
     }
-    
-    return { success: true, user: updatedUser };
   };
 
-  // Force refresh authentication state (useful for debugging)
-  const refreshAuthState = () => {
-    console.log('Forcing auth state refresh...');
-    return checkAuthState();
+  // Check if user has specific permission
+  const hasPermission = (permission) => {
+    if (!user) return false;
+    // Add permission logic here if needed
+    return true;
+  };
+
+  // Get user's display name
+  const getDisplayName = () => {
+    if (!user) return '';
+    return user.fullName || user.email || 'User';
   };
 
   return {
     user,
     isAuthenticated,
-    loading,
-    login,
+    isLoading,
+    startEmailVerification,
+    sendPhoneOtp,
+    verifyPhoneOtp,
     signup,
+    login,
     logout,
     updateProfile,
-    refreshAuthState,
-    checkAuthState
+    hasPermission,
+    getDisplayName,
+    refreshAuthState
   };
 };

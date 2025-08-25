@@ -1,0 +1,323 @@
+.faqContainer {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  padding: 2rem 0;
+}
+
+.faqHeader {
+  text-align: center;
+  margin-bottom: 3rem;
+  padding: 0 1rem;
+}
+
+.faqHeader h1 {
+  color: var(--text-dark);
+  font-size: 3rem;
+  font-weight: 800;
+  margin-bottom: 1rem;
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.faqHeader p {
+  color: var(--text-light);
+  font-size: 1.25rem;
+  max-width: 600px;
+  margin: 0 auto;
+  line-height: 1.6;
+}
+
+.faqContent {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+.faqSection {
+  background: var(--white);
+  border-radius: 1rem;
+  padding: 2rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  border: 1px solid var(--gray-200);
+}
+
+.faqSection h2 {
+  color: var(--primary-color);
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 3px solid var(--primary-color);
+  position: relative;
+}
+
+.faqSection h2::after {
+  content: '';
+  position: absolute;
+  bottom: -3px;
+  left: 0;
+  width: 60px;
+  height: 3px;
+  background: linear-gradient(90deg, var(--primary-color) 0%, var(--primary-light) 100%);
+  border-radius: 2px;
+}
+
+.faqItem {
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  background: var(--gray-50);
+  border-radius: 0.75rem;
+  border-left: 4px solid var(--primary-color);
+  transition: all 0.3s ease;
+}
+
+.faqItem:hover {
+  transform: translateX(5px);
+  box-shadow: 0 4px 15px rgba(19, 25, 179, 0.1);
+  background: var(--white);
+}
+
+.faqItem:last-child {
+  margin-bottom: 0;
+}
+
+.faqItem h3 {
+  color: var(--text-dark);
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  line-height: 1.4;
+}
+
+.faqItem p {
+  color: var(--text-light);
+  font-size: 1rem;
+  line-height: 1.7;
+  margin-bottom: 1rem;
+}
+
+.faqItem ul {
+  margin: 1rem 0;
+  padding-left: 1.5rem;
+}
+
+.faqItem li {
+  color: var(--text-light);
+  font-size: 1rem;
+  line-height: 1.6;
+  margin-bottom: 0.5rem;
+}
+
+.faqItem strong {
+  color: var(--text-dark);
+  font-weight: 600;
+}
+
+/* Package Cards */
+.packageCard {
+  background: var(--white);
+  border: 2px solid var(--gray-200);
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  margin: 1rem 0;
+  transition: all 0.3s ease;
+}
+
+.packageCard:hover {
+  border-color: var(--primary-color);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(19, 25, 179, 0.15);
+}
+
+.packageCard h4 {
+  color: var(--primary-color);
+  font-size: 1.125rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid var(--primary-color);
+}
+
+.packageCard ul {
+  margin: 0;
+  padding-left: 1.25rem;
+}
+
+.packageCard li {
+  margin-bottom: 0.75rem;
+  font-size: 0.95rem;
+}
+
+/* Prohibited List */
+.prohibitedList {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+  margin: 1rem 0;
+}
+
+.prohibitedList li {
+  color: #991b1b;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+  padding: 0.25rem 0;
+}
+
+/* Contact Section */
+.contactSection {
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+  border-radius: 1rem;
+  padding: 2.5rem;
+  text-align: center;
+  color: var(--white);
+  margin-top: 3rem;
+}
+
+.contactSection h2 {
+  color: var(--white);
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+  border: none;
+  padding: 0;
+}
+
+.contactSection h2::after {
+  display: none;
+}
+
+.contactSection p {
+  color: var(--white);
+  font-size: 1.125rem;
+  margin: 0;
+  opacity: 0.9;
+}
+
+.contactEmail {
+  color: var(--white);
+  text-decoration: underline;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.contactEmail:hover {
+  color: #fbbf24;
+  text-decoration: none;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .faqContainer {
+    padding: 1rem 0;
+  }
+
+  .faqHeader {
+    margin-bottom: 2rem;
+  }
+
+  .faqHeader h1 {
+    font-size: 2.25rem;
+  }
+
+  .faqHeader p {
+    font-size: 1.125rem;
+  }
+
+  .faqContent {
+    padding: 0 0.75rem;
+  }
+
+  .faqSection {
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .faqSection h2 {
+    font-size: 1.75rem;
+    margin-bottom: 1rem;
+  }
+
+  .faqItem {
+    padding: 1.25rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .faqItem h3 {
+    font-size: 1.125rem;
+  }
+
+  .packageCard {
+    padding: 1.25rem;
+    margin: 0.75rem 0;
+  }
+
+  .contactSection {
+    padding: 2rem 1.5rem;
+    margin-top: 2rem;
+  }
+
+  .contactSection h2 {
+    font-size: 1.75rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .faqHeader h1 {
+    font-size: 2rem;
+  }
+
+  .faqHeader p {
+    font-size: 1rem;
+  }
+
+  .faqSection {
+    padding: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  .faqSection h2 {
+    font-size: 1.5rem;
+  }
+
+  .faqItem {
+    padding: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  .faqItem h3 {
+    font-size: 1rem;
+  }
+
+  .faqItem p,
+  .faqItem li {
+    font-size: 0.95rem;
+  }
+
+  .packageCard {
+    padding: 1rem;
+  }
+
+  .packageCard h4 {
+    font-size: 1rem;
+  }
+
+  .packageCard li {
+    font-size: 0.9rem;
+  }
+
+  .contactSection {
+    padding: 1.5rem 1rem;
+  }
+
+  .contactSection h2 {
+    font-size: 1.5rem;
+  }
+
+  .contactSection p {
+    font-size: 1rem;
+  }
+}

@@ -1,110 +1,80 @@
-import React, { useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
-import { useAuth } from './hooks/useAuth';
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import Home from './pages/Home';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
 import Dashboard from './pages/Dashboard';
+import Profile from './pages/Profile';
 import MyOrders from './pages/MyOrders';
 import Checkout from './pages/Checkout';
-import Profile from './pages/Profile';
-import DashboardOverview from './components/DashboardOverview';
-import './styles.css';
+import FAQ from './pages/FAQ';
+import PrivacyPolicy from './pages/PrivacyPolicy';
+import Terms from './pages/Terms';
+import EmailVerificationSuccess from './pages/EmailVerificationSuccess';
+import ScrollToTop from './components/ScrollToTop';
+import { useAuth } from './hooks/useAuth';
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
-  const { isAuthenticated, loading, refreshAuthState } = useAuth();
+  const { isAuthenticated, isLoading } = useAuth();
   
-  // Ensure authentication state is checked on mount
-  useEffect(() => {
-    if (!loading && !isAuthenticated) {
-      refreshAuthState();
-    }
-  }, [loading, isAuthenticated, refreshAuthState]);
-  
-  if (loading) {
+  if (isLoading) {
     return <div>Loading...</div>;
   }
   
   return isAuthenticated ? children : <Navigate to="/login" />;
 };
 
-// Layout Component that conditionally shows footer
-const Layout = ({ children }) => {
-  const location = useLocation();
-  const showFooter = !['/login', '/signup'].includes(location.pathname);
-  
+// Layout Component (conditional footer)
+const Layout = ({ children, showFooter = true }) => {
   return (
     <>
-      <main style={{ paddingTop: '80px', minHeight: 'calc(100vh - 160px)', width: '100%' }}>
-        {children}
-      </main>
+      <Navbar />
+      <main>{children}</main>
       {showFooter && <Footer />}
     </>
   );
 };
 
-// App Initialization Component
-const AppInitializer = ({ children }) => {
-  const { refreshAuthState, loading } = useAuth();
-
-  useEffect(() => {
-    // Force authentication state check on app initialization
-    if (!loading) {
-      console.log('App initializing, checking auth state...');
-      refreshAuthState();
-    }
-  }, [loading, refreshAuthState]);
-
-  return children;
+// App Initializer Component
+const AppInitializer = () => {
+  const { refreshAuthState } = useAuth();
+  
+  React.useEffect(() => {
+    refreshAuthState();
+  }, [refreshAuthState]);
+  
+  return null;
 };
 
 function App() {
   return (
     <Router>
-      <AppInitializer>
-        <div className="App">
-          <Navbar />
-          <Layout>
-            <Routes>
-              <Route path="/" element={<Home />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/signup" element={<Signup />} />
-              <Route path="/dashboard" element={
-                <ProtectedRoute>
-                  <DashboardOverview />
-                </ProtectedRoute>
-              } />
-              <Route path="/book-ad" element={
-                <ProtectedRoute>
-                  <Dashboard />
-                </ProtectedRoute>
-              } />
-              <Route path="/my-orders" element={
-                <ProtectedRoute>
-                  <MyOrders />
-                </ProtectedRoute>
-              } />
-              <Route path="/checkout" element={
-                <ProtectedRoute>
-                  <Checkout />
-                </ProtectedRoute>
-              } />
-              <Route path="/profile" element={
-                <ProtectedRoute>
-                  <Profile />
-                </ProtectedRoute>
-              } />
-              <Route path="/pricing" element={<Home />} />
-              <Route path="/how-it-works" element={<Home />} />
-              <Route path="/about" element={<Home />} />
-              <Route path="/blogs" element={<Home />} />
-            </Routes>
-          </Layout>
-        </div>
-      </AppInitializer>
+      <AppInitializer />
+      <ScrollToTop />
+      <Routes>
+        {/* Public Routes */}
+        <Route path="/" element={<Layout><Home /></Layout>} />
+        <Route path="/faq" element={<Layout><FAQ /></Layout>} />
+        <Route path="/privacy-policy" element={<Layout><PrivacyPolicy /></Layout>} />
+        <Route path="/terms" element={<Layout><Terms /></Layout>} />
+        <Route path="/email-verification-success" element={<Layout showFooter={false}><EmailVerificationSuccess /></Layout>} />
+        
+        {/* Auth Routes (no footer) */}
+        <Route path="/login" element={<Layout showFooter={false}><Login /></Layout>} />
+        <Route path="/signup" element={<Layout showFooter={false}><Signup /></Layout>} />
+        
+        {/* Protected Routes */}
+        <Route path="/dashboard" element={<ProtectedRoute><Layout><Dashboard /></Layout></ProtectedRoute>} />
+        <Route path="/profile" element={<ProtectedRoute><Layout><Profile /></Layout></ProtectedRoute>} />
+        <Route path="/my-orders" element={<ProtectedRoute><Layout><MyOrders /></Layout></ProtectedRoute>} />
+        <Route path="/checkout" element={<ProtectedRoute><Layout><Checkout /></Layout></ProtectedRoute>} />
+        
+        {/* Catch all route */}
+        <Route path="*" element={<Navigate to="/" />} />
+      </Routes>
     </Router>
   );
 }
