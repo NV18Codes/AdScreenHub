@@ -14,13 +14,22 @@ export default function EmailVerification() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    // Get email from URL params or localStorage
+    // Get email and token from URL params or localStorage
     const emailFromParams = searchParams.get('email');
+    const tokenFromParams = searchParams.get('token'); // Backend verification token
     const emailFromStorage = localStorage.getItem('pending_email_verification');
     
     if (emailFromParams) {
       setEmail(emailFromParams);
       localStorage.setItem('pending_email_verification', emailFromParams);
+      
+      // If we have a token, this is a real verification from backend
+      if (tokenFromParams) {
+        // This means backend has already verified the email
+        // Redirect directly to success page
+        navigate(`/email-verification-success?email=${encodeURIComponent(emailFromParams)}`);
+        return;
+      }
     } else if (emailFromStorage) {
       setEmail(emailFromStorage);
     } else {
@@ -28,9 +37,11 @@ export default function EmailVerification() {
       return;
     }
 
-    // Simulate verification process (in real app, this would be handled by backend)
-    handleVerification();
-  }, [searchParams]);
+    // Only simulate verification if no token (manual testing)
+    if (!tokenFromParams) {
+      handleVerification();
+    }
+  }, [searchParams, navigate]);
 
   const handleVerification = async () => {
     try {
