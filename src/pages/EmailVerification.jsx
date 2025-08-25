@@ -45,6 +45,9 @@ export default function EmailVerification() {
       // Clear pending verification
       localStorage.removeItem('pending_email_verification');
       
+      // Redirect to email verification success page with email parameter
+      navigate(`/email-verification-success?email=${encodeURIComponent(email)}`);
+      
     } catch (error) {
       setVerificationStatus('error');
       setError('Verification failed. Please try again.');

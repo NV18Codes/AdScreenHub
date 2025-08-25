@@ -14,6 +14,7 @@ export default function EmailVerificationSuccess() {
     
     if (emailFromParams) {
       setEmail(emailFromParams);
+      // Store email in localStorage for the signup flow
       localStorage.setItem('pending_email_verification', emailFromParams);
     } else if (emailFromStorage) {
       setEmail(emailFromStorage);
@@ -26,7 +27,7 @@ export default function EmailVerificationSuccess() {
 
   const handleProceed = () => {
     // Navigate to signup with verified email
-    navigate('/signup?verified=true');
+    navigate(`/signup?verified=true&email=${encodeURIComponent(email)}`);
   };
 
   const handleGoHome = () => {

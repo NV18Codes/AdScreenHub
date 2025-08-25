@@ -10,13 +10,14 @@ export default function Signup() {
   
   // Check if coming from email verification
   const isFromEmailVerification = searchParams.get('verified') === 'true';
+  const verifiedEmail = searchParams.get('email');
   
   // Step management
   const [currentStep, setCurrentStep] = useState(isFromEmailVerification ? 2 : 1);
   
   // Form data
   const [formData, setFormData] = useState({
-    email: '',
+    email: verifiedEmail || '',
     phoneNumber: '',
     fullName: '',
     password: '',
@@ -48,6 +49,16 @@ export default function Signup() {
 
   // Check if can proceed to next step
   const canProceedToStep2 = verificationState.emailVerified && verificationState.phoneVerified;
+
+  // Update form data when verified email changes
+  useEffect(() => {
+    if (verifiedEmail && verifiedEmail !== formData.email) {
+      setFormData(prev => ({
+        ...prev,
+        email: verifiedEmail
+      }));
+    }
+  }, [verifiedEmail, formData.email]);
 
   // OTP Timer effect
   useEffect(() => {
