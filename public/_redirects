@@ -1,24 +1,17 @@
 # Netlify redirects for SPA routing
-# This ensures all routes are handled by the React app
+# This approach ensures assets are served correctly
 
-# Handle all routes and redirect to index.html
-/*    /index.html   200
+# Serve assets directly
+/assets/*    /assets/:splat    200
 
-# Specific redirects for email verification
-/email-verification-success    /index.html   200
-/email-verification    /index.html   200
+# Serve static files directly
+/*.css      /:splat           200
+/*.js       /:splat           200
+/*.png      /:splat           200
+/*.jpg      /:splat           200
+/*.svg      /:splat           200
+/*.ico      /:splat           200
+/*.pdf      /:splat           200
 
-# Auth routes
-/login    /index.html   200
-/signup    /index.html   200
-
-# Protected routes
-/dashboard    /index.html   200
-/profile    /index.html   200
-/my-orders    /index.html   200
-/checkout    /index.html   200
-
-# Static pages
-/faq    /index.html   200
-/privacy-policy    /index.html   200
-/terms    /index.html   200
+# Handle all other routes for SPA
+/*          /index.html       200
