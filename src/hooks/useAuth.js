@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 
-const API_BASE_URL = 'http://adscreenapi-production.up.railway.app';
+const API_BASE_URL = 'https://adscreenapi-production.up.railway.app';
 
 export const useAuth = () => {
   const [user, setUser] = useState(null);
