@@ -165,6 +165,125 @@
   margin: 20px auto;
 }
 
+/* Mobile Verification Styles */
+.mobileVerificationSection {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 25px;
+  margin: 25px 0;
+  text-align: left;
+}
+
+.mobileVerificationSection h3 {
+  color: #1319B3;
+  font-size: 1.3rem;
+  font-weight: 600;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.phoneInputSection {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 15px;
+  align-items: center;
+}
+
+.phoneInput {
+  flex: 1;
+  padding: 12px 16px;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: border-color 0.3s ease;
+}
+
+.phoneInput:focus {
+  outline: none;
+  border-color: #1319B3;
+}
+
+.phoneInput:disabled {
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+.otpSection {
+  margin-top: 20px;
+}
+
+.otpSection label {
+  display: block;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 10px;
+  text-align: center;
+}
+
+.otpContainer {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin-bottom: 10px;
+}
+
+.otpInput {
+  width: 45px;
+  height: 45px;
+  text-align: center;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 1.2rem;
+  font-weight: 600;
+  transition: border-color 0.3s ease;
+}
+
+.otpInput:focus {
+  outline: none;
+  border-color: #1319B3;
+}
+
+.otpNote {
+  text-align: center;
+  color: #6b7280;
+  font-size: 0.9rem;
+  font-style: italic;
+}
+
+.verifiedMessage {
+  background: #d1fae5;
+  border: 1px solid #10b981;
+  color: #065f46;
+  padding: 15px;
+  border-radius: 8px;
+  text-align: center;
+  font-weight: 600;
+  margin: 15px 0;
+}
+
+.errorMessage {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #dc2626;
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin: 15px 0;
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+.successMessage {
+  background: #d1fae5;
+  border: 1px solid #10b981;
+  color: #065f46;
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin: 15px 0;
+  font-size: 0.9rem;
+  text-align: center;
+}
+
 @keyframes spin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
