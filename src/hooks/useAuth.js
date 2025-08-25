@@ -76,7 +76,7 @@ export const useAuth = () => {
   // Send phone OTP
   const sendPhoneOtp = async (phoneNumber) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/auth/send-phone-otp`, {
+      const response = await fetch(`${API_BASE_URL}/api/v1/auth/start-phone-verification`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
