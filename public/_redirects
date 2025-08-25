@@ -11,7 +11,9 @@
 /*.jpg      /:splat           200
 /*.svg      /:splat           200
 /*.ico      /:splat           200
-/*.pdf      /:splat           200
 
-# Handle all other routes for SPA
+# Handle backend email verification route
+/verify-email    /index.html   200
+
+# Handle all other routes and redirect to index.html
 /*          /index.html       200
