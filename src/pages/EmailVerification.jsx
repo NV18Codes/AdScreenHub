@@ -19,17 +19,35 @@ export default function EmailVerification() {
     const tokenFromParams = searchParams.get('token'); // Backend verification token
     const emailFromStorage = localStorage.getItem('pending_email_verification');
     
-    if (emailFromParams) {
-      setEmail(emailFromParams);
-      localStorage.setItem('pending_email_verification', emailFromParams);
-      
-      // If we have a token, this is a real verification from backend
-      if (tokenFromParams) {
-        // This means backend has already verified the email
+    console.log('Email verification params:', { emailFromParams, tokenFromParams, emailFromStorage });
+    
+    if (tokenFromParams) {
+      // This is a backend verification link
+      if (emailFromParams) {
+        // We have both email and token
+        setEmail(emailFromParams);
+        localStorage.setItem('pending_email_verification', emailFromParams);
         // Redirect directly to success page
         navigate(`/email-verification-success?email=${encodeURIComponent(emailFromParams)}`);
         return;
+      } else if (emailFromStorage) {
+        // We have token but no email in URL, use stored email
+        setEmail(emailFromStorage);
+        // Redirect directly to success page
+        navigate(`/email-verification-success?email=${encodeURIComponent(emailFromStorage)}`);
+        return;
+      } else {
+        // We have token but no email anywhere - this shouldn't happen
+        setVerificationStatus('error');
+        setError('Verification failed: No email found');
+        return;
       }
+    }
+    
+    // Handle manual email verification (no token)
+    if (emailFromParams) {
+      setEmail(emailFromParams);
+      localStorage.setItem('pending_email_verification', emailFromParams);
     } else if (emailFromStorage) {
       setEmail(emailFromStorage);
     } else {
@@ -38,9 +56,7 @@ export default function EmailVerification() {
     }
 
     // Only simulate verification if no token (manual testing)
-    if (!tokenFromParams) {
-      handleVerification();
-    }
+    handleVerification();
   }, [searchParams, navigate]);
 
   const handleVerification = async () => {

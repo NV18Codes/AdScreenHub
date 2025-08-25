@@ -64,6 +64,9 @@ function App() {
         <Route path="/email-verification" element={<Layout showFooter={false}><EmailVerification /></Layout>} />
         <Route path="/email-verification-success" element={<Layout showFooter={false}><EmailVerificationSuccess /></Layout>} />
         
+        {/* Backend Email Verification Route */}
+        <Route path="/verify-email" element={<Layout showFooter={false}><EmailVerification /></Layout>} />
+        
         {/* Auth Routes (no footer) */}
         <Route path="/login" element={<Layout showFooter={false}><Login /></Layout>} />
         <Route path="/signup" element={<Layout showFooter={false}><Signup /></Layout>} />
