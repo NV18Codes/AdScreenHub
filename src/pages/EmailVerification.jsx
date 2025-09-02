@@ -6,7 +6,7 @@ import styles from '../styles/EmailVerification.module.css';
 export default function EmailVerification() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { startEmailVerification } = useAuth();
+  const { startEmailVerification, verifyEmail } = useAuth();
   
   const [verificationStatus, setVerificationStatus] = useState('verifying');
   const [email, setEmail] = useState('');
@@ -20,21 +20,69 @@ export default function EmailVerification() {
     const emailFromStorage = localStorage.getItem('pending_email_verification');
     
     console.log('Email verification params:', { emailFromParams, tokenFromParams, emailFromStorage });
+    console.log('Current URL:', window.location.href);
+    
+    // Check if we're on production URL but need to redirect to localhost (for development)
+    const isProductionUrl = window.location.hostname === 'ad-screenhub.netlify.app';
+    const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    
+    // Only redirect from production to localhost if we have verification parameters
+    // This helps developers who are testing locally but get production email links
+    if (isProductionUrl && (emailFromParams || tokenFromParams)) {
+      console.log('🔄 Production email verification detected - redirecting to localhost for development');
+      const localhostUrl = `http://localhost:3002/email-verification?email=${encodeURIComponent(emailFromParams || '')}&token=${encodeURIComponent(tokenFromParams || '')}`;
+      
+      // Show redirect message
+      setVerificationStatus('redirecting');
+      setEmail(emailFromParams || '');
+      
+      // Redirect after a short delay
+      setTimeout(() => {
+        window.location.href = localhostUrl;
+      }, 1000);
+      return;
+    }
     
     if (tokenFromParams) {
-      // This is a backend verification link
-      if (emailFromParams) {
-        // We have both email and token
-        setEmail(emailFromParams);
-        localStorage.setItem('pending_email_verification', emailFromParams);
-        // Redirect to signup page after email verification
-        navigate(`/signup?email=${encodeURIComponent(emailFromParams)}&verified=true`);
-        return;
-      } else if (emailFromStorage) {
-        // We have token but no email in URL, use stored email
-        setEmail(emailFromStorage);
-        // Redirect to signup page after email verification
-        navigate(`/signup?email=${encodeURIComponent(emailFromStorage)}&verified=true`);
+      // This is a backend verification link - verify the token
+      const emailToVerify = emailFromParams || emailFromStorage;
+      
+      if (emailToVerify) {
+        setEmail(emailToVerify);
+        setVerificationStatus('verifying');
+        
+        // Call the API to verify the email token
+        const verifyToken = async () => {
+          try {
+            console.log('🔍 Verifying email token:', tokenFromParams);
+            console.log('📧 Email to verify:', emailToVerify);
+            
+            const result = await verifyEmail(tokenFromParams);
+            
+            console.log('📥 Verification result:', result);
+            
+            if (result && result.success) {
+              console.log('✅ Email verification successful');
+              setVerificationStatus('success');
+              // Store verified email
+              localStorage.setItem('verified_email', emailToVerify);
+              // Redirect back to signup page where user left off
+              setTimeout(() => {
+                navigate(`/signup?email=${encodeURIComponent(emailToVerify)}&verified=true`);
+              }, 2000);
+            } else {
+              console.log('❌ Email verification failed:', result);
+              setVerificationStatus('error');
+              setError(result?.error || result?.message || 'Email verification failed');
+            }
+          } catch (error) {
+            console.error('❌ Email verification error:', error);
+            setVerificationStatus('error');
+            setError('Email verification failed. Please try again.');
+          }
+        };
+        
+        verifyToken();
         return;
       } else {
         // We have token but no email anywhere - this shouldn't happen
@@ -151,6 +199,30 @@ export default function EmailVerification() {
           <button onClick={handleGoHome} className={styles.secondaryButton}>
             Back to Home
           </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (verificationStatus === 'redirecting') {
+    return (
+      <div className={styles.container}>
+        <div className={styles.content}>
+          <div className={styles.iconContainer}>
+            <div className={styles.loadingIcon}>🔄</div>
+          </div>
+          
+          <h1 className={styles.title}>Redirecting to Local Development</h1>
+          
+          <p className={styles.message}>
+            We're redirecting you to your local development environment...
+          </p>
+          
+          <div className={styles.loadingSpinner}></div>
+          
+          <p className={styles.subMessage}>
+            This will redirect you to localhost:3002 to complete email verification.
+          </p>
         </div>
       </div>
     );
