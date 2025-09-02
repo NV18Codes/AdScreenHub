@@ -25,7 +25,7 @@ export default function DashboardOverview() {
       <div className={styles.container}>
         <div className={styles.header}>
           <h1>Dashboard Overview</h1>
-          <p>Welcome back, {user?.fullName}! Here's your advertising summary.</p>
+          <p>Welcome back, {user?.fullName || user?.email?.split('@')[0] || 'User'}! Here's your advertising summary.</p>
         </div>
 
         {/* Stats Grid */}

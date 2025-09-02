@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-
-const API_BASE_URL = 'https://adscreenapi-production.up.railway.app';
+import { authAPI, userAPI } from '../config/api';
 
 export const useAuth = () => {
   const [user, setUser] = useState(null);
@@ -52,20 +51,12 @@ export const useAuth = () => {
   // Start email verification
   const startEmailVerification = async (email) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/v1/auth/start-email-verification`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email }),
-      });
-
-      const data = await response.json();
+      const result = await authAPI.startEmailVerification(email);
       
-      if (response.ok) {
-        return { success: true, message: data.message || 'Verification email sent successfully' };
+      if (result.success) {
+        return { success: true, message: result.data.message || 'Verification email sent successfully' };
       } else {
-        return { success: false, error: data.message || 'Failed to send verification email' };
+        return { success: false, error: result.error || 'Failed to send verification email' };
       }
     } catch (error) {
       console.error('Email verification error:', error);
@@ -76,20 +67,12 @@ export const useAuth = () => {
   // Send phone OTP
   const sendPhoneOtp = async (phoneNumber) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/v1/auth/start-phone-verification`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ phoneNumber }),
-      });
-
-      const data = await response.json();
+      const result = await authAPI.startPhoneVerification(phoneNumber);
       
-      if (response.ok) {
-        return { success: true, message: data.message || 'OTP sent successfully' };
+      if (result.success) {
+        return { success: true, message: result.data.message || 'OTP sent successfully' };
       } else {
-        return { success: false, error: data.message || 'Failed to send OTP' };
+        return { success: false, error: result.error || 'Failed to send OTP' };
       }
     } catch (error) {
       console.error('Phone OTP error:', error);
@@ -100,20 +83,12 @@ export const useAuth = () => {
   // Verify phone OTP
   const verifyPhoneOtp = async (phoneNumber, otp) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/auth/verify-phone-otp`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ phoneNumber, otp }),
-      });
-
-      const data = await response.json();
+      const result = await authAPI.verifyPhone(phoneNumber, otp);
       
-      if (response.ok) {
-        return { success: true, message: data.message || 'Phone number verified successfully' };
+      if (result.success) {
+        return { success: true, message: result.data.message || 'Phone number verified successfully' };
       } else {
-        return { success: false, error: data.message || 'Invalid OTP' };
+        return { success: false, error: result.error || 'Invalid OTP' };
       }
     } catch (error) {
       console.error('Phone OTP verification error:', error);
@@ -121,94 +96,213 @@ export const useAuth = () => {
     }
   };
 
-  // Signup function with real API
-  const signup = async (userData) => {
+  // Verify email with token
+  const verifyEmail = async (token) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/auth/register`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email: userData.email,
-          password: userData.password,
-          fullName: userData.fullName,
-          phoneNumber: userData.phoneNumber,
-        }),
-      });
-
-      const data = await response.json();
+      const result = await authAPI.verifyEmail(token);
       
-      if (response.ok) {
-        // Create user object for local storage
-        const newUser = {
-          id: data.user?.id || Date.now().toString(),
-          email: userData.email.toLowerCase(),
-          phoneNumber: userData.phoneNumber,
-          fullName: userData.fullName,
-          address: userData.address,
-          createdAt: new Date().toISOString(),
-        };
-        
-        // Store user data
-        localStorage.setItem('adscreenhub_user', JSON.stringify(newUser));
-        
-        // Update state
-        setUser(newUser);
-        setIsAuthenticated(true);
-        
-        return { success: true, user: newUser, message: data.message || 'Registration successful' };
+      if (result.success) {
+        return { success: true, message: result.data.message || 'Email verified successfully' };
       } else {
-        return { success: false, error: data.message || 'Registration failed' };
+        return { success: false, error: result.error || 'Email verification failed' };
       }
     } catch (error) {
-      console.error('Signup error:', error);
+      console.error('Email verification error:', error);
       return { success: false, error: 'Network error. Please try again.' };
+    }
+  };
+
+  // Fetch user profile from API
+  const fetchUserProfile = async (token) => {
+    try {
+      console.log('Fetching user profile...');
+      const result = await userAPI.getProfile();
+      console.log('Profile API Response:', result);
+      
+      if (result.success) {
+        console.log('Profile data received:', result.data);
+        return result.data;
+      } else {
+        console.log('Profile fetch failed:', result.error);
+        return null;
+      }
+    } catch (error) {
+      console.error('Error fetching user profile:', error);
+      return null;
     }
   };
 
   // Login function with real API
   const login = async (email, password) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email: email.toLowerCase(),
-          password: password,
-        }),
-      });
-
-      const data = await response.json();
+      const result = await authAPI.login(email, password);
       
-      if (response.ok) {
-        // Create user object for local storage
-        const userData = {
+      // Log the full response for debugging
+      console.log('Login API Response:', result);
+      
+      if (result.success) {
+        const data = result.data;
+        console.log('Login response data:', data);
+        console.log('Login response user:', data.user);
+        console.log('Login response user fullName:', data.user?.fullName);
+        console.log('Login response user name:', data.user?.name);
+        
+        // Create initial user object for local storage
+        const initialUserData = {
           id: data.user?.id || Date.now().toString(),
           email: email.toLowerCase(),
           phoneNumber: data.user?.phoneNumber || '',
-          fullName: data.user?.fullName || '',
+          fullName: data.user?.fullName || data.user?.name || email.split('@')[0] || 'User',
           address: data.user?.address || '',
           createdAt: new Date().toISOString(),
           token: data.token || data.accessToken,
         };
         
-        // Store user data
-        localStorage.setItem('adscreenhub_user', JSON.stringify(userData));
+        console.log('Initial user data:', initialUserData);
         
-        // Update state
-        setUser(userData);
+        // Store initial user data
+        localStorage.setItem('adscreenhub_user', JSON.stringify(initialUserData));
+        
+        // Update state with initial data
+        setUser(initialUserData);
         setIsAuthenticated(true);
         
-        return { success: true, user: userData, message: data.message || 'Login successful' };
+        // Fetch complete user profile from API
+        try {
+          const profileData = await fetchUserProfile(data.token || data.accessToken);
+          if (profileData) {
+            console.log('Profile data keys:', Object.keys(profileData));
+            console.log('Profile fullName:', profileData.fullName);
+            console.log('Profile name:', profileData.name);
+            
+            // Update user data with complete profile information
+            const completeUserData = {
+              ...initialUserData,
+              fullName: profileData.fullName || profileData.name || profileData.user?.fullName || profileData.user?.name || initialUserData.fullName,
+              phoneNumber: profileData.phoneNumber || profileData.user?.phoneNumber || initialUserData.phoneNumber,
+              address: profileData.address || profileData.user?.address || initialUserData.address,
+              // Add any other profile fields
+              ...profileData
+            };
+            
+            console.log('Final user data fullName:', completeUserData.fullName);
+            
+            // Update localStorage and state with complete data
+            localStorage.setItem('adscreenhub_user', JSON.stringify(completeUserData));
+            setUser(completeUserData);
+            
+            console.log('User profile fetched successfully:', completeUserData);
+          } else {
+            console.log('No profile data received, using initial data');
+          }
+        } catch (profileError) {
+          console.error('Error fetching user profile after login:', profileError);
+          // Continue with initial user data if profile fetch fails
+        }
+        
+        return { success: true, user: user, message: data.message || 'Login successful' };
       } else {
-        return { success: false, error: data.message || 'Invalid email or password' };
+        // Handle specific error statuses
+        if (result.status === 401) {
+          return { 
+            success: false, 
+            error: result.error || 'Invalid email or password. Please check your credentials.' 
+          };
+        } else if (result.status === 404) {
+          return { 
+            success: false, 
+            error: result.error || 'Account not found. Please sign up first.' 
+          };
+        } else {
+          return { 
+            success: false, 
+            error: result.error || `Login failed (${result.status}). Please try again.` 
+          };
+        }
       }
     } catch (error) {
       console.error('Login error:', error);
-      return { success: false, error: 'Network error. Please try again.' };
+      return { success: false, error: 'Network error. Please check your connection and try again.' };
+    }
+  };
+
+  // Signup function
+  const signup = async (userData) => {
+    try {
+      const result = await authAPI.signup(userData);
+      
+      // Log the full response for debugging
+      console.log('Signup API Response:', result);
+      
+      if (result.success) {
+        const data = result.data;
+        
+        // Create initial user object for local storage
+        const initialUserData = {
+          id: data.user?.id || Date.now().toString(),
+          email: userData.email.toLowerCase(),
+          phoneNumber: userData.phoneNumber || '',
+          fullName: data.user?.fullName || data.user?.name || userData.fullName || userData.email.split('@')[0] || 'User',
+          address: userData.address || '',
+          createdAt: new Date().toISOString(),
+          token: data.token || data.accessToken,
+        };
+        
+        // Store initial user data
+        localStorage.setItem('adscreenhub_user', JSON.stringify(initialUserData));
+        
+        // Update state with initial data
+        setUser(initialUserData);
+        setIsAuthenticated(true);
+        
+        // Fetch complete user profile from API
+        try {
+          const profileData = await fetchUserProfile(data.token || data.accessToken);
+          if (profileData) {
+            // Update user data with complete profile information
+            const completeUserData = {
+              ...initialUserData,
+              fullName: profileData.fullName || profileData.name || initialUserData.fullName,
+              phoneNumber: profileData.phoneNumber || initialUserData.phoneNumber,
+              address: profileData.address || initialUserData.address,
+              // Add any other profile fields
+              ...profileData
+            };
+            
+            // Update localStorage and state with complete data
+            localStorage.setItem('adscreenhub_user', JSON.stringify(completeUserData));
+            setUser(completeUserData);
+            
+            console.log('User profile fetched successfully after signup:', completeUserData);
+          }
+        } catch (profileError) {
+          console.error('Error fetching user profile after signup:', profileError);
+          // Continue with initial user data if profile fetch fails
+        }
+        
+        return { success: true, user: user, message: data.message || 'Signup successful' };
+      } else {
+        // Handle specific error statuses
+        if (result.status === 400) {
+          return { 
+            success: false, 
+            error: result.error || 'Invalid data provided. Please check your information.' 
+          };
+        } else if (result.status === 409) {
+          return { 
+            success: false, 
+            error: result.error || 'Account already exists with this email.' 
+          };
+        } else {
+          return { 
+            success: false, 
+            error: result.error || `Signup failed (${result.status}). Please try again.` 
+          };
+        }
+      }
+    } catch (error) {
+      console.error('Signup error:', error);
+      return { success: false, error: 'Network error. Please check your connection and try again.' };
     }
   };
 
@@ -256,19 +350,50 @@ export const useAuth = () => {
     return user.fullName || user.email || 'User';
   };
 
+  // Refresh user profile data
+  const refreshUserProfile = async () => {
+    if (!user || !user.token) return { success: false, error: 'No user logged in' };
+    
+    try {
+      const profileData = await fetchUserProfile(user.token);
+      if (profileData) {
+        const updatedUserData = {
+          ...user,
+          fullName: profileData.fullName || profileData.name || user.fullName,
+          phoneNumber: profileData.phoneNumber || user.phoneNumber,
+          address: profileData.address || user.address,
+          // Add any other profile fields
+          ...profileData
+        };
+        
+        localStorage.setItem('adscreenhub_user', JSON.stringify(updatedUserData));
+        setUser(updatedUserData);
+        
+        return { success: true, user: updatedUserData };
+      } else {
+        return { success: false, error: 'Failed to fetch profile data' };
+      }
+    } catch (error) {
+      console.error('Error refreshing user profile:', error);
+      return { success: false, error: 'Network error while fetching profile' };
+    }
+  };
+
   return {
     user,
     isAuthenticated,
     isLoading,
     startEmailVerification,
+    verifyEmail,
     sendPhoneOtp,
     verifyPhoneOtp,
-    signup,
     login,
+    signup,
     logout,
     updateProfile,
     hasPermission,
     getDisplayName,
-    refreshAuthState
+    refreshAuthState,
+    refreshUserProfile
   };
 };

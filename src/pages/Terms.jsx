@@ -1,12 +1,33 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import styles from '../styles/Terms.module.css';
 
 export default function Terms() {
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleGoBack = () => {
-    navigate(-1); // Go back to previous page
+    // Check if there's a referrer in the state
+    const referrer = location.state?.referrer;
+    
+    if (referrer) {
+      // If there's a specific referrer, go back to that page
+      navigate(referrer);
+    } else {
+      // Check if we came from the home page (footer link)
+      const fromHome = document.referrer.includes(window.location.origin) && 
+                      !document.referrer.includes('/dashboard') && 
+                      !document.referrer.includes('/my-orders') &&
+                      !document.referrer.includes('/profile');
+      
+      if (fromHome) {
+        // If from home page, go back to home
+        navigate('/');
+      } else {
+        // Default: go back to previous page
+        navigate(-1);
+      }
+    }
   };
 
   return (

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { mockOrders, mockScreens } from '../data/mockData';
 import { generateOrderId, manageStorageQuota } from '../utils/validation';
+import { ordersAPI } from '../config/api';
 
 export const useOrders = (userId) => {
   const [orders, setOrders] = useState([]);
@@ -55,13 +56,15 @@ export const useOrders = (userId) => {
     return getAvailableInventory(screenId, date) > 0;
   };
 
-  // Create new order
-  const createOrder = (orderData) => {
+  // Create new order - For now, accept booking and save locally
+  const createOrder = async (orderData) => {
     // Check if inventory is available
     if (!hasAvailableInventory(orderData.screenId, orderData.displayDate)) {
       return { success: false, error: 'No available inventory for this location and date' };
     }
 
+    // For now, accept all bookings and save locally
+    // Later we'll add API calls for real-time functionality
     const newOrder = {
       id: generateOrderId(),
       userId,
@@ -70,7 +73,10 @@ export const useOrders = (userId) => {
       screenName: orderData.screenName || 'Unknown Screen',
       location: orderData.location || 'Unknown Location',
       adminProofImage: null, // Will be set by admin when ad goes live
-      ...orderData
+      ...orderData,
+      createdAt: new Date().toISOString(),
+      // Remove API sync flags for now since we're accepting locally
+      apiSyncPending: false
     };
 
     const updatedOrders = [...orders, newOrder];
@@ -89,8 +95,8 @@ export const useOrders = (userId) => {
         manageStorageQuota();
         localStorage.setItem('adscreenhub_orders', JSON.stringify(updatedOrders));
       } else {
-        console.error('Error saving order:', error);
-        return { success: false, error: 'Failed to save order' };
+        console.error('Error saving order locally:', error);
+        return { success: false, error: 'Failed to save order. Please try again.' };
       }
     }
 
@@ -172,6 +178,49 @@ export const useOrders = (userId) => {
       .map(order => order.screenId);
   };
 
+  // Sync pending orders with API when available
+  const syncPendingOrders = async () => {
+    const pendingOrders = orders.filter(order => order.apiSyncPending);
+    
+    for (const order of pendingOrders) {
+      try {
+        const apiOrderData = {
+          userId: order.userId,
+          screenId: order.screenId,
+          planId: order.planId,
+          displayDate: order.displayDate,
+          designFile: order.designFile,
+          supportingDoc: order.supportingDoc,
+          totalAmount: order.totalAmount,
+          thumbnail: order.thumbnail,
+          address: order.address,
+          gstApplicable: order.gstApplicable,
+          companyName: order.companyName,
+          gstNumber: order.gstNumber,
+          couponCode: order.couponCode,
+          screenName: order.screenName,
+          location: order.location,
+        };
+
+        const result = await ordersAPI.createOrder(apiOrderData);
+        
+        if (result.success) {
+          // Update order with API response
+          const updatedOrders = orders.map(o => 
+            o.id === order.id 
+              ? { ...o, ...result.data, apiSyncPending: false, status: result.data.status || 'Pending Approval' }
+              : o
+          );
+          setOrders(updatedOrders);
+          localStorage.setItem('adscreenhub_orders', JSON.stringify(updatedOrders));
+        }
+      } catch (error) {
+        console.error(`Failed to sync order ${order.id}:`, error);
+        // Keep trying next time
+      }
+    }
+  };
+
   return {
     orders,
     loading,
@@ -184,6 +233,7 @@ export const useOrders = (userId) => {
     isScreenBooked, // Keep for backward compatibility
     hasAvailableInventory,
     getAvailableInventory,
-    getBookedScreensForDate
+    getBookedScreensForDate,
+    syncPendingOrders
   };
 };

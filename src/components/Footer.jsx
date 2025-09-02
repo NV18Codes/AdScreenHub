@@ -1,8 +1,9 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import styles from '../styles/Footer.module.css';
 
 export default function Footer() {
+  const location = useLocation();
   const socialLinks = [
     {
       name: 'Instagram',
@@ -77,8 +78,7 @@ export default function Footer() {
           <div className={styles.footerSection}>
             <h3>Legal</h3>
             <ul className={styles.footerLinks}>
-              <li><Link to="/privacy-policy">Privacy Policy</Link></li>
-              <li><Link to="/terms">Terms & Conditions</Link></li>
+              <li><Link to="/terms" state={{ referrer: location.pathname }}>Terms & Conditions</Link></li>
               <li><Link to="/refund-policy">Refund Policy</Link></li>
             </ul>
           </div>
