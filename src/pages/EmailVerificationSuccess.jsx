@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import styles from '../styles/EmailVerificationSuccess.module.css';
 
 export default function EmailVerificationSuccess() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const location = useLocation();
   const { sendPhoneOtp, verifyPhoneOtp } = useAuth();
   const [email, setEmail] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
@@ -18,14 +19,19 @@ export default function EmailVerificationSuccess() {
   const [errors, setErrors] = useState({});
   
   useEffect(() => {
-    // Get email from URL params or localStorage
+    // Get email from URL params, navigation state, or localStorage
     const emailFromParams = searchParams.get('email');
+    const emailFromState = location.state?.email;
     const emailFromStorage = localStorage.getItem('pending_email_verification');
     
     if (emailFromParams) {
       setEmail(emailFromParams);
       // Store email in localStorage for the signup flow
       localStorage.setItem('pending_email_verification', emailFromParams);
+    } else if (emailFromState) {
+      setEmail(emailFromState);
+      // Store email in localStorage for the signup flow
+      localStorage.setItem('pending_email_verification', emailFromState);
     } else if (emailFromStorage) {
       setEmail(emailFromStorage);
     } else {
@@ -33,7 +39,7 @@ export default function EmailVerificationSuccess() {
       navigate('/signup');
       return;
     }
-  }, [searchParams, navigate]);
+  }, [searchParams, location.state, navigate]);
 
   // Handle phone number input
   const handlePhoneChange = (e) => {
@@ -114,6 +120,14 @@ export default function EmailVerificationSuccess() {
         // Clear any previous errors
         setErrors(prev => ({ ...prev, phone: '' }));
         
+        // Store verified phone number
+        localStorage.setItem('verified_phone', phoneNumber);
+        
+        // Store phone verification token (simulated for now)
+        // In a real implementation, this would come from the OTP verification response
+        const phoneToken = `phone_verified_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        localStorage.setItem('phone_verification_token', phoneToken);
+        
       } else {
         setErrors(prev => ({ ...prev, phone: result.error }));
         setMessages(prev => ({ ...prev, phone: '' }));
@@ -127,9 +141,9 @@ export default function EmailVerificationSuccess() {
     }
   };
 
-  const handleProceed = () => {
-    // Navigate to signup with verified email and phone
-    navigate(`/signup?verified=true&email=${encodeURIComponent(email)}&phone=${encodeURIComponent(phoneNumber)}`);
+  const handleContinueToDetails = () => {
+    // Navigate to details collection page with verified email and phone
+    navigate(`/complete-profile?email=${encodeURIComponent(email)}&phone=${encodeURIComponent(phoneNumber)}`);
   };
 
   const handleGoHome = () => {
@@ -169,6 +183,9 @@ export default function EmailVerificationSuccess() {
         {/* Mobile Verification Section */}
         <div className={styles.mobileVerificationSection}>
           <h3>Verify Mobile Number</h3>
+          <p className={styles.verificationNote}>
+            <strong>Required:</strong> Mobile verification is mandatory to complete your account setup.
+          </p>
           
           {!phoneVerified ? (
             <>
@@ -228,18 +245,10 @@ export default function EmailVerificationSuccess() {
         {/* Action Buttons */}
         <div className={styles.buttonContainer}>
           {phoneVerified ? (
-            <button onClick={handleProceed} className={styles.primaryButton}>
-              Continue to Sign Up
+            <button onClick={handleContinueToDetails} className={styles.primaryButton}>
+              Continue to Complete Profile
             </button>
-          ) : (
-            <button 
-              onClick={() => setShowPhoneVerification(true)} 
-              className={styles.secondaryButton}
-              disabled={!phoneNumber}
-            >
-              Skip Mobile Verification
-            </button>
-          )}
+          ) : null}
           
           <button onClick={handleGoHome} className={styles.secondaryButton}>
             Back to Home
@@ -248,7 +257,7 @@ export default function EmailVerificationSuccess() {
         
         <div className={styles.infoBox}>
           <p className={styles.infoText}>
-            <strong>Next Steps:</strong> Complete your profile with your full name, phone number, and address to finish setting up your account.
+            <strong>Next Steps:</strong> Mobile verification is required to continue. After verifying your phone number, you'll complete your profile with your full name, address, and create a password to finish setting up your account.
           </p>
         </div>
         

@@ -27,14 +27,14 @@ export default function EmailVerification() {
         // We have both email and token
         setEmail(emailFromParams);
         localStorage.setItem('pending_email_verification', emailFromParams);
-        // Redirect directly to success page
-        navigate(`/email-verification-success?email=${encodeURIComponent(emailFromParams)}`);
+        // Redirect to signup page after email verification
+        navigate(`/signup?email=${encodeURIComponent(emailFromParams)}&verified=true`);
         return;
       } else if (emailFromStorage) {
         // We have token but no email in URL, use stored email
         setEmail(emailFromStorage);
-        // Redirect directly to success page
-        navigate(`/email-verification-success?email=${encodeURIComponent(emailFromStorage)}`);
+        // Redirect to signup page after email verification
+        navigate(`/signup?email=${encodeURIComponent(emailFromStorage)}&verified=true`);
         return;
       } else {
         // We have token but no email anywhere - this shouldn't happen
@@ -69,11 +69,16 @@ export default function EmailVerification() {
       // Mark email as verified
       setVerificationStatus('success');
       
+      // Store email verification token (simulated for now)
+      // In a real implementation, this would come from the verification email
+      const emailToken = `email_verified_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      localStorage.setItem('email_verification_token', emailToken);
+      
       // Clear pending verification
       localStorage.removeItem('pending_email_verification');
       
-      // Redirect to email verification success page with email parameter
-      navigate(`/email-verification-success?email=${encodeURIComponent(email)}`);
+      // Redirect to signup page after email verification
+      navigate(`/signup?email=${encodeURIComponent(email)}&verified=true`);
       
     } catch (error) {
       setVerificationStatus('error');

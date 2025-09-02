@@ -66,7 +66,7 @@ export default function Navbar() {
           {!loading && isAuthenticated && user ? (
             <div className={styles.authSection}>
               <div className={styles.userMenu}>
-                <span className={styles.userName}>Hi, {user.fullName}</span>
+                <span className={styles.userName}>Hi, {user.fullName || user.email?.split('@')[0] || 'User'}</span>
                 <div className={styles.dropdown}>
                   <Link to="/dashboard" className={styles.dropdownItem} onClick={closeMenu}>Dashboard</Link>
                   <Link to="/my-orders" className={styles.dropdownItem} onClick={closeMenu}>My Orders</Link>

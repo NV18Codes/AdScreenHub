@@ -4,6 +4,7 @@ import { useOrders } from '../hooks/useOrders';
 import { mockScreens, mockPlans } from '../data/mockData';
 import { isDateDisabled, validateFile, generateOrderId, compressImage, manageStorageQuota } from '../utils/validation';
 import { useNavigate } from 'react-router-dom';
+import { couponsAPI } from '../config/api';
 import styles from '../styles/Dashboard.module.css';
 import StorageManager from '../components/StorageManager';
 
@@ -32,6 +33,8 @@ export default function Dashboard() {
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [couponCode, setCouponCode] = useState('');
   const [discountAmount, setDiscountAmount] = useState(0);
+  const [couponError, setCouponError] = useState('');
+  const [validatingCoupon, setValidatingCoupon] = useState(false);
 
   const handleDateChange = (e) => {
     setSelectedDate(e.target.value);
@@ -51,6 +54,114 @@ export default function Dashboard() {
 
   const handlePlanSelect = (plan) => {
     setSelectedPlan(plan);
+  };
+
+  const handleCouponValidation = async () => {
+    if (!couponCode.trim()) {
+      setCouponError('');
+      setDiscountAmount(0);
+      return;
+    }
+
+    setValidatingCoupon(true);
+    setCouponError('');
+
+    // Simulate API call delay
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
+    // For now, accept a few mock coupon codes
+    const validCoupons = {
+      'WELCOME10': 100,
+      'SAVE20': 200,
+      'DISCOUNT50': 500,
+      'FIRST50': 50
+    };
+
+    const discount = validCoupons[couponCode.toUpperCase()];
+    
+    if (discount) {
+      // Valid coupon - apply discount
+      setDiscountAmount(discount);
+      setCouponError('');
+    } else {
+      // Invalid coupon - show warning but allow order to proceed
+      setCouponError('Invalid coupon code - order will proceed without discount');
+      setDiscountAmount(0);
+    }
+
+    setValidatingCoupon(false);
+  };
+
+  // Allow booking even with invalid coupon - just ignore the discount
+  const handleConfirmBooking = async () => {
+    if (!designFile) {
+      alert('Please upload your design first');
+      return;
+    }
+
+    if (!address.trim()) {
+      alert('Please enter your address');
+      return;
+    }
+
+    if (gstApplicable && (!companyName.trim() || !gstNumber.trim())) {
+      alert('Please enter company name and GST number when GST is applicable');
+      return;
+    }
+
+    if (!termsAccepted) {
+      alert('Please accept the terms and conditions');
+      return;
+    }
+
+    // Create new order - always proceed regardless of coupon validation
+    // Use discount if coupon was validated successfully, otherwise use 0
+    const finalDiscount = couponError ? 0 : discountAmount;
+    
+    const orderData = {
+      screenId: selectedScreen.id,
+      planId: selectedPlan.id,
+      displayDate: selectedDate,
+      designFile: designFile.name,
+      supportingDoc: null,
+      totalAmount: selectedPlan.price - finalDiscount,
+      thumbnail: designPreview,
+      address: address,
+      gstApplicable: gstApplicable,
+      companyName: companyName,
+      gstNumber: gstNumber,
+      couponCode: couponCode, // Always include the coupon code entered by user
+      screenName: selectedScreen.name,
+      location: selectedScreen.location
+    };
+
+    const result = await createOrder(orderData);
+    
+    if (result.success) {
+      setNewOrder(result.order);
+      setShowConfirmation(true);
+      setShowUploadModal(false);
+      
+      // Reset form
+      setSelectedDate('');
+      setSelectedScreen(null);
+      setSelectedPlan(null);
+      setDesignFile(null);
+      setDesignPreview(null);
+      setAddress('');
+      setGstApplicable(false);
+      setCompanyName('');
+      setGstNumber('');
+      setTermsAccepted(false);
+      setCouponCode('');
+      setDiscountAmount(0);
+      setCouponError('');
+      
+      // Clear localStorage
+      localStorage.removeItem('adscreenhub_design');
+    } else {
+      alert(result.error || 'Failed to create order. Please try again.');
+    }
   };
 
   // Load saved design from localStorage
@@ -123,73 +234,7 @@ export default function Dashboard() {
     setShowUploadModal(true);
   };
 
-  const handleConfirmBooking = () => {
-    if (!designFile) {
-      alert('Please upload your design first');
-      return;
-    }
 
-    if (!address.trim()) {
-      alert('Please enter your address');
-      return;
-    }
-
-    if (gstApplicable && (!companyName.trim() || !gstNumber.trim())) {
-      alert('Please enter company name and GST number when GST is applicable');
-      return;
-    }
-
-    if (!termsAccepted) {
-      alert('Please accept the terms and conditions');
-      return;
-    }
-
-    // Create new order
-    const orderData = {
-      screenId: selectedScreen.id,
-      planId: selectedPlan.id,
-      displayDate: selectedDate,
-      designFile: designFile.name,
-      supportingDoc: null,
-      totalAmount: selectedPlan.price - discountAmount,
-      thumbnail: designPreview,
-      address: address,
-      gstApplicable: gstApplicable,
-      companyName: companyName,
-      gstNumber: gstNumber,
-      couponCode: couponCode,
-      screenName: selectedScreen.name,
-      location: selectedScreen.location
-    };
-
-    const result = createOrder(orderData);
-    
-    if (result.success) {
-      setNewOrder(result.order);
-      setShowConfirmation(true);
-      setShowUploadModal(false);
-      setShowScreenModal(false);
-      
-      // Reset form
-      setSelectedDate('');
-      setSelectedScreen(null);
-      setSelectedPlan(null);
-      setDesignFile(null);
-      setDesignPreview(null);
-      setAddress('');
-      setGstApplicable(false);
-      setCompanyName('');
-      setGstNumber('');
-      setTermsAccepted(false);
-      setCouponCode('');
-      setDiscountAmount(0);
-      
-      // Clear localStorage
-      localStorage.removeItem('adscreenhub_design');
-    } else {
-      alert(result.error || 'Failed to create order. Please try again.');
-    }
-  };
 
   const handleCancel = () => {
     setShowUploadModal(false);
@@ -221,7 +266,7 @@ export default function Dashboard() {
         <div className={styles.header}>
           <div className={styles.headerContent}>
             <div>
-              <h1>Welcome back, {user?.fullName}!</h1>
+              <h1>Welcome back, {user?.fullName || user?.email?.split('@')[0] || 'User'}!</h1>
               <p>Book your LED screen advertising campaign</p>
             </div>
             <button 
@@ -389,7 +434,7 @@ export default function Dashboard() {
 
         {/* Warning Modal - Now shows before upload */}
         {showWarningModal && (
-          <div className={styles.modalOverlay} onClick={() => setShowWarningModal(false)}>
+          <div className={`${styles.modalOverlay} ${styles.warningModal}`} onClick={() => setShowWarningModal(false)}>
             <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
               <button
                 className={styles.modalClose}
@@ -399,19 +444,79 @@ export default function Dashboard() {
               </button>
               
               <div className={styles.warningHeader}>
-                <h2>Important Notice</h2>
+                <h2>IMPORTANT NOTICE</h2>
                 <p>Please read the following terms before proceeding with your order:</p>
               </div>
 
-              <div className={styles.warningContent}>
-                <div className={styles.warningSection}>
-                  <h3>English</h3>
-                  <p>Please ensure your content complies with our advertising guidelines. Inappropriate content will be rejected.</p>
-                </div>
-                
-                <div className={styles.warningSection}>
-                  <h3>ಕನ್ನಡ</h3>
-                  <p>ದಯವಿಟ್ಟು ನಿಮ್ಮ ವಿಷಯವು ನಮ್ಮ ಜಾಹೀರಾತು ಮಾರ್ಗದರ್ಶನಗಳಿಗೆ ಅನುಗುಣವಾಗಿದೆ ಎಂದು ಖಚಿತಪಡಿಸಿಕೊಳ್ಳಿ. ಅನುಚಿತ ವಿಷಯವನ್ನು ತಿರಸ್ಕರಿಸಲಾಗುತ್ತದೆ.</p>
+              <div className={styles.importantNoticeSection}>
+                <div className={styles.noticeContainer}>
+                  <div className={styles.noticeContent}>
+                    <p className={styles.noticeIntro}>
+                      Please ensure your advertisement creative strictly adheres to the design and content guidelines before uploading.
+                    </p>
+                    
+                    <div className={styles.noticeSection}>
+                      <h4>Content & Legal Compliance</h4>
+                      <ul>
+                        <li>Your creative must comply with all applicable laws in force in India, the Advertising Standards Council of India (ASCI) Code, and local municipal (BBMP) bye-laws.</li>
+                        <li>Prohibited content includes:
+                          <ul>
+                            <li>False or misleading claims</li>
+                            <li>Fraudulent financial schemes or get-rich-quick scams</li>
+                            <li>Hate speech, defamation, or politically sensitive content</li>
+                            <li>Illegal services, counterfeit products, or copyrighted material without permission</li>
+                            <li>Alcohol Advertising</li>
+                            <li>Tobacco & Vaping Products</li>
+                            <li>Gambling, Betting & Lottery Ads</li>
+                            <li>Political Ads</li>
+                            <li>Adult Content</li>
+                            <li>Language, Religious & Culturally Sensitive Ads</li>
+                          </ul>
+                        </li>
+                        <li>For Bengaluru digital screens, in strict compliance with the Bruhat Bengaluru Mahanagara Palike Outdoor Signage and Public Messaging Bye-Laws, 2018, the text/logo (units) in a digital screen advertisement shall adhere to the ratio of 60:40 between the Kannada language and English language of the visible content.</li>
+                      </ul>
+                    </div>
+
+                    <div className={styles.noticeSection}>
+                      <h4>Technical Specifications</h4>
+                      <ul>
+                        <li>Creatives must strictly match the size, dimensions, aspect ratio, and resolution required for the chosen display location.</li>
+                        <li>Poor quality or non-compliant creatives will be rejected.</li>
+                      </ul>
+                    </div>
+
+                    <div className={styles.noticeSection}>
+                      <h4>Approval & Timelines</h4>
+                      <ul>
+                        <li>All ads require AdScreenHub.com's approval before going live.</li>
+                        <li>If your creative is rejected, you must alter the creative to follow guidelines and resubmit at least 12 hours prior to the scheduled display start date.</li>
+                        <li>Failure to resubmit on time will result in forfeiture of the ad slot without refund, credit, or compensation.</li>
+                        <li>Any creative that remains incorrect or non-compliant upon resubmission will be rejected, and AdScreenHub.com shall bear no liability or entitlement to any refund, credit, or compensation.</li>
+                      </ul>
+                    </div>
+
+                    <div className={styles.noticeSection}>
+                      <h4>Intellectual Property</h4>
+                      <ul>
+                        <li>You must own or have legal permission to use all images, text, logos, music, and other elements in your creative.</li>
+                        <li>Do not submit material that infringes trademarks, copyrights, or other intellectual property rights of any third party.</li>
+                        <li>AdScreenHub.com reserves the right to remove any infringing content without notice and is not responsible for any claims arising from your infringement.</li>
+                      </ul>
+                    </div>
+
+                    <div className={styles.noticeSection}>
+                      <h4>Advertiser Liability</h4>
+                      <ul>
+                        <li>You are solely responsible for ensuring your creative is accurate, lawful, and compliant.</li>
+                        <li>Any breach of the Terms & Conditions, specifications, guidelines or laws may result in rejection, account termination, and/or legal action.</li>
+                        <li>AdScreenHub.com is not liable for any losses, delays, or damages resulting from your submission of non-compliant creatives.</li>
+                      </ul>
+                    </div>
+
+                    <p className={styles.noticeConclusion}>
+                      By proceeding with your upload, you agree to have read the detailed Terms & Conditions and confirm that your creative meets these requirements in full.
+                    </p>
+                  </div>
                 </div>
               </div>
 
@@ -562,14 +667,37 @@ export default function Dashboard() {
                   <label htmlFor="couponCode" className={styles.formLabel}>
                     Coupon Code
                   </label>
-                  <input
-                    type="text"
-                    id="couponCode"
-                    value={couponCode}
-                    onChange={(e) => setCouponCode(e.target.value)}
-                    className={styles.formInput}
-                    placeholder="Enter coupon code (optional)"
-                  />
+                  <div className={styles.couponInputGroup}>
+                    <input
+                      type="text"
+                      id="couponCode"
+                      value={couponCode}
+                      onChange={(e) => {
+                        setCouponCode(e.target.value);
+                        setCouponError(''); // Clear error when typing
+                      }}
+                      className={styles.formInput}
+                      placeholder="Enter coupon code (optional)"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleCouponValidation}
+                      disabled={!couponCode.trim() || validatingCoupon}
+                      className={styles.validateButton}
+                    >
+                      {validatingCoupon ? 'Validating...' : 'Apply'}
+                    </button>
+                  </div>
+                  {couponError && (
+                    <div className={styles.errorMessage}>
+                      {couponError}
+                    </div>
+                  )}
+                  {discountAmount > 0 && (
+                    <div className={styles.successMessage}>
+                      Discount applied: ₹{discountAmount}
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -586,12 +714,16 @@ export default function Dashboard() {
                     />
                     <span>
                       I accept the{' '}
-                      <a href="/terms" target="_blank" className={styles.link}>
+                      <a 
+                        href="/terms" 
+                        target="_blank" 
+                        className={styles.link}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          navigate('/terms', { state: { referrer: '/dashboard' } });
+                        }}
+                      >
                         Terms & Conditions
-                      </a>
-                      {' '}and{' '}
-                      <a href="/privacy-policy" target="_blank" className={styles.link}>
-                        Privacy Policy
                       </a>
                       <span style={{ color: 'red' }}> *</span>
                     </span>

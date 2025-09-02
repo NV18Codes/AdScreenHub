@@ -62,7 +62,7 @@ A complete frontend React application for ADSCREENHUB's demo platform, featuring
    ```
 
 4. **Open your browser**
-   Navigate to `http://localhost:5173` (or the port shown in terminal)
+   Navigate to `http://localhost:3001` (or the port shown in terminal)
 
 ## 📁 Project Structure
 

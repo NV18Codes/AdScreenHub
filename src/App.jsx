@@ -10,10 +10,10 @@ import Profile from './pages/Profile';
 import MyOrders from './pages/MyOrders';
 import Checkout from './pages/Checkout';
 import FAQ from './pages/FAQ';
-import PrivacyPolicy from './pages/PrivacyPolicy';
 import Terms from './pages/Terms';
 import EmailVerification from './pages/EmailVerification';
 import EmailVerificationSuccess from './pages/EmailVerificationSuccess';
+import CompleteProfile from './pages/CompleteProfile';
 import ScrollToTop from './components/ScrollToTop';
 import { useAuth } from './hooks/useAuth';
 
@@ -59,10 +59,10 @@ function App() {
         {/* Public Routes */}
         <Route path="/" element={<Layout><Home /></Layout>} />
         <Route path="/faq" element={<Layout><FAQ /></Layout>} />
-        <Route path="/privacy-policy" element={<Layout><PrivacyPolicy /></Layout>} />
         <Route path="/terms" element={<Layout><Terms /></Layout>} />
         <Route path="/email-verification" element={<Layout showFooter={false}><EmailVerification /></Layout>} />
         <Route path="/email-verification-success" element={<Layout showFooter={false}><EmailVerificationSuccess /></Layout>} />
+        <Route path="/complete-profile" element={<Layout showFooter={false}><CompleteProfile /></Layout>} />
         
         {/* Backend Email Verification Route */}
         <Route path="/verify-email" element={<Layout showFooter={false}><EmailVerification /></Layout>} />
