@@ -1,6 +1,9 @@
 // API Configuration
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://adscreenapi-production.up.railway.app/api/v1';
 
+// Check if we're in local development
+const isLocalDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+
 // API Endpoints
 export const API_ENDPOINTS = {
   // Authentication
@@ -107,48 +110,154 @@ export const apiRequest = async (endpoint, options = {}) => {
 // Specific API functions
 export const authAPI = {
   login: async (email, password) => {
-    return apiRequest(API_ENDPOINTS.LOGIN, {
-      method: 'POST',
-      body: JSON.stringify({
-        email: email.toLowerCase(),
-        password,
-      }),
-    });
+    console.log('🔐 Attempting login for:', email);
+    console.log('🌐 Using real API for login (always real-time)');
+    
+    try {
+      const result = await apiRequest(API_ENDPOINTS.LOGIN, {
+        method: 'POST',
+        body: JSON.stringify({
+          email: email.toLowerCase(),
+          password,
+        }),
+      });
+      
+      console.log('📥 Login API response:', result);
+      return result;
+    } catch (error) {
+      console.error('❌ Login API error:', error);
+      throw error;
+    }
   },
 
   signup: async (userData) => {
-    return apiRequest(API_ENDPOINTS.SIGNUP, {
-      method: 'POST',
-      body: JSON.stringify(userData),
-    });
+    console.log('📝 Attempting signup for:', userData.email);
+    console.log('🌐 Using real API for signup (always real-time)');
+    
+    try {
+      const result = await apiRequest(API_ENDPOINTS.SIGNUP, {
+        method: 'POST',
+        body: JSON.stringify({
+          email: userData.email,
+          phone: userData.phoneNumber,
+          fullName: userData.fullName,
+          password: userData.password
+        }),
+      });
+      
+      console.log('📥 Signup API response:', result);
+      return result;
+    } catch (error) {
+      console.error('❌ Signup API error:', error);
+      throw error;
+    }
   },
 
   verifyEmail: async (token) => {
-    return apiRequest(API_ENDPOINTS.VERIFY_EMAIL, {
-      method: 'POST',
-      body: JSON.stringify({ token }),
-    });
+    console.log('🔍 Email verification called with token:', token);
+    
+    // Only simulate for mock tokens in local development
+    if (isLocalDev && token.startsWith('mock_token_')) {
+      console.log('🔧 Local Development Mode: Simulating email verification success');
+      return {
+        success: true,
+        data: {
+          message: 'Email verified successfully (Local Dev Mode)'
+        }
+      };
+    }
+    
+    // For real tokens, always use the real API regardless of environment
+    console.log('🌐 Using real API for email verification');
+    
+    // The API expects selector and validator
+    // If token contains both (separated by some delimiter), split them
+    // Otherwise, use the token as selector and generate a validator
+    let selector, validator;
+    
+    if (token.includes('|')) {
+      // Token format: "selector|validator"
+      [selector, validator] = token.split('|');
+    } else if (token.includes(':')) {
+      // Token format: "selector:validator"
+      [selector, validator] = token.split(':');
+    } else {
+      // Single token - use as selector and validator
+      selector = token;
+      validator = token;
+    }
+    
+    console.log('📤 Sending to API:', { selector, validator });
+    
+    try {
+      const result = await apiRequest(API_ENDPOINTS.VERIFY_EMAIL, {
+        method: 'POST',
+        body: JSON.stringify({ 
+          selector: selector,
+          validator: validator
+        }),
+      });
+      
+      console.log('📥 API Response:', result);
+      return result;
+    } catch (error) {
+      console.error('❌ API Error:', error);
+      throw error;
+    }
   },
 
   startEmailVerification: async (email) => {
-    return apiRequest(API_ENDPOINTS.START_EMAIL_VERIFICATION, {
-      method: 'POST',
-      body: JSON.stringify({ email }),
-    });
+    console.log('📧 Starting email verification for:', email);
+    console.log('🌐 Using real API for email verification (always real-time)');
+    
+    try {
+      const result = await apiRequest(API_ENDPOINTS.START_EMAIL_VERIFICATION, {
+        method: 'POST',
+        body: JSON.stringify({ email }),
+      });
+      
+      console.log('📥 Email verification API response:', result);
+      return result;
+    } catch (error) {
+      console.error('❌ Email verification API error:', error);
+      throw error;
+    }
   },
 
   startPhoneVerification: async (phoneNumber) => {
-    return apiRequest(API_ENDPOINTS.START_PHONE_VERIFICATION, {
-      method: 'POST',
-      body: JSON.stringify({ phoneNumber }),
-    });
+    console.log('📱 Starting phone verification for:', phoneNumber);
+    console.log('🌐 Using real API for phone verification (always real-time)');
+    
+    try {
+      const result = await apiRequest(API_ENDPOINTS.START_PHONE_VERIFICATION, {
+        method: 'POST',
+        body: JSON.stringify({ phone: phoneNumber }),
+      });
+      
+      console.log('📥 Phone verification API response:', result);
+      return result;
+    } catch (error) {
+      console.error('❌ Phone verification API error:', error);
+      throw error;
+    }
   },
 
   verifyPhone: async (phoneNumber, otp) => {
-    return apiRequest(API_ENDPOINTS.VERIFY_PHONE, {
-      method: 'POST',
-      body: JSON.stringify({ phoneNumber, otp }),
-    });
+    console.log('📱 Verifying phone OTP for:', phoneNumber);
+    console.log('🌐 Using real API for phone verification (always real-time)');
+    
+    try {
+      const result = await apiRequest(API_ENDPOINTS.VERIFY_PHONE, {
+        method: 'POST',
+        body: JSON.stringify({ phone: phoneNumber, otp: otp }),
+      });
+      
+      console.log('📥 Phone OTP verification API response:', result);
+      return result;
+    } catch (error) {
+      console.error('❌ Phone OTP verification API error:', error);
+      throw error;
+    }
   },
 
   refreshToken: async () => {

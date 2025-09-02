@@ -55,7 +55,24 @@ export default function Signup() {
         phoneNumber: verifiedPhone
       }));
     }
-  }, [verifiedEmail, verifiedPhone, formData.email, formData.phoneNumber]);
+    
+    // Check if email is verified from localStorage or URL params
+    const verifiedEmailFromStorage = localStorage.getItem('verified_email');
+    if ((verifiedEmailFromStorage && verifiedEmailFromStorage === formData.email) || isFromEmailVerification) {
+      setVerificationState(prev => ({
+        ...prev,
+        emailVerified: true
+      }));
+      
+      // Show success message when returning from email verification
+      if (isFromEmailVerification) {
+        setMessages(prev => ({
+          ...prev,
+          email: '✓ Email verified successfully! Now please verify your phone number.'
+        }));
+      }
+    }
+  }, [verifiedEmail, verifiedPhone, formData.email, formData.phoneNumber, isFromEmailVerification]);
 
   // OTP Timer effect
   useEffect(() => {
@@ -182,15 +199,8 @@ export default function Signup() {
         // Clear any previous errors
         setErrors(prev => ({ ...prev, email: '' }));
         
-        // Mark email as verified locally and update state
-        setVerificationState(prev => ({
-          ...prev,
-          emailVerified: true
-        }));
-        
-        // Store email verification token (simulated for now)
-        const emailToken = `email_verified_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-        localStorage.setItem('email_verification_token', emailToken);
+        // DON'T mark email as verified yet - wait for actual verification
+        // The user needs to click the link in their email
         
       } else {
         setErrors(prev => ({ ...prev, email: result.error }));
@@ -349,11 +359,27 @@ export default function Signup() {
                 </button>
               </div>
               {errors.email && <span className={styles.errorText}>{errors.email}</span>}
-              {messages.email && (
-                <div className={styles.successMessage}>
-                  {messages.email}
-                </div>
-              )}
+                        {messages.email && (
+            <div className={styles.successMessage}>
+              {messages.email}
+            </div>
+          )}
+          
+          {/* Local Development Helper - Only show if email verification is pending */}
+          {window.location.hostname === 'localhost' && verificationState.emailVerified === false && messages.email && (
+            <div style={{ 
+              marginTop: '10px', 
+              padding: '10px', 
+              backgroundColor: '#f8fafc', 
+              border: '1px solid #e2e8f0', 
+              borderRadius: '6px',
+              fontSize: '12px'
+            }}>
+              <p style={{ margin: '0 0 8px 0', color: '#64748b' }}>
+                <strong>💡 Development Tip:</strong> If email link redirects to production, it will automatically redirect back to localhost.
+              </p>
+            </div>
+          )}
             </div>
 
             {/* Phone Verification */}
