@@ -17,9 +17,14 @@ export default function EmailVerification() {
     // Get email and token from URL params or localStorage
     const emailFromParams = searchParams.get('email');
     const tokenFromParams = searchParams.get('token'); // Backend verification token
+    const selectorFromParams = searchParams.get('selector'); // Email verification selector
+    const validatorFromParams = searchParams.get('validator'); // Email verification validator
     const emailFromStorage = localStorage.getItem('pending_email_verification');
     
-    console.log('Email verification params:', { emailFromParams, tokenFromParams, emailFromStorage });
+    // Combine selector and validator into token format if they exist
+    const finalToken = tokenFromParams || (selectorFromParams && validatorFromParams ? `${selectorFromParams}|${validatorFromParams}` : null);
+    
+    console.log('Email verification params:', { emailFromParams, tokenFromParams, selectorFromParams, validatorFromParams, finalToken, emailFromStorage });
     console.log('Current URL:', window.location.href);
     
     // Check if we're on production URL but need to redirect to localhost (for development)
@@ -28,9 +33,9 @@ export default function EmailVerification() {
     
     // Only redirect from production to localhost if we have verification parameters
     // This helps developers who are testing locally but get production email links
-    if (isProductionUrl && (emailFromParams || tokenFromParams)) {
+    if (isProductionUrl && (emailFromParams || finalToken)) {
       console.log('🔄 Production email verification detected - redirecting to localhost for development');
-      const localhostUrl = `http://localhost:3002/email-verification?email=${encodeURIComponent(emailFromParams || '')}&token=${encodeURIComponent(tokenFromParams || '')}`;
+      const localhostUrl = `http://localhost:3002/email-verification?email=${encodeURIComponent(emailFromParams || '')}&token=${encodeURIComponent(finalToken || '')}`;
       
       // Show redirect message
       setVerificationStatus('redirecting');
@@ -43,7 +48,7 @@ export default function EmailVerification() {
       return;
     }
     
-    if (tokenFromParams) {
+    if (finalToken) {
       // This is a backend verification link - verify the token
       const emailToVerify = emailFromParams || emailFromStorage;
       
@@ -54,10 +59,10 @@ export default function EmailVerification() {
         // Call the API to verify the email token
         const verifyToken = async () => {
           try {
-            console.log('🔍 Verifying email token:', tokenFromParams);
+            console.log('🔍 Verifying email token:', finalToken);
             console.log('📧 Email to verify:', emailToVerify);
             
-            const result = await verifyEmail(tokenFromParams);
+            const result = await verifyEmail(finalToken);
             
             console.log('📥 Verification result:', result);
             
