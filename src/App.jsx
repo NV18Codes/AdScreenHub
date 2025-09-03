@@ -14,6 +14,7 @@ import Terms from './pages/Terms';
 import EmailVerification from './pages/EmailVerification';
 import EmailVerificationSuccess from './pages/EmailVerificationSuccess';
 import CompleteProfile from './pages/CompleteProfile';
+import EmailVerificationRedirect from './components/EmailVerificationRedirect';
 import ScrollToTop from './components/ScrollToTop';
 import { useAuth } from './hooks/useAuth';
 
@@ -65,7 +66,7 @@ function App() {
         <Route path="/complete-profile" element={<Layout showFooter={false}><CompleteProfile /></Layout>} />
         
         {/* Backend Email Verification Route */}
-        <Route path="/verify-email" element={<Layout showFooter={false}><EmailVerification /></Layout>} />
+        <Route path="/verify-email" element={<Layout showFooter={false}><EmailVerificationRedirect /></Layout>} />
         
         {/* Auth Routes (no footer) */}
         <Route path="/login" element={<Layout showFooter={false}><Login /></Layout>} />

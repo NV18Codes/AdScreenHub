@@ -35,16 +35,15 @@ export default function EmailVerification() {
     // This helps developers who are testing locally but get production email links
     if (isProductionUrl && (emailFromParams || finalToken)) {
       console.log('🔄 Production email verification detected - redirecting to localhost for development');
-      const localhostUrl = `http://localhost:3002/email-verification?email=${encodeURIComponent(emailFromParams || '')}&token=${encodeURIComponent(finalToken || '')}`;
       
       // Show redirect message
       setVerificationStatus('redirecting');
       setEmail(emailFromParams || '');
       
-      // Redirect after a short delay
-      setTimeout(() => {
-        window.location.href = localhostUrl;
-      }, 1000);
+      // Redirect immediately to localhost
+      const localhostUrl = `http://localhost:3002/email-verification?email=${encodeURIComponent(emailFromParams || '')}&token=${encodeURIComponent(finalToken || '')}`;
+      console.log('🔄 Redirecting to:', localhostUrl);
+      window.location.href = localhostUrl;
       return;
     }
     
