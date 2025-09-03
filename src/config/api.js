@@ -13,6 +13,7 @@ export const API_ENDPOINTS = {
   START_EMAIL_VERIFICATION: '/auth/start-email-verification',
   START_PHONE_VERIFICATION: '/auth/start-phone-verification',
   VERIFY_PHONE: '/auth/verify-phone',
+  COMPLETE_REGISTRATION: '/auth/complete-registration',
   REFRESH_TOKEN: '/auth/refresh-token',
   LOGOUT: '/auth/logout',
   
@@ -256,6 +257,29 @@ export const authAPI = {
       return result;
     } catch (error) {
       console.error('❌ Phone OTP verification API error:', error);
+      throw error;
+    }
+  },
+
+  completeRegistration: async (registrationData) => {
+    console.log('📝 Completing registration for:', registrationData.fullName);
+    console.log('🌐 Using real API for complete registration (always real-time)');
+    
+    try {
+      const result = await apiRequest(API_ENDPOINTS.COMPLETE_REGISTRATION, {
+        method: 'POST',
+        body: JSON.stringify({
+          fullName: registrationData.fullName,
+          password: registrationData.password,
+          phoneToken: registrationData.phoneToken,
+          emailToken: registrationData.emailToken
+        }),
+      });
+      
+      console.log('📥 Complete registration API response:', result);
+      return result;
+    } catch (error) {
+      console.error('❌ Complete registration API error:', error);
       throw error;
     }
   },

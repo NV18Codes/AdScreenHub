@@ -66,9 +66,12 @@ export default function EmailVerification() {
               setVerificationStatus('success');
               // Store verified email
               localStorage.setItem('verified_email', emailToVerify);
-              // Redirect back to signup page where user left off
+              // Redirect back to signup page on the same domain
               setTimeout(() => {
-                navigate(`/signup?email=${encodeURIComponent(emailToVerify)}&verified=true`);
+                const currentOrigin = window.location.origin;
+                const signupUrl = `${currentOrigin}/signup?email=${encodeURIComponent(emailToVerify)}&verified=true`;
+                console.log('🔄 Redirecting to signup:', signupUrl);
+                window.location.href = signupUrl;
               }, 2000);
             } else {
               console.log('❌ Email verification failed:', result);
@@ -156,11 +159,14 @@ export default function EmailVerification() {
   };
 
   const handleProceedToSignup = () => {
-    navigate('/signup?verified=true');
+    const currentOrigin = window.location.origin;
+    const signupUrl = `${currentOrigin}/signup?verified=true`;
+    window.location.href = signupUrl;
   };
 
   const handleGoHome = () => {
-    navigate('/');
+    const currentOrigin = window.location.origin;
+    window.location.href = currentOrigin;
   };
 
   if (verificationStatus === 'no-email') {
@@ -263,7 +269,7 @@ export default function EmailVerification() {
           <h1 className={styles.title}>Email Verified Successfully!</h1>
           
           <p className={styles.message}>
-            Great! Your email <strong>{email}</strong> has been verified. You can now proceed to create your account and start advertising on AdScreenHub.
+            Great! Your email <strong>{email}</strong> has been verified. Redirecting you back to complete your registration...
           </p>
           
           <div className={styles.buttonContainer}>
