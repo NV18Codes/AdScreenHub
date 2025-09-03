@@ -306,6 +306,38 @@ export const useAuth = () => {
     }
   };
 
+  const completeRegistration = async (registrationData) => {
+    try {
+      const result = await authAPI.completeRegistration(registrationData);
+      
+      console.log('Complete registration API response:', result);
+      
+      if (result.success) {
+        // Store user data in localStorage after complete registration
+        const userData = {
+          id: result.data.user.id,
+          email: result.data.user.email,
+          fullName: result.data.user.fullName,
+          phoneNumber: result.data.user.phoneNumber,
+          emailVerified: true,
+          phoneVerified: true,
+          token: result.data.token
+        };
+        
+        localStorage.setItem('adscreenhub_user', JSON.stringify(userData));
+        setUser(userData);
+        setIsAuthenticated(true);
+        
+        return { success: true, data: result.data };
+      } else {
+        return { success: false, error: result.error || 'Registration completion failed' };
+      }
+    } catch (error) {
+      console.error('Complete registration error:', error);
+      return { success: false, error: 'Registration completion failed. Please try again.' };
+    }
+  };
+
   // Logout function
   const logout = () => {
     try {
@@ -389,6 +421,7 @@ export const useAuth = () => {
     verifyPhoneOtp,
     login,
     signup,
+    completeRegistration,
     logout,
     updateProfile,
     hasPermission,
