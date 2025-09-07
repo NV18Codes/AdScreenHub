@@ -1,296 +1,273 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import styles from '../styles/CompleteProfile.module.css';
 
-export default function CompleteProfile() {
+const CompleteProfile = () => {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const { signup } = useAuth();
+  const location = useLocation();
+  const { completeRegistration } = useAuth();
   
-  // Form state
-  const [fullName, setFullName] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [formData, setFormData] = useState({
+    fullName: '',
+    password: '',
+    confirmPassword: ''
+  });
   
-  // UI state
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState(false);
-  
-  // Validation state
   const [errors, setErrors] = useState({});
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    // Get email and phone from URL params or localStorage
-    const emailFromParams = searchParams.get('email');
-    const phoneFromParams = searchParams.get('phone');
-    const emailFromStorage = localStorage.getItem('pending_email_verification');
-    const phoneFromStorage = localStorage.getItem('verified_phone');
-    
-    // Debug logging
-    console.log('CompleteProfile - Verification data:', {
-      emailFromParams,
-      phoneFromParams,
-      emailFromStorage,
-      phoneFromStorage,
-      allLocalStorage: Object.keys(localStorage)
-    });
-    
-    // Check if we have verified email and phone
-    if (!emailFromParams && !emailFromStorage) {
-      setError('Email verification required. Please complete email verification first.');
-      return;
+    if (location.state) {
+      setFormData(prev => ({
+        ...prev,
+        fullName: location.state.fullName || ''
+      }));
     }
-    
-    if (!phoneFromParams && !phoneFromStorage) {
-      setError('Phone verification required. Please complete phone verification first.');
-      return;
-    }
-    
-    // Pre-fill email and phone (read-only)
-    if (emailFromParams || emailFromStorage) {
-      // Email will be read-only and sent via token
-    }
-    if (phoneFromParams || phoneFromStorage) {
-      // Phone will be read-only and sent via token
-    }
-  }, [searchParams]);
+  }, [location.state]);
 
-  const validateForm = () => {
-    const newErrors = {};
-
-    if (!fullName.trim()) {
-      newErrors.fullName = 'Full name is required';
-    } else if (fullName.trim().length < 2) {
-      newErrors.fullName = 'Full name must be at least 2 characters';
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+    if (errors[name]) {
+      setErrors(prev => ({ ...prev, [name]: '' }));
     }
-
-    if (!password) {
-      newErrors.password = 'Password is required';
-    } else if (password.length < 8) {
-      newErrors.password = 'Password must be at least 8 characters';
-    } else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])/.test(password)) {
-      newErrors.password = 'Password must contain uppercase, lowercase, number, and special character';
-    }
-
-    if (!confirmPassword) {
-      newErrors.confirmPassword = 'Please confirm your password';
-    } else if (password !== confirmPassword) {
-      newErrors.confirmPassword = 'Passwords do not match';
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    if (!validateForm()) {
-      return;
+    if (loading) return;
+    
+    // Validation
+    if (!formData.fullName.trim()) {
+      return setErrors({ fullName: 'Full name is required' });
+    }
+    if (!formData.password) {
+      return setErrors({ password: 'Password is required' });
+    }
+    if (formData.password.length < 6) {
+      return setErrors({ password: 'Password must be at least 6 characters' });
+    }
+    if (formData.password !== formData.confirmPassword) {
+      return setErrors({ confirmPassword: 'Passwords do not match' });
     }
 
+    setErrors({});
     setLoading(true);
-    setError('');
 
     try {
-      // Get verified email and phone from URL params or localStorage
-      const emailFromParams = searchParams.get('email');
-      const phoneFromParams = searchParams.get('phone');
-      const emailFromStorage = localStorage.getItem('pending_email_verification');
-      const phoneFromStorage = localStorage.getItem('verified_phone');
+      const phoneToken = localStorage.getItem('phone_verification_token');
+      const emailToken = localStorage.getItem('email_verification_token');
       
-      const email = emailFromParams || emailFromStorage;
-      const phoneNumber = phoneFromParams || phoneFromStorage;
+      console.log('🔐 Checking tokens:', {
+        phoneToken: phoneToken ? `${phoneToken.substring(0, 20)}...` : 'MISSING',
+        emailToken: emailToken ? `${emailToken.substring(0, 20)}...` : 'MISSING'
+      });
       
-      if (!email || !phoneNumber) {
-        setError('Missing verification data. Please complete email and phone verification first.');
-        setLoading(false);
+      // Check if we have valid tokens
+      if (!phoneToken || !emailToken) {
+        setErrors({ 
+          general: 'Verification tokens not found. Please complete email and phone verification first by clicking "Start Over".' 
+        });
         return;
       }
-
-      // Prepare user data for signup
-      const userData = {
-        email: email.toLowerCase(),
-        phoneNumber: phoneNumber,
-        fullName: fullName.trim(),
-        password: password,
-      };
-
-      // Call the signup function from useAuth
-      const result = await signup(userData);
-
+      
+      const result = await completeRegistration(
+        formData.fullName,
+        formData.password,
+        phoneToken,
+        emailToken
+      );
+      
+      console.log('📥 Complete registration result:', result);
+      console.log('📥 Complete registration error details:', result.error);
+      
       if (result.success) {
-        setSuccess(true);
-        
-        // Clear verification data from localStorage
-        localStorage.removeItem('pending_email_verification');
-        localStorage.removeItem('verified_phone');
         localStorage.removeItem('email_verification_token');
         localStorage.removeItem('phone_verification_token');
-        
-        // Redirect to dashboard after a short delay
-        setTimeout(() => {
-          navigate('/dashboard');
-        }, 2000);
-        
+        localStorage.removeItem('verified_email');
+        localStorage.removeItem('verified_phone');
+        alert('Registration completed successfully!');
+        navigate('/dashboard');
       } else {
-        setError(result.error || 'Registration failed. Please try again.');
+        console.error('❌ Registration failed:', result);
+        if (result.error && result.error.includes('Invalid or expired')) {
+          setErrors({ 
+            general: 'Verification tokens are invalid or expired. Please click "Start Over" to verify your email and phone again.' 
+          });
+        } else {
+          setErrors({ general: result.error || 'Registration failed. Please try again.' });
+        }
       }
     } catch (error) {
-      console.error('Registration error:', error);
-      setError('Network error. Please check your connection and try again.');
+      console.error('❌ Registration error:', error);
+      setErrors({ general: 'Registration failed. Please try again.' });
     } finally {
       setLoading(false);
     }
   };
 
-  if (success) {
-    return (
-      <div className={styles.container}>
-        <div className={styles.content}>
-          <div className={styles.successIcon}>✓</div>
-          <h1 className={styles.title}>Profile Completed Successfully!</h1>
-          <p className={styles.message}>
-            Your account has been created successfully. Redirecting you to the dashboard...
-          </p>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className={styles.container}>
       <div className={styles.content}>
-        <h1 className={styles.title}>Complete Your Profile</h1>
-        <p className={styles.subtitle}>
-          You're almost there! Just a few more details to complete your account setup.
-        </p>
+        <h2>Complete Your Profile</h2>
+        
+        {/* Debug info */}
+        <div style={{ 
+          background: '#e3f2fd', 
+          border: '1px solid #2196f3', 
+          borderRadius: '8px', 
+          padding: '15px', 
+          margin: '20px 0', 
+          fontSize: '12px', 
+          color: '#1976d2' 
+        }}>
+          <strong>Debug Info:</strong><br/>
+          Email Token: {localStorage.getItem('email_verification_token') ? '✅ Present' : '❌ Missing'}<br/>
+          Phone Token: {localStorage.getItem('phone_verification_token') ? '✅ Present' : '❌ Missing'}<br/>
+          Email Token Length: {localStorage.getItem('email_verification_token')?.length || 0}<br/>
+          Phone Token Length: {localStorage.getItem('phone_verification_token')?.length || 0}
+        </div>
+        
+        {errors.general && (
+          <div className={styles.errorMessage}>{errors.general}</div>
+        )}
 
         <form onSubmit={handleSubmit} className={styles.form}>
-          {/* Full Name */}
-          <div className={styles.formGroup}>
-            <label htmlFor="fullName" className={styles.label}>
-              Full Name *
-            </label>
+          <div className={styles.inputGroup}>
+            <label>Full Name</label>
             <input
               type="text"
-              id="fullName"
-              value={fullName}
-              onChange={(e) => setFullName(e.target.value)}
-              className={`${styles.input} ${errors.fullName ? styles.inputError : ''}`}
+              name="fullName"
+              value={formData.fullName}
+              onChange={handleInputChange}
               placeholder="Enter your full name"
-              disabled={loading}
+              required
             />
-            {errors.fullName && <span className={styles.errorText}>{errors.fullName}</span>}
+            {errors.fullName && <span className={styles.error}>{errors.fullName}</span>}
           </div>
 
-          {/* Password */}
-          <div className={styles.formGroup}>
-            <label htmlFor="password" className={styles.label}>
-              Password *
-            </label>
-            <div className={styles.passwordContainer}>
-              <input
-                type={showPassword ? 'text' : 'password'}
-                id="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className={`${styles.input} ${styles.passwordInput} ${errors.password ? styles.inputError : ''}`}
-                placeholder="Create a strong password"
-                disabled={loading}
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className={styles.passwordToggle}
-                disabled={loading}
-              >
-                {showPassword ? '👁️' : '👁️‍🗨️'}
-              </button>
-            </div>
-            {errors.password && <span className={styles.errorText}>{errors.password}</span>}
-            <div className={styles.passwordHint}>
-              Password must be at least 8 characters with uppercase, lowercase, number, and special character
-            </div>
+          <div className={styles.inputGroup}>
+            <label>Password</label>
+            <input
+              type="password"
+              name="password"
+              value={formData.password}
+              onChange={handleInputChange}
+              placeholder="Create a password (min 6 characters)"
+              required
+            />
+            {errors.password && <span className={styles.error}>{errors.password}</span>}
           </div>
 
-          {/* Confirm Password */}
-          <div className={styles.formGroup}>
-            <label htmlFor="confirmPassword" className={styles.label}>
-              Confirm Password *
-            </label>
-            <div className={styles.passwordContainer}>
-              <input
-                type={showConfirmPassword ? 'text' : 'password'}
-                id="confirmPassword"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                className={`${styles.input} ${styles.passwordInput} ${errors.confirmPassword ? styles.inputError : ''}`}
-                placeholder="Confirm your password"
-                disabled={loading}
-              />
-              <button
-                type="button"
-                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                className={styles.passwordToggle}
-                disabled={loading}
-              >
-                {showConfirmPassword ? '👁️' : '👁️‍🗨️'}
-              </button>
-            </div>
-            {errors.confirmPassword && <span className={styles.errorText}>{errors.confirmPassword}</span>}
+          <div className={styles.inputGroup}>
+            <label>Confirm Password</label>
+            <input
+              type="password"
+              name="confirmPassword"
+              value={formData.confirmPassword}
+              onChange={handleInputChange}
+              placeholder="Confirm your password"
+              required
+            />
+            {errors.confirmPassword && <span className={styles.error}>{errors.confirmPassword}</span>}
           </div>
 
-          {/* Error Message */}
-          {error && (
-            <div className={styles.errorMessage}>
-              {error}
-            </div>
-          )}
-
-          {/* Submit Button */}
-          <button
-            type="submit"
-            className={styles.submitButton}
-            disabled={loading}
-          >
+          <button type="submit" className={styles.submitButton} disabled={loading}>
             {loading ? 'Creating Account...' : 'Complete Registration'}
           </button>
         </form>
-
-        <div className={styles.infoBox}>
-          <p className={styles.infoText}>
-            <strong>Note:</strong> Your email and phone number have already been verified and will be automatically included in your account.
-          </p>
-        </div>
         
-        {/* Show error message if verification is incomplete */}
-        {error && (
-          <div className={styles.errorBox}>
-            <p className={styles.errorText}>
-              <strong>Verification Required:</strong> {error}
-            </p>
-            <div className={styles.verificationSteps}>
-              <p><strong>To complete your profile, you need to:</strong></p>
-              <ol>
-                <li>Verify your email address first</li>
-                <li>Verify your phone number with OTP</li>
-                <li>Then return to this page to complete your profile</li>
-              </ol>
-              <button 
-                onClick={() => navigate('/email-verification-success')} 
-                className={styles.verificationButton}
-              >
-                Go to Verification
-              </button>
-            </div>
-          </div>
-        )}
+        <div className={styles.startOver}>
+          <button 
+            type="button" 
+            onClick={() => {
+              localStorage.clear();
+              navigate('/signup');
+            }}
+            className={styles.startOverButton}
+          >
+            Start Over
+          </button>
+          
+          <button 
+            type="button" 
+            onClick={async () => {
+              console.log('🧪 Testing with fresh phone token from API response...');
+              // Use the fresh token from the API response you just got
+              const freshPhoneToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJwaG9uZU51bWJlciI6IjgyOTY2MjA3NjUiLCJ2ZXJpZmllZCI6dHJ1ZSwidHlwZSI6InBob25lIiwiaWF0IjoxNzU3MjYyMzI5LCJleHAiOjE3NTcyNjMyMjl9.yVPFLblhbwcYYTZJoPtdPxW1HEl6soVv72hRL1gftx4";
+              const testEmailToken = "591a047631c191067218d236dce205dd3557c63c044b2214b6b7c2511a89a22a";
+              
+              localStorage.setItem('phone_verification_token', freshPhoneToken);
+              localStorage.setItem('email_verification_token', testEmailToken);
+              
+              alert('Fresh phone token set! Now try submitting the form.');
+            }}
+            style={{
+              background: '#ff9800',
+              color: 'white',
+              border: 'none',
+              padding: '10px 20px',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              fontSize: '14px',
+              fontWeight: '500',
+              marginLeft: '10px'
+            }}
+          >
+            Test with Fresh Phone Token
+          </button>
+          
+          <button 
+            type="button" 
+            onClick={async () => {
+              console.log('🧪 Testing with ONLY phone token (no email token)...');
+              const freshPhoneToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJwaG9uZU51bWJlciI6IjgyOTY2MjA3NjUiLCJ2ZXJpZmllZCI6dHJ1ZSwidHlwZSI6InBob25lIiwiaWF0IjoxNzU3MjYyMzI5LCJleHAiOjE3NTcyNjMyMjl9.yVPFLblhbwcYYTZJoPtdPxW1HEl6soVv72hRL1gftx4";
+              
+              localStorage.setItem('phone_verification_token', freshPhoneToken);
+              localStorage.removeItem('email_verification_token'); // Remove email token
+              
+              alert('Only phone token set! This will test if email token is the issue.');
+            }}
+            style={{
+              background: '#f44336',
+              color: 'white',
+              border: 'none',
+              padding: '10px 20px',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              fontSize: '14px',
+              fontWeight: '500',
+              marginLeft: '10px'
+            }}
+          >
+            Test Phone Token Only
+          </button>
+          
+          <button 
+            type="button" 
+            onClick={() => {
+              navigate('/signup');
+            }}
+            style={{
+              background: '#4CAF50',
+              color: 'white',
+              border: 'none',
+              padding: '10px 20px',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              fontSize: '14px',
+              fontWeight: '500',
+              marginLeft: '10px'
+            }}
+          >
+            Get Real Email Token
+          </button>
+        </div>
       </div>
     </div>
   );
-}
+};
+
+export default CompleteProfile;

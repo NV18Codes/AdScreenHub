@@ -6,7 +6,6 @@ import { isDateDisabled, validateFile, generateOrderId, compressImage, manageSto
 import { useNavigate } from 'react-router-dom';
 import { couponsAPI } from '../config/api';
 import styles from '../styles/Dashboard.module.css';
-import StorageManager from '../components/StorageManager';
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -23,7 +22,6 @@ export default function Dashboard() {
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [newOrder, setNewOrder] = useState(null);
   const [showWarningModal, setShowWarningModal] = useState(false);
-  const [showStorageManager, setShowStorageManager] = useState(false);
   
   // New form fields
   const [address, setAddress] = useState('');
@@ -269,16 +267,6 @@ export default function Dashboard() {
               <h1>Welcome back, {user?.fullName || user?.email?.split('@')[0] || 'User'}!</h1>
               <p>Book your LED screen advertising campaign</p>
             </div>
-            <button 
-              className={styles.storageBtn}
-              onClick={() => setShowStorageManager(true)}
-              title="Manage Storage"
-            >
-              <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4" />
-              </svg>
-              Storage
-            </button>
           </div>
         </div>
 
@@ -835,10 +823,7 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* Storage Manager Modal */}
-        {showStorageManager && (
-          <StorageManager onClose={() => setShowStorageManager(false)} />
-        )}
+        {/* Storage Manager Modal - Removed for simplicity */}
       </div>
     </div>
   );
