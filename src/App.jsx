@@ -14,7 +14,6 @@ import Terms from './pages/Terms';
 import EmailVerification from './pages/EmailVerification';
 import EmailVerificationSuccess from './pages/EmailVerificationSuccess';
 import CompleteProfile from './pages/CompleteProfile';
-import EmailVerificationRedirect from './components/EmailVerificationRedirect';
 import ScrollToTop from './components/ScrollToTop';
 import { useAuth } from './hooks/useAuth';
 
@@ -66,7 +65,31 @@ function App() {
         <Route path="/complete-profile" element={<Layout showFooter={false}><CompleteProfile /></Layout>} />
         
         {/* Backend Email Verification Route */}
-        <Route path="/verify-email" element={<Layout showFooter={false}><EmailVerificationRedirect /></Layout>} />
+        <Route path="/verify-email" element={<Layout showFooter={false}><EmailVerification /></Layout>} />
+        
+        {/* Redirect handler for 3002 port issues */}
+        <Route path="/redirect-3002-to-3000" element={
+          <div style={{ 
+            minHeight: '100vh', 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center',
+            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            color: 'white',
+            textAlign: 'center'
+          }}>
+            <div style={{
+              background: 'rgba(255, 255, 255, 0.1)',
+              padding: '40px',
+              borderRadius: '20px',
+              backdropFilter: 'blur(10px)'
+            }}>
+              <h2>Redirecting to correct port...</h2>
+              <p>Please wait while we redirect you to the correct address.</p>
+              <p>If you're not redirected automatically, <a href="/email-verification" style={{color: 'white', textDecoration: 'underline'}}>click here</a>.</p>
+            </div>
+          </div>
+        } />
         
         {/* Auth Routes (no footer) */}
         <Route path="/login" element={<Layout showFooter={false}><Login /></Layout>} />
