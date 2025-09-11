@@ -7,25 +7,37 @@ export const useAuth = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    refreshAuthState();
+    checkAuthStatus();
   }, []);
 
-  const refreshAuthState = () => {
-    const userData = localStorage.getItem('user');
-    if (userData) {
-      setUser(JSON.parse(userData));
-      setIsAuthenticated(true);
+  const checkAuthStatus = () => {
+    try {
+      const userData = localStorage.getItem('user');
+      if (userData && userData !== 'undefined' && userData !== 'null') {
+        const parsedUser = JSON.parse(userData);
+        setUser(parsedUser);
+        setIsAuthenticated(true);
+      } else {
+        setUser(null);
+        setIsAuthenticated(false);
+      }
+    } catch (error) {
+      setUser(null);
+      setIsAuthenticated(false);
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   };
 
   const login = async (email, password) => {
     const result = await authAPI.login(email, password);
-    if (result.success) {
+    if (result.success && result.data && result.data.user) {
       setUser(result.data.user);
       setIsAuthenticated(true);
       localStorage.setItem('user', JSON.stringify(result.data.user));
-      localStorage.setItem('token', result.data.token);
+      if (result.data.token) {
+        localStorage.setItem('token', result.data.token);
+      }
     }
     return result;
   };
@@ -33,12 +45,7 @@ export const useAuth = () => {
   const logout = () => {
     setUser(null);
     setIsAuthenticated(false);
-    localStorage.removeItem('user');
-    localStorage.removeItem('token');
-    localStorage.removeItem('email_verification_token');
-    localStorage.removeItem('phone_verification_token');
-    localStorage.removeItem('verified_email');
-    localStorage.removeItem('verified_phone');
+    localStorage.clear();
   };
 
   const startEmailVerification = async (email) => {
@@ -47,19 +54,11 @@ export const useAuth = () => {
 
   const verifyEmail = async (selector, validator) => {
     const result = await authAPI.verifyEmail(selector, validator);
-    console.log('📧 Full email verification response:', JSON.stringify(result, null, 2));
-    
     if (result.success) {
-      // Try multiple possible token locations - check for nested data structure
+      // Store email token for later use
       const emailToken = result.data?.data?.emailToken || result.data?.emailToken || result.data?.token || result.token;
-      console.log('📧 Email token found:', emailToken);
-      
       if (emailToken) {
         localStorage.setItem('email_verification_token', emailToken);
-        console.log('✅ Email token stored successfully');
-      } else {
-        console.log('❌ No email token found in API response');
-        // Don't store any token if API doesn't provide one
       }
     }
     return result;
@@ -71,19 +70,11 @@ export const useAuth = () => {
 
   const verifyPhone = async (phoneNumber, otp) => {
     const result = await authAPI.verifyPhone(phoneNumber, otp);
-    console.log('📱 Full phone verification response:', JSON.stringify(result, null, 2));
-    
     if (result.success) {
-      // Try multiple possible token locations - the API response shows it's at result.data.data.phoneToken
+      // Store phone token for later use
       const phoneToken = result.data?.data?.phoneToken || result.data?.phoneToken || result.data?.token || result.token;
-      console.log('📱 Phone token found:', phoneToken);
-      
       if (phoneToken) {
         localStorage.setItem('phone_verification_token', phoneToken);
-        console.log('✅ Phone token stored successfully');
-      } else {
-        console.log('❌ No phone token found in API response');
-        // Don't store any token if API doesn't provide one
       }
     }
     return result;
@@ -91,14 +82,18 @@ export const useAuth = () => {
 
   const completeRegistration = async (fullName, password, phoneToken, emailToken) => {
     const result = await authAPI.completeRegistration(fullName, password, phoneToken, emailToken);
-    if (result.success) {
+    if (result.success && result.data && result.data.user) {
       setUser(result.data.user);
       setIsAuthenticated(true);
       localStorage.setItem('user', JSON.stringify(result.data.user));
-      localStorage.setItem('token', result.data.token);
+      if (result.data.token) {
+        localStorage.setItem('token', result.data.token);
+      }
     }
     return result;
   };
+
+  const refreshAuthState = checkAuthStatus;
 
   return {
     user,

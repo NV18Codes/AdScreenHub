@@ -5,15 +5,28 @@ import { useAuth } from '../hooks/useAuth';
 const EmailVerification = () => {
   const [searchParams] = useSearchParams();
   const { verifyEmail } = useAuth();
-  const [verificationStatus, setVerificationStatus] = useState('verifying');
+  const [status, setStatus] = useState('verifying');
 
   useEffect(() => {
+    const selector = searchParams.get('selector');
+    const validator = searchParams.get('validator');
     const token = searchParams.get('token');
     const email = searchParams.get('email');
     
-    if (token) {
-      const [selector, validator] = token.split('|');
-      verifyEmailToken(selector, validator, email);
+    // Handle different URL formats
+    let finalSelector = selector;
+    let finalValidator = validator;
+    
+    if (token && !selector && !validator) {
+      const [tokenSelector, tokenValidator] = token.split('|');
+      finalSelector = tokenSelector;
+      finalValidator = tokenValidator;
+    }
+    
+    if (finalSelector && finalValidator) {
+      verifyEmailToken(finalSelector, finalValidator, email);
+    } else {
+      setStatus('error');
     }
   }, [searchParams]);
 
@@ -22,24 +35,45 @@ const EmailVerification = () => {
       const result = await verifyEmail(selector, validator);
       
       if (result.success) {
-        setVerificationStatus('success');
+        setStatus('success');
+        
+        // Store verification status
+        localStorage.setItem('email_verified', 'true');
         if (email) {
           localStorage.setItem('verified_email', email);
         }
+        
+        // Redirect to signup after 2 seconds
         setTimeout(() => {
-          window.location.href = `${window.location.origin}/signup?email=${encodeURIComponent(email || '')}&verified=true`;
+          const currentOrigin = window.location.origin;
+          const redirectUrl = email 
+            ? `${currentOrigin}/signup?email=${encodeURIComponent(email)}&verified=true`
+            : `${currentOrigin}/signup?verified=true`;
+          
+          window.location.href = redirectUrl;
         }, 2000);
       } else {
-        setVerificationStatus('error');
+        setStatus('error');
       }
     } catch (error) {
-      setVerificationStatus('error');
+      setStatus('error');
     }
   };
 
-  const handleProceedToSignup = () => {
+  const handleContinue = () => {
     const email = searchParams.get('email');
-    window.location.href = `${window.location.origin}/signup?email=${encodeURIComponent(email || '')}&verified=true`;
+    
+    localStorage.setItem('email_verified', 'true');
+    if (email) {
+      localStorage.setItem('verified_email', email);
+    }
+    
+    const currentOrigin = window.location.origin;
+    const redirectUrl = email 
+      ? `${currentOrigin}/signup?email=${encodeURIComponent(email)}&verified=true`
+      : `${currentOrigin}/signup?verified=true`;
+    
+    window.location.href = redirectUrl;
   };
 
   return (
@@ -48,7 +82,7 @@ const EmailVerification = () => {
       display: 'flex', 
       alignItems: 'center', 
       justifyContent: 'center',
-      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+      background: 'linear-gradient(135deg, #2196F3 0%, #21CBF3 100%)',
       padding: '20px'
     }}>
       <div style={{
@@ -60,21 +94,30 @@ const EmailVerification = () => {
         maxWidth: '500px',
         width: '100%'
       }}>
-        {verificationStatus === 'verifying' && (
+        {status === 'verifying' && (
           <div>
             <h2>Verifying Email...</h2>
             <p>Please wait while we verify your email address.</p>
+            <div style={{
+              width: '40px',
+              height: '40px',
+              border: '4px solid #f3f3f3',
+              borderTop: '4px solid #2196F3',
+              borderRadius: '50%',
+              animation: 'spin 1s linear infinite',
+              margin: '20px auto'
+            }}></div>
           </div>
         )}
         
-        {verificationStatus === 'success' && (
+        {status === 'success' && (
           <div>
-            <h2 style={{ color: '#4CAF50' }}>✅ Email Verified!</h2>
+            <h2 style={{ color: '#2196F3' }}>✅ Email Verified!</h2>
             <p>Your email has been successfully verified. Redirecting to signup...</p>
             <button 
-              onClick={handleProceedToSignup}
+              onClick={handleContinue}
               style={{
-                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                background: '#2196F3',
                 color: 'white',
                 border: 'none',
                 padding: '12px 24px',
@@ -88,14 +131,14 @@ const EmailVerification = () => {
           </div>
         )}
         
-        {verificationStatus === 'error' && (
+        {status === 'error' && (
           <div>
             <h2 style={{ color: '#f44336' }}>❌ Verification Failed</h2>
             <p>The verification link is invalid or has expired.</p>
             <button 
-              onClick={handleProceedToSignup}
+              onClick={handleContinue}
               style={{
-                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                background: '#2196F3',
                 color: 'white',
                 border: 'none',
                 padding: '12px 24px',
@@ -109,6 +152,13 @@ const EmailVerification = () => {
           </div>
         )}
       </div>
+      
+      <style jsx>{`
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+      `}</style>
     </div>
   );
 };

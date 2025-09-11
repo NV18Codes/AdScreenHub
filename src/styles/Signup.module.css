@@ -3,22 +3,22 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #2196F3 0%, #21CBF3 100%);
   padding: 20px;
 }
 
-.content {
+.card {
   background: white;
   border-radius: 20px;
   padding: 40px;
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-  width: 100%;
   max-width: 500px;
+  width: 100%;
 }
 
-.content h2 {
+.card h2 {
+  color: #2196F3;
   text-align: center;
-  color: #333;
   margin-bottom: 30px;
   font-size: 28px;
   font-weight: 600;
@@ -30,63 +30,62 @@
 
 .inputGroup label {
   display: block;
-  font-weight: 600;
-  color: #333;
   margin-bottom: 8px;
+  color: #333;
+  font-weight: 500;
 }
 
 .inputGroup input {
   width: 100%;
-  padding: 15px;
-  border: 2px solid #e1e5e9;
-  border-radius: 10px;
+  padding: 12px 16px;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
   font-size: 16px;
-  transition: all 0.3s ease;
+  transition: border-color 0.3s ease;
+  box-sizing: border-box;
 }
 
 .inputGroup input:focus {
   outline: none;
-  border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  border-color: #2196F3;
 }
 
 .submitButton {
   width: 100%;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #2196F3;
   color: white;
   border: none;
-  padding: 18px;
-  border-radius: 10px;
+  padding: 14px 24px;
+  border-radius: 8px;
   font-size: 16px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: background-color 0.3s ease;
+  margin-top: 10px;
 }
 
 .submitButton:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+  background: #1976D2;
 }
 
 .submitButton:disabled {
-  opacity: 0.7;
+  background: #ccc;
   cursor: not-allowed;
-  transform: none;
-}
-
-.error {
-  color: #ef4444;
-  font-size: 12px;
-  margin-top: 4px;
-  display: block;
 }
 
 .successMessage {
-  background: #d4edda;
-  color: #155724;
-  padding: 15px;
+  background: #e3f2fd;
+  color: #1976D2;
+  padding: 12px 16px;
   border-radius: 8px;
   margin-bottom: 20px;
   text-align: center;
   font-weight: 500;
+}
+
+.error {
+  color: #f44336;
+  font-size: 14px;
+  margin-top: 5px;
+  display: block;
 }
