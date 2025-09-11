@@ -64,8 +64,9 @@ function App() {
         <Route path="/email-verification-success" element={<Layout showFooter={false}><EmailVerificationSuccess /></Layout>} />
         <Route path="/complete-profile" element={<Layout showFooter={false}><CompleteProfile /></Layout>} />
         
-        {/* Backend Email Verification Route */}
+        {/* Backend Email Verification Routes */}
         <Route path="/verify-email" element={<Layout showFooter={false}><EmailVerification /></Layout>} />
+        <Route path="/email-verification" element={<Layout showFooter={false}><EmailVerification /></Layout>} />
         
         {/* Redirect handler for 3002 port issues */}
         <Route path="/redirect-3002-to-3000" element={

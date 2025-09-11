@@ -6,105 +6,89 @@ import styles from '../styles/Signup.module.css';
 const Signup = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { startEmailVerification, verifyEmail, startPhoneVerification, verifyPhone } = useAuth();
+  const { startEmailVerification, startPhoneVerification, verifyPhone } = useAuth();
 
+  const [step, setStep] = useState('email');
   const [formData, setFormData] = useState({
     email: '',
-    phoneNumber: '',
-    fullName: '',
-    password: '',
-    confirmPassword: ''
+    phoneNumber: ''
   });
-
-  const [verificationState, setVerificationState] = useState({
-    emailVerified: false,
-    phoneVerified: false,
-    otpSent: false,
-    otp: ''
-  });
-
+  const [otp, setOtp] = useState('');
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    // Check if user is coming back from email verification
     const email = searchParams.get('email');
     const verified = searchParams.get('verified');
     
-    if (email) setFormData(prev => ({ ...prev, email }));
-    if (verified === 'true' || localStorage.getItem('verified_email')) {
-      setVerificationState(prev => ({ ...prev, emailVerified: true }));
+    if (email) {
+      setFormData(prev => ({ ...prev, email }));
+    }
+    
+    // If verified=true in URL or email_verified in localStorage, go to phone step
+    if (verified === 'true' || localStorage.getItem('email_verified') === 'true') {
+      setStep('phone');
     }
   }, [searchParams]);
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-    if (errors[name]) {
-      setErrors(prev => ({ ...prev, [name]: '' }));
-    }
-  };
-
-  const handleEmailVerification = async (e) => {
+  const handleEmailSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.email) return setErrors({ email: 'Email is required' });
+    if (!formData.email) {
+      setErrors({ email: 'Email is required' });
+      return;
+    }
 
     setLoading(true);
+    setErrors({});
+    
     const result = await startEmailVerification(formData.email);
     setLoading(false);
 
     if (result.success) {
-      alert('Verification email sent! Check your inbox.');
+      alert('Verification email sent! Please check your inbox and click the verification link.');
     } else {
       setErrors({ email: result.error });
     }
   };
 
-  const handlePhoneVerification = async (e) => {
+  const handlePhoneSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.phoneNumber) return setErrors({ phoneNumber: 'Phone number is required' });
+    if (!formData.phoneNumber) {
+      setErrors({ phoneNumber: 'Phone number is required' });
+      return;
+    }
 
     setLoading(true);
+    setErrors({});
+    
     const result = await startPhoneVerification(formData.phoneNumber);
     setLoading(false);
 
     if (result.success) {
-      setVerificationState(prev => ({ ...prev, otpSent: true }));
-      alert('OTP sent to your phone!');
+      setStep('otp');
+      alert('OTP sent to your phone! Please check your messages.');
     } else {
       setErrors({ phoneNumber: result.error });
     }
   };
 
-  const handleOtpVerification = async (e) => {
+  const handleOtpSubmit = async (e) => {
     e.preventDefault();
-    if (!verificationState.otp) return setErrors({ otp: 'OTP is required' });
+    if (!otp) {
+      setErrors({ otp: 'OTP is required' });
+      return;
+    }
 
     setLoading(true);
-    const result = await verifyPhone(formData.phoneNumber, verificationState.otp);
+    setErrors({});
+    
+    const result = await verifyPhone(formData.phoneNumber, otp);
     setLoading(false);
 
     if (result.success) {
-      setVerificationState(prev => ({ ...prev, phoneVerified: true }));
       alert('Phone verified successfully!');
-      navigate('/complete-profile', { state: formData });
-    } else {
-      setErrors({ otp: result.error });
-    }
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (formData.password !== formData.confirmPassword) {
-      return setErrors({ confirmPassword: 'Passwords do not match' });
-    }
-
-    setLoading(true);
-    const result = await verifyPhone(formData.phoneNumber, verificationState.otp);
-    setLoading(false);
-
-    if (result.success) {
-      setVerificationState(prev => ({ ...prev, phoneVerified: true }));
-      navigate('/complete-profile', { state: formData });
+      navigate('/complete-profile');
     } else {
       setErrors({ otp: result.error });
     }
@@ -112,18 +96,18 @@ const Signup = () => {
 
   return (
     <div className={styles.container}>
-      <div className={styles.content}>
+      <div className={styles.card}>
         <h2>Create Account</h2>
         
-        {!verificationState.emailVerified ? (
-          <form onSubmit={handleEmailVerification}>
+        {step === 'email' && (
+          <form onSubmit={handleEmailSubmit}>
             <div className={styles.inputGroup}>
               <label>Email Address</label>
               <input
                 type="email"
                 name="email"
                 value={formData.email}
-                onChange={handleInputChange}
+                onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
                 placeholder="Enter your email"
                 required
               />
@@ -133,53 +117,55 @@ const Signup = () => {
               {loading ? 'Sending...' : 'Send Verification Email'}
             </button>
           </form>
-        ) : !verificationState.phoneVerified ? (
+        )}
+
+        {step === 'phone' && (
           <div>
             <div className={styles.successMessage}>
               ✅ Email verified successfully!
             </div>
-            
-            {!verificationState.otpSent ? (
-              <form onSubmit={handlePhoneVerification}>
-                <div className={styles.inputGroup}>
-                  <label>Phone Number</label>
-                  <input
-                    type="tel"
-                    name="phoneNumber"
-                    value={formData.phoneNumber}
-                    onChange={handleInputChange}
-                    placeholder="Enter your phone number"
-                    required
-                  />
-                  {errors.phoneNumber && <span className={styles.error}>{errors.phoneNumber}</span>}
-                </div>
-                <button type="submit" className={styles.submitButton} disabled={loading}>
-                  {loading ? 'Sending...' : 'Send OTP'}
-                </button>
-              </form>
-            ) : (
-              <form onSubmit={handleOtpVerification}>
-                <div className={styles.inputGroup}>
-                  <label>Enter OTP</label>
-                  <input
-                    type="text"
-                    value={verificationState.otp}
-                    onChange={(e) => setVerificationState(prev => ({ ...prev, otp: e.target.value }))}
-                    placeholder="Enter 6-digit OTP"
-                    maxLength="6"
-                    required
-                  />
-                  {errors.otp && <span className={styles.error}>{errors.otp}</span>}
-                </div>
-                <button type="submit" className={styles.submitButton} disabled={loading}>
-                  {loading ? 'Verifying...' : 'Verify OTP'}
-                </button>
-              </form>
-            )}
+            <form onSubmit={handlePhoneSubmit}>
+              <div className={styles.inputGroup}>
+                <label>Phone Number</label>
+                <input
+                  type="tel"
+                  name="phoneNumber"
+                  value={formData.phoneNumber}
+                  onChange={(e) => setFormData(prev => ({ ...prev, phoneNumber: e.target.value }))}
+                  placeholder="Enter your phone number"
+                  required
+                />
+                {errors.phoneNumber && <span className={styles.error}>{errors.phoneNumber}</span>}
+              </div>
+              <button type="submit" className={styles.submitButton} disabled={loading}>
+                {loading ? 'Sending...' : 'Send OTP'}
+              </button>
+            </form>
           </div>
-        ) : (
-          <div className={styles.successMessage}>
-            ✅ All verifications complete! Redirecting...
+        )}
+
+        {step === 'otp' && (
+          <div>
+            <div className={styles.successMessage}>
+              ✅ Email verified successfully!
+            </div>
+            <form onSubmit={handleOtpSubmit}>
+              <div className={styles.inputGroup}>
+                <label>Enter OTP</label>
+                <input
+                  type="text"
+                  value={otp}
+                  onChange={(e) => setOtp(e.target.value)}
+                  placeholder="Enter 6-digit OTP"
+                  maxLength="6"
+                  required
+                />
+                {errors.otp && <span className={styles.error}>{errors.otp}</span>}
+              </div>
+              <button type="submit" className={styles.submitButton} disabled={loading}>
+                {loading ? 'Verifying...' : 'Verify OTP'}
+              </button>
+            </form>
           </div>
         )}
       </div>

@@ -1,88 +1,62 @@
 const API_BASE_URL = 'https://adscreenapi-production.up.railway.app/api/v1';
 
-const apiRequest = async (endpoint, options = {}) => {
-  const url = `${API_BASE_URL}${endpoint}`;
-  const config = {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    ...options,
-  };
-
+// Simple API request function
+const makeRequest = async (endpoint, body) => {
   try {
-    const response = await fetch(url, config);
+    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body),
+    });
+
     const data = await response.json();
     
-    if (!response.ok) {
-      throw new Error(data.message || `HTTP error! status: ${response.status}`);
+    if (response.ok) {
+      return { success: true, data };
+    } else {
+      return { success: false, error: data.message || data.error || 'Request failed' };
     }
-    
-    return { success: true, data };
   } catch (error) {
     return { success: false, error: error.message };
   }
 };
 
 export const authAPI = {
-  login: async (email, password) => {
-    return apiRequest('/auth/login', {
-      body: JSON.stringify({ email, password })
-    });
-  },
-
+  // Start email verification
   startEmailVerification: async (email) => {
-    return apiRequest('/auth/start-email-verification', {
-      body: JSON.stringify({ email })
-    });
+    return makeRequest('/auth/start-email-verification', { email });
   },
 
+  // Verify email with selector and validator
   verifyEmail: async (selector, validator) => {
-    return apiRequest('/auth/verify-email', {
-      body: JSON.stringify({ selector, validator })
-    });
+    return makeRequest('/auth/verify-email', { selector, validator });
   },
 
+  // Start phone verification
   startPhoneVerification: async (phoneNumber) => {
-    return apiRequest('/auth/start-phone-verification', {
-      body: JSON.stringify({ phoneNumber })
-    });
+    return makeRequest('/auth/start-phone-verification', { phoneNumber });
   },
 
+  // Verify phone OTP
   verifyPhone: async (phoneNumber, otp) => {
-    return apiRequest('/auth/verify-phone', {
-      body: JSON.stringify({ phoneNumber, otp })
+    return makeRequest('/auth/verify-phone', { phoneNumber, otp });
+  },
+
+  // Complete registration
+  completeRegistration: async (fullName, password, phoneToken, emailToken) => {
+    return makeRequest('/auth/complete-registration', {
+      fullName,
+      password,
+      phoneToken,
+      emailToken
     });
   },
 
-  completeRegistration: async (fullName, password, phoneToken, emailToken) => {
-    const requestBody = { fullName, password, phoneToken, emailToken };
-    
-    console.log('🔐 Complete Registration Request:', {
-      url: `${API_BASE_URL}/auth/complete-registration`,
-      body: requestBody,
-      phoneTokenLength: phoneToken?.length || 0,
-      emailTokenLength: emailToken?.length || 0
-    });
-    
-    const response = await fetch(`${API_BASE_URL}/auth/complete-registration`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(requestBody)
-    });
-    
-    console.log('📥 Complete Registration Response:', {
-      status: response.status,
-      statusText: response.statusText,
-      headers: Object.fromEntries(response.headers.entries())
-    });
-    
-    const data = await response.json();
-    console.log('📥 Complete Registration Response Data:', data);
-    
-    if (!response.ok) {
-      return { success: false, error: data.message || `API Error: ${response.status} - ${data.message || response.statusText}` };
-    }
-    
-    return { success: true, data };
+  // Login
+  login: async (email, password) => {
+    return makeRequest('/auth/login', { email, password });
   }
 };
 
