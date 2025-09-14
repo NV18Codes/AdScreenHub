@@ -29,6 +29,8 @@ export default function AuthFlow() {
     const storedEmailToken = localStorage.getItem('emailToken');
     const storedPhoneToken = localStorage.getItem('phoneToken');
     
+    console.log('Loading tokens from localStorage:', { storedEmailToken, storedPhoneToken });
+    
     if (storedEmailToken) {
       setEmailToken(storedEmailToken);
     }
@@ -57,6 +59,27 @@ export default function AuthFlow() {
       }
     }
   }, [searchParams]);
+
+  // Validate tokens when reaching registration step
+  useEffect(() => {
+    if (step === 'register') {
+      const emailTokenCheck = emailToken || localStorage.getItem('emailToken');
+      const phoneTokenCheck = phoneToken || localStorage.getItem('phoneToken');
+      
+      console.log('Registration step token validation:', {
+        emailToken: emailTokenCheck ? 'present' : 'missing',
+        phoneToken: phoneTokenCheck ? 'present' : 'missing'
+      });
+      
+      if (!emailTokenCheck) {
+        setError("Email verification required. Please complete email verification first.");
+        setStep("email");
+      } else if (!phoneTokenCheck) {
+        setError("Phone verification required. Please complete phone verification first.");
+        setStep("phone");
+      }
+    }
+  }, [step, emailToken, phoneToken]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -238,9 +261,22 @@ export default function AuthFlow() {
       const emailTokenToUse = emailToken || localStorage.getItem('emailToken');
       const phoneTokenToUse = phoneToken || localStorage.getItem('phoneToken');
       
-      if (!emailTokenToUse || !phoneTokenToUse) {
-        setError("Verification tokens missing. Please restart the verification process.");
+      console.log('Registration tokens check:', { 
+        emailToken: emailTokenToUse ? 'present' : 'missing',
+        phoneToken: phoneTokenToUse ? 'present' : 'missing',
+        emailTokenValue: emailTokenToUse,
+        phoneTokenValue: phoneTokenToUse
+      });
+      
+      if (!emailTokenToUse) {
+        setError("Email verification token missing. Please complete email verification first.");
         setStep("email");
+        return;
+      }
+      
+      if (!phoneTokenToUse) {
+        setError("Phone verification token missing. Please complete phone verification first.");
+        setStep("phone");
         return;
       }
       
@@ -510,6 +546,18 @@ export default function AuthFlow() {
               <p className="mt-2 text-gray-600">
                 Almost done! Just a few more details to complete your account.
               </p>
+              
+              {/* Verification Status Indicators */}
+              <div className="mt-4 flex justify-center space-x-4">
+                <div className="flex items-center space-x-2">
+                  <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                  <span className="text-sm text-green-600 font-medium">Email Verified</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                  <span className="text-sm text-green-600 font-medium">Phone Verified</span>
+                </div>
+              </div>
             </div>
             
             <form onSubmit={handleRegister} className="space-y-4">
@@ -569,9 +617,16 @@ export default function AuthFlow() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+                  className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed font-medium transition-all duration-200"
                 >
-                  {loading ? "Creating Account..." : "Complete Registration"}
+                  {loading ? (
+                    <div className="flex items-center justify-center space-x-2">
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      <span>Creating Account...</span>
+                    </div>
+                  ) : (
+                    "Complete Registration"
+                  )}
                 </button>
               </div>
             </form>
@@ -648,14 +703,20 @@ export default function AuthFlow() {
         {renderStep()}
         
         {error && (
-          <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-            <p className="text-red-600 text-sm text-center">{error}</p>
+          <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg animate-fadeIn">
+            <div className="flex items-center space-x-2">
+              <div className="w-5 h-5 text-red-500">⚠️</div>
+              <p className="text-red-600 text-sm font-medium">{error}</p>
+            </div>
           </div>
         )}
         
         {success && (
-          <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
-            <p className="text-green-600 text-sm text-center">{success}</p>
+          <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg animate-fadeIn">
+            <div className="flex items-center space-x-2">
+              <div className="w-5 h-5 text-green-500">✅</div>
+              <p className="text-green-600 text-sm font-medium">{success}</p>
+            </div>
           </div>
         )}
       </div>
