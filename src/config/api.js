@@ -1,4 +1,16 @@
-const API_BASE_URL = 'https://adscreenapi-production.up.railway.app/api/v1';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://adscreenapi-production.up.railway.app/api/v1';
+
+// Centralized API endpoints
+export const API_ENDPOINTS = {
+  AUTH: {
+    START_EMAIL_VERIFICATION: '/auth/start-email-verification',
+    VERIFY_EMAIL: '/auth/verify-email',
+    START_PHONE_VERIFICATION: '/auth/start-phone-verification',
+    VERIFY_PHONE: '/auth/verify-phone',
+    COMPLETE_REGISTRATION: '/auth/complete-registration',
+    LOGIN: '/auth/login'
+  }
+};
 
 // Optimized API request function
 const makeRequest = async (endpoint, body = null, method = 'POST', customHeaders = {}) => {

@@ -93,9 +93,9 @@
             <h1>Email Verified!</h1>
             <p>Your email has been successfully verified.</p>
             <div class="info-box">
-                <strong>Next Step:</strong> Go back to your local development tab and click "I've Verified My Email" to continue with phone verification.
+                <strong>Next Step:</strong> Click the button below to continue with phone verification.
             </div>
-            <a href="http://localhost:3001/auth?step=phone" class="button">Go to Local Development</a>
+            <a href="/auth?step=phone" class="button">Continue to Phone Verification</a>
         </div>
         
         <div id="error" style="display: none;">
@@ -109,7 +109,7 @@
                 • Network connection issue
             </div>
             <div style="margin-top: 20px;">
-                <a href="http://localhost:3001/auth" class="button">Start Over</a>
+                <a href="/auth" class="button">Start Over</a>
                 <button onclick="location.reload()" class="button" style="background: #95a5a6; margin-left: 10px;">Retry</button>
             </div>
         </div>
