@@ -1,63 +1,72 @@
 const API_BASE_URL = 'https://adscreenapi-production.up.railway.app/api/v1';
 
-// Simple API request function
-const makeRequest = async (endpoint, body) => {
+// Optimized API request function
+const makeRequest = async (endpoint, body = null, method = 'POST', customHeaders = {}) => {
   try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
+
+    const token = localStorage.getItem('token');
+
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-      method: 'POST',
+      method,
       headers: {
         'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...customHeaders
       },
-      body: JSON.stringify(body),
+      body: method !== 'GET' ? JSON.stringify(body) : undefined,
+      signal: controller.signal
     });
 
-    const data = await response.json();
-    
+    clearTimeout(timeoutId);
+
+    let data;
+    try {
+      data = await response.json();
+    } catch {
+      data = {};
+    }
+
     if (response.ok) {
       return { success: true, data };
     } else {
-      return { success: false, error: data.message || data.error || 'Request failed' };
+      return {
+        success: false,
+        error:
+          data.message ||
+          data.error ||
+          response.statusText ||
+          `Request failed with status ${response.status}`
+      };
     }
   } catch (error) {
-    return { success: false, error: error.message };
+    if (error.name === 'AbortError') {
+      return { success: false, error: 'Request timeout. Please try again.' };
+    }
+    return { success: false, error: error.message || 'Network error' };
   }
 };
 
+// Authentication API
 export const authAPI = {
-  // Start email verification
-  startEmailVerification: async (email) => {
-    return makeRequest('/auth/start-email-verification', { email });
-  },
-
-  // Verify email with selector and validator
-  verifyEmail: async (selector, validator) => {
-    return makeRequest('/auth/verify-email', { selector, validator });
-  },
-
-  // Start phone verification
-  startPhoneVerification: async (phoneNumber) => {
-    return makeRequest('/auth/start-phone-verification', { phoneNumber });
-  },
-
-  // Verify phone OTP
-  verifyPhone: async (phoneNumber, otp) => {
-    return makeRequest('/auth/verify-phone', { phoneNumber, otp });
-  },
-
-  // Complete registration
-  completeRegistration: async (fullName, password, phoneToken, emailToken) => {
-    return makeRequest('/auth/complete-registration', {
-      fullName,
-      password,
-      phoneToken,
-      emailToken
-    });
-  },
-
-  // Login
-  login: async (email, password) => {
-    return makeRequest('/auth/login', { email, password });
-  }
+  startEmailVerification: (email, redirectUrl) => 
+    makeRequest('/auth/start-email-verification', { email, redirectUrl }),
+  
+  verifyEmail: (selector, validator) => 
+    makeRequest('/auth/verify-email', { selector, validator }),
+  
+  startPhoneVerification: (phoneNumber) => 
+    makeRequest('/auth/start-phone-verification', { phoneNumber }),
+  
+  verifyPhone: (phoneNumber, otp) => 
+    makeRequest('/auth/verify-phone', { phoneNumber, otp }),
+  
+  register: (email, phoneNumber, name, password) => 
+    makeRequest('/auth/complete-registration', { email, phoneNumber, name, password }),
+  
+  login: (email, password) => 
+    makeRequest('/auth/login', { email, password })
 };
 
 // Demo APIs
@@ -72,11 +81,17 @@ export const ordersAPI = {
 export const couponsAPI = {
   validateCoupon: (code) => {
     const validCoupons = ['WELCOME10', 'SAVE20', 'FIRST50'];
-    const isValid = validCoupons.includes(code.toUpperCase());
-    const discount = code === 'FIRST50' ? 50 : code === 'SAVE20' ? 20 : 10;
-    
-    return isValid 
-      ? { success: true, data: { valid: true, discount, message: `${discount}% discount applied!` }}
+    const normalized = code.toUpperCase();
+    const isValid = validCoupons.includes(normalized);
+
+    const discount =
+      normalized === 'FIRST50' ? 50 : normalized === 'SAVE20' ? 20 : 10;
+
+    return isValid
+      ? {
+        success: true,
+        data: { valid: true, discount, message: `${discount}% discount applied!` }
+      }
       : { success: false, error: 'Invalid coupon code' };
   }
 };

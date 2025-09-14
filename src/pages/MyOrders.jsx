@@ -1,13 +1,11 @@
 import React, { useState } from 'react';
-import { useAuth } from '../hooks/useAuth';
 import { useOrders } from '../hooks/useOrders';
 import { formatDate, formatCurrency, validateFile, compressImage, manageStorageQuota } from '../utils/validation';
 import { Link } from 'react-router-dom';
 import styles from '../styles/MyOrders.module.css';
 
 export default function MyOrders() {
-  const { user } = useAuth();
-  const { orders, loading, cancelOrder, reviseOrder } = useOrders(user?.id);
+  const { orders, loading, cancelOrder, reviseOrder } = useOrders();
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [showImageModal, setShowImageModal] = useState(false);
   const [showReviseModal, setShowReviseModal] = useState(false);

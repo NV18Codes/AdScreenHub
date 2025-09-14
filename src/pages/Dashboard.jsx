@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '../hooks/useAuth';
 import { useOrders } from '../hooks/useOrders';
 import { mockScreens, mockPlans } from '../data/mockData';
 import { isDateDisabled, validateFile, generateOrderId, compressImage, manageStorageQuota } from '../utils/validation';
@@ -8,8 +7,7 @@ import { couponsAPI } from '../config/api';
 import styles from '../styles/Dashboard.module.css';
 
 export default function Dashboard() {
-  const { user } = useAuth();
-  const { createOrder, hasAvailableInventory, getAvailableInventory, getBookedScreensForDate } = useOrders(user?.id);
+  const { createOrder, hasAvailableInventory, getAvailableInventory, getBookedScreensForDate } = useOrders();
   const navigate = useNavigate();
   const [selectedDate, setSelectedDate] = useState('');
   const [selectedScreen, setSelectedScreen] = useState(null);

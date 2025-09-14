@@ -1,12 +1,10 @@
 import React from 'react';
-import { useAuth } from '../hooks/useAuth';
 import { useOrders } from '../hooks/useOrders';
 import { Link } from 'react-router-dom';
 import styles from '../styles/DashboardOverview.module.css';
 
 export default function DashboardOverview() {
-  const { user } = useAuth();
-  const { orders } = useOrders(user?.id);
+  const { orders } = useOrders();
 
   // Calculate stats - exclude cancelled orders from total spent
   const totalOrders = orders.length;

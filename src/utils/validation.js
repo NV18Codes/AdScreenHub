@@ -1,84 +1,42 @@
-// Email validation
-export const validateEmail = (email) => {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return emailRegex.test(email);
-};
+// Validation utilities for the application
 
-// Password validation (min 8 chars, 1 uppercase, 1 special char)
-export const validatePassword = (password) => {
-  const minLength = password.length >= 8;
-  const hasUpperCase = /[A-Z]/.test(password);
-  const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(password);
-  
-  return {
-    isValid: minLength && hasUpperCase && hasSpecialChar,
-    errors: {
-      length: !minLength ? "Password must be at least 8 characters" : "",
-      uppercase: !hasUpperCase ? "Password must contain at least 1 uppercase letter" : "",
-      special: !hasSpecialChar ? "Password must contain at least 1 special character" : ""
-    }
-  };
-};
-
-// Mobile number validation (India format)
-export const validateMobile = (mobile) => {
-  // Remove all spaces and validate format +91XXXXXXXXXX (13 characters total)
-  const cleanMobile = mobile.replace(/\s/g, '');
-  const mobileRegex = /^\+91[6-9]\d{9}$/;
-  return mobileRegex.test(cleanMobile);
+// Date validation
+export const isDateDisabled = (date) => {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const selectedDate = new Date(date);
+  return selectedDate < today;
 };
 
 // File validation
-export const validateFile = (file, allowedTypes, maxSize) => {
-  const isValidType = allowedTypes.includes(file.type);
-  const isValidSize = file.size <= maxSize;
+export const validateFile = (file) => {
+  const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+  const maxSize = 10 * 1024 * 1024; // 10MB
   
-  return {
-    isValid: isValidType && isValidSize,
-    errors: {
-      type: !isValidType ? "Invalid file type" : "",
-      size: !isValidSize ? "File size too large" : ""
-    }
-  };
+  if (!file) {
+    return { valid: false, error: 'No file selected' };
+  }
+  
+  if (!allowedTypes.includes(file.type)) {
+    return { valid: false, error: 'Invalid file type. Please upload JPG, PNG, GIF, or WebP images only.' };
+  }
+  
+  if (file.size > maxSize) {
+    return { valid: false, error: 'File size too large. Please upload files smaller than 10MB.' };
+  }
+  
+  return { valid: true };
 };
 
-// Generate unique order ID
+// Generate order ID
 export const generateOrderId = () => {
-  const timestamp = Date.now().toString(36);
-  const randomStr = Math.random().toString(36).substr(2, 5);
-  return `ORD${timestamp}${randomStr}`.toUpperCase();
+  const timestamp = Date.now();
+  const random = Math.random().toString(36).substr(2, 5);
+  return `ORD-${timestamp}-${random}`.toUpperCase();
 };
 
-// Format date for display
-export const formatDate = (dateString) => {
-  const date = new Date(dateString);
-  return date.toLocaleDateString('en-IN', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
-  });
-};
-
-// Format currency (Indian Rupees)
-export const formatCurrency = (amount) => {
-  return new Intl.NumberFormat('en-IN', {
-    style: 'currency',
-    currency: 'INR'
-  }).format(amount);
-};
-
-// Check if date is disabled (today and tomorrow)
-export const isDateDisabled = (date) => {
-  const today = new Date();
-  const tomorrow = new Date(today);
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  
-  const checkDate = new Date(date);
-  return checkDate <= tomorrow;
-};
-
-// Compress and resize image for storage
-export const compressImage = (file, maxWidth = 800, quality = 0.7) => {
+// Image compression
+export const compressImage = (file, maxWidth = 1920, quality = 0.8) => {
   return new Promise((resolve) => {
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
@@ -86,71 +44,63 @@ export const compressImage = (file, maxWidth = 800, quality = 0.7) => {
     
     img.onload = () => {
       // Calculate new dimensions
-      const ratio = Math.min(maxWidth / img.width, maxWidth / img.height);
-      const newWidth = img.width * ratio;
-      const newHeight = img.height * ratio;
+      let { width, height } = img;
+      if (width > maxWidth) {
+        height = (height * maxWidth) / width;
+        width = maxWidth;
+      }
       
-      canvas.width = newWidth;
-      canvas.height = newHeight;
+      canvas.width = width;
+      canvas.height = height;
       
       // Draw and compress
-      ctx.drawImage(img, 0, 0, newWidth, newHeight);
-      const compressedDataUrl = canvas.toDataURL('image/jpeg', quality);
-      
-      resolve(compressedDataUrl);
+      ctx.drawImage(img, 0, 0, width, height);
+      canvas.toBlob(resolve, 'image/jpeg', quality);
     };
     
     img.src = URL.createObjectURL(file);
   });
 };
 
-// Check localStorage quota and clean if needed
+// Storage quota management
 export const manageStorageQuota = () => {
-  try {
-    // Test if we can write to localStorage
-    const testKey = 'storage_test';
-    const testValue = 'test';
-    localStorage.setItem(testKey, testValue);
-    localStorage.removeItem(testKey);
-    return true;
-  } catch (error) {
-    if (error.name === 'QuotaExceededError') {
-      // Clean up old data
-      cleanupOldData();
-      return true;
-    }
-    return false;
+  if ('storage' in navigator && 'estimate' in navigator.storage) {
+    return navigator.storage.estimate().then(estimate => {
+      const used = estimate.usage || 0;
+      const quota = estimate.quota || 0;
+      const percentage = (used / quota) * 100;
+      
+      return {
+        used,
+        quota,
+        percentage,
+        available: quota - used
+      };
+    });
   }
+  
+  return Promise.resolve({
+    used: 0,
+    quota: 0,
+    percentage: 0,
+    available: 0
+  });
 };
 
-// Clean up old data to free space
-const cleanupOldData = () => {
-  try {
-    // Remove old design previews (keep only the latest)
-    const designKey = 'adscreenhub_design';
-    if (localStorage.getItem(designKey)) {
-      localStorage.removeItem(designKey);
-    }
-    
-    // Keep only last 10 orders
-    const ordersKey = 'adscreenhub_orders';
-    const ordersData = localStorage.getItem(ordersKey);
-    if (ordersData) {
-      const orders = JSON.parse(ordersData);
-      if (orders.length > 10) {
-        const recentOrders = orders.slice(-10);
-        localStorage.setItem(ordersKey, JSON.stringify(recentOrders));
-      }
-    }
-    
-    // Clear any other large data
-    const keysToClean = ['adscreenhub_temp', 'adscreenhub_cache'];
-    keysToClean.forEach(key => {
-      if (localStorage.getItem(key)) {
-        localStorage.removeItem(key);
-      }
-    });
-  } catch (error) {
-    console.warn('Storage cleanup failed:', error);
-  }
+// Format date
+export const formatDate = (dateString) => {
+  const date = new Date(dateString);
+  return date.toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric'
+  });
+};
+
+// Format currency
+export const formatCurrency = (amount) => {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD'
+  }).format(amount);
 };

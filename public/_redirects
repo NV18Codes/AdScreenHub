@@ -1,19 +1,5 @@
-# Netlify redirects for SPA routing
-# This approach ensures assets are served correctly
+# Redirect /verify-email to the HTML file
+/verify-email /verify-email.html 200
 
-# Serve assets directly
-/assets/*    /assets/:splat    200
-
-# Serve static files directly
-/*.css      /:splat           200
-/*.js       /:splat           200
-/*.png      /:splat           200
-/*.jpg      /:splat           200
-/*.svg      /:splat           200
-/*.ico      /:splat           200
-
-# Handle backend email verification route
-/verify-email    /index.html   200
-
-# Handle all other routes and redirect to index.html
-/*          /index.html       200
+# Fallback for SPA routing
+/* /index.html 200
