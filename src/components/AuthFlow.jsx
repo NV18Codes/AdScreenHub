@@ -238,6 +238,12 @@ export default function AuthFlow() {
       const emailTokenToUse = emailToken || localStorage.getItem('emailToken');
       const phoneTokenToUse = phoneToken || localStorage.getItem('phoneToken');
       
+      if (!emailTokenToUse || !phoneTokenToUse) {
+        setError("Verification tokens missing. Please restart the verification process.");
+        setStep("email");
+        return;
+      }
+      
       await axios.post(`${API_BASE}/complete-registration`, {
         email,
         phoneNumber: phone,
@@ -252,7 +258,17 @@ export default function AuthFlow() {
       setPassword("");
       setConfirmPassword("");
     } catch (err) {
-      setError(err.response?.data?.message || "Registration failed. Please try again.");
+      if (err.response?.status === 401) {
+        setError("Verification tokens have expired. Please restart the verification process.");
+        // Clear expired tokens
+        localStorage.removeItem('emailToken');
+        localStorage.removeItem('phoneToken');
+        setEmailToken("");
+        setPhoneToken("");
+        setStep("email");
+      } else {
+        setError(err.response?.data?.message || "Registration failed. Please try again.");
+      }
     } finally {
       setLoading(false);
     }
@@ -334,13 +350,31 @@ export default function AuthFlow() {
                 />
               </div>
               
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
-              >
-                {loading ? "Sending..." : "Send Verification Email"}
-              </button>
+              <div className="space-y-3">
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+                >
+                  {loading ? "Sending..." : "Send Verification Email"}
+                </button>
+                
+                <button
+                  type="button"
+                  onClick={() => {
+                    // Clear any existing tokens
+                    localStorage.removeItem('emailToken');
+                    localStorage.removeItem('phoneToken');
+                    setEmailToken("");
+                    setPhoneToken("");
+                    setError("");
+                    setSuccess("");
+                  }}
+                  className="w-full bg-gray-200 text-gray-800 py-3 px-4 rounded-lg hover:bg-gray-300 font-medium"
+                >
+                  Clear & Start Fresh
+                </button>
+              </div>
             </form>
           </div>
         );
