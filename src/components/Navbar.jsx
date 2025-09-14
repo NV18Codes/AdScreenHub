@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 import styles from '../styles/Navbar.module.css';
 
 export default function Navbar() {
   const location = useLocation();
+  const { user, logout, isAuthenticated } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const toggleMenu = () => {
@@ -37,15 +39,32 @@ export default function Navbar() {
           <button onClick={() => scrollToSection('blogs')} className={styles.navLink}>Blogs</button>
           
           <div className={styles.authSection}>
-            <Link to="/login" className={`${styles.btn} ${styles.btnSecondary}`} onClick={closeMenu}>
-              Sign In
-            </Link>
-            <Link to="/signup" className={`${styles.btn} ${styles.btnPrimary}`} onClick={closeMenu}>
-              Sign Up
-            </Link>
-            <Link to="/dashboard" className={`${styles.btn} ${styles.btnSecondary}`} onClick={closeMenu}>
-              Dashboard
-            </Link>
+            {isAuthenticated() ? (
+              <>
+                <span className={styles.userName}>Welcome, {user?.name || 'User'}</span>
+                <Link to="/dashboard" className={`${styles.btn} ${styles.btnSecondary}`} onClick={closeMenu}>
+                  Dashboard
+                </Link>
+                <button 
+                  onClick={() => {
+                    logout();
+                    closeMenu();
+                  }} 
+                  className={`${styles.btn} ${styles.btnPrimary}`}
+                >
+                  Logout
+                </button>
+              </>
+            ) : (
+              <>
+                <Link to="/login" className={`${styles.btn} ${styles.btnSecondary}`} onClick={closeMenu}>
+                  Sign In
+                </Link>
+                <Link to="/signup" className={`${styles.btn} ${styles.btnPrimary}`} onClick={closeMenu}>
+                  Sign Up
+                </Link>
+              </>
+            )}
           </div>
         </div>
 

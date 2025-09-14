@@ -1,11 +1,13 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
 import axios from "axios";
 
 const API_BASE = "https://adscreenapi-production.up.railway.app/api/v1/auth";
 
 export default function AuthFlow() {
   const navigate = useNavigate();
+  const { login } = useAuth();
   const [searchParams] = useSearchParams();
   
   const [step, setStep] = useState(searchParams.get('step') || "email");
@@ -326,20 +328,18 @@ export default function AuthFlow() {
     try {
       const res = await axios.post(`${API_BASE}/login`, { email, password });
       
-      // Store token and user data
-      if (res.data.token) {
-        localStorage.setItem("token", res.data.token);
+      // Use auth context for login
+      if (res.data.token && res.data.user) {
+        login(res.data.user, res.data.token);
+        setSuccess("Logged in successfully! Redirecting...");
+        
+        // Redirect to dashboard after a short delay
+        setTimeout(() => {
+          navigate("/dashboard");
+        }, 1500);
+      } else {
+        setError("Login successful but missing user data. Please try again.");
       }
-      if (res.data.user) {
-        localStorage.setItem("user", JSON.stringify(res.data.user));
-      }
-      
-      setSuccess("Logged in successfully! Redirecting...");
-      
-      // Redirect to dashboard after a short delay
-      setTimeout(() => {
-        navigate("/dashboard");
-      }, 1500);
       
     } catch (err) {
       setError(err.response?.data?.message || "Login failed. Please check your credentials.");
@@ -386,31 +386,13 @@ export default function AuthFlow() {
                 />
               </div>
               
-              <div className="space-y-3">
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
-                >
-                  {loading ? "Sending..." : "Send Verification Email"}
-                </button>
-                
-                <button
-                  type="button"
-                  onClick={() => {
-                    // Clear any existing tokens
-                    localStorage.removeItem('emailToken');
-                    localStorage.removeItem('phoneToken');
-                    setEmailToken("");
-                    setPhoneToken("");
-                    setError("");
-                    setSuccess("");
-                  }}
-                  className="w-full bg-gray-200 text-gray-800 py-3 px-4 rounded-lg hover:bg-gray-300 font-medium"
-                >
-                  Clear & Start Fresh
-                </button>
-              </div>
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+              >
+                {loading ? "Sending..." : "Send Verification Email"}
+              </button>
             </form>
           </div>
         );
@@ -434,15 +416,6 @@ export default function AuthFlow() {
             </div>
             
             <div className="space-y-3">
-              <button
-                onClick={() => {
-                  setStep("phone");
-                  setSuccess("Email verified! Now verify your mobile number.");
-                }}
-                className="w-full bg-green-600 text-white py-3 px-4 rounded-lg hover:bg-green-700 font-medium"
-              >
-                I've Verified My Email
-              </button>
               <button
                 onClick={() => setStep("email")}
                 className="w-full bg-gray-200 text-gray-800 py-3 px-4 rounded-lg hover:bg-gray-300 font-medium"
