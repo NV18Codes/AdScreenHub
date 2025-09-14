@@ -102,7 +102,16 @@
             <div class="error">✗</div>
             <h1>Verification Failed</h1>
             <p id="errorMessage">There was an error verifying your email. Please try again.</p>
-            <a href="http://localhost:3001/auth" class="button">Try Again</a>
+            <div class="info-box">
+                <strong>Common Issues:</strong><br>
+                • Link may have expired (try requesting a new verification email)<br>
+                • Link may have already been used<br>
+                • Network connection issue
+            </div>
+            <div style="margin-top: 20px;">
+                <a href="http://localhost:3001/auth" class="button">Start Over</a>
+                <button onclick="location.reload()" class="button" style="background: #95a5a6; margin-left: 10px;">Retry</button>
+            </div>
         </div>
     </div>
 
@@ -139,7 +148,11 @@
                         console.log('Email token stored:', data.token);
                     }
                     showSuccess();
+                } else if (response.status === 401) {
+                    console.error('401 Unauthorized:', data);
+                    showError('Verification link has expired or is invalid. Please request a new verification email.');
                 } else {
+                    console.error('API Error:', data);
                     showError(data.message || 'Email verification failed. Please try again.');
                 }
             } catch (error) {
