@@ -1,32 +1,10 @@
-import React, { useState, useEffect } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../hooks/useAuth';
+import React, { useState } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import styles from '../styles/Navbar.module.css';
 
 export default function Navbar() {
-  const { user, isAuthenticated, loading, logout, refreshAuthState } = useAuth();
-  const navigate = useNavigate();
   const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-
-  // Ensure authentication state is properly loaded
-  useEffect(() => {
-    if (!loading && !isAuthenticated) {
-      // Try to restore auth state from localStorage
-      refreshAuthState();
-    }
-  }, [loading, isAuthenticated, refreshAuthState]);
-
-  // Debug logging
-  useEffect(() => {
-    console.log('Navbar auth state:', { user, isAuthenticated, loading });
-  }, [user, isAuthenticated, loading]);
-
-  const handleLogout = () => {
-    logout();
-    navigate('/');
-    setIsMenuOpen(false);
-  };
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
@@ -44,11 +22,6 @@ export default function Navbar() {
     }
   };
 
-  // Close menu when location changes
-  useEffect(() => {
-    closeMenu();
-  }, [location.pathname]);
-
   return (
     <nav className={styles.navbar}>
       <div className={styles.container}>
@@ -63,32 +36,17 @@ export default function Navbar() {
           <button onClick={() => scrollToSection('pricing')} className={styles.navLink}>Pricing</button>
           <button onClick={() => scrollToSection('blogs')} className={styles.navLink}>Blogs</button>
           
-          {!loading && isAuthenticated && user ? (
-            <div className={styles.authSection}>
-              <div className={styles.userMenu}>
-                <span className={styles.userName}>Hi, {user.fullName || user.email?.split('@')[0] || 'User'}</span>
-                <div className={styles.dropdown}>
-                  <Link to="/dashboard" className={styles.dropdownItem} onClick={closeMenu}>Dashboard</Link>
-                  <Link to="/my-orders" className={styles.dropdownItem} onClick={closeMenu}>My Orders</Link>
-                  <Link to="/profile" className={styles.dropdownItem} onClick={closeMenu}>Profile</Link>
-                  <button onClick={handleLogout} className={styles.dropdownItem}>Logout</button>
-                </div>
-              </div>
-            </div>
-          ) : !loading ? (
-            <div className={styles.authSection}>
-              <Link to="/login" className={`${styles.btn} ${styles.btnSecondary}`} onClick={closeMenu}>
-                Log In
-              </Link>
-              <Link to="/signup" className={`${styles.btn} ${styles.btnPrimary}`} onClick={closeMenu}>
-                Sign Up
-              </Link>
-            </div>
-          ) : (
-            <div className={styles.authSection}>
-              <span className={styles.loadingText}>Loading...</span>
-            </div>
-          )}
+          <div className={styles.authSection}>
+            <Link to="/login" className={`${styles.btn} ${styles.btnSecondary}`} onClick={closeMenu}>
+              Sign In
+            </Link>
+            <Link to="/signup" className={`${styles.btn} ${styles.btnPrimary}`} onClick={closeMenu}>
+              Sign Up
+            </Link>
+            <Link to="/dashboard" className={`${styles.btn} ${styles.btnSecondary}`} onClick={closeMenu}>
+              Dashboard
+            </Link>
+          </div>
         </div>
 
         {/* Mobile Menu Button */}
