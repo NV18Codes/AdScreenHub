@@ -2,8 +2,9 @@ import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import axios from "axios";
+import { API_BASE_URL, API_ENDPOINTS } from "../config/api";
 
-const API_BASE = "https://adscreenapi-production.up.railway.app/api/v1/auth";
+const API_BASE = `${API_BASE_URL}/auth`;
 
 export default function AuthFlow() {
   const navigate = useNavigate();
@@ -296,6 +297,8 @@ export default function AuthFlow() {
       setPassword("");
       setConfirmPassword("");
     } catch (err) {
+      console.error('Registration error:', err);
+      
       if (err.response?.status === 401) {
         setError("Verification tokens have expired. Please restart the verification process.");
         // Clear expired tokens
@@ -304,6 +307,13 @@ export default function AuthFlow() {
         setEmailToken("");
         setPhoneToken("");
         setStep("email");
+      } else if (err.response?.status === 400) {
+        setError(err.response?.data?.message || "Invalid registration data. Please check your information and try again.");
+      } else if (err.response?.status === 409) {
+        setError("An account with this email already exists. Please try logging in instead.");
+        setStep("login");
+      } else if (err.code === 'NETWORK_ERROR' || !err.response) {
+        setError("Network error. Please check your connection and try again.");
       } else {
         setError(err.response?.data?.message || "Registration failed. Please try again.");
       }

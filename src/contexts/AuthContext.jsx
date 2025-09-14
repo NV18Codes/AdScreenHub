@@ -47,7 +47,30 @@ export const AuthProvider = ({ children }) => {
   };
 
   const isAuthenticated = () => {
-    return !!user && !!localStorage.getItem('token');
+    const token = localStorage.getItem('token');
+    const userData = localStorage.getItem('user');
+    
+    if (!token || !userData) {
+      return false;
+    }
+    
+    try {
+      // Check if token is expired (basic check)
+      const tokenData = JSON.parse(atob(token.split('.')[1]));
+      const currentTime = Date.now() / 1000;
+      
+      if (tokenData.exp && tokenData.exp < currentTime) {
+        // Token expired, clear auth data
+        logout();
+        return false;
+      }
+      
+      return !!user;
+    } catch (error) {
+      console.error('Token validation error:', error);
+      logout();
+      return false;
+    }
   };
 
   return (

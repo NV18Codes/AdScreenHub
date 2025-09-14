@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
+import { API_BASE_URL, API_ENDPOINTS } from '../config/api';
 
-const API_BASE = "https://adscreenapi-production.up.railway.app/api/v1/auth";
+const API_BASE = `${API_BASE_URL}/auth`;
 
 export default function EmailRedirect() {
   const navigate = useNavigate();
@@ -40,14 +41,8 @@ export default function EmailRedirect() {
         
         // Redirect to auth page with phone step after 3 seconds
         setTimeout(() => {
-          // If we're on the production domain, redirect to localhost for development
-          if (window.location.hostname === 'ad-screenhub.netlify.app') {
-            console.log('Redirecting to localhost...');
-            window.location.href = 'http://localhost:3001/auth?step=phone';
-          } else {
-            console.log('Navigating to auth page...');
-            navigate('/auth?step=phone');
-          }
+          console.log('Navigating to auth page...');
+          navigate('/auth?step=phone');
         }, 3000);
       } catch (error) {
         console.error('Email verification error:', error);
@@ -77,21 +72,15 @@ export default function EmailRedirect() {
             <p className="text-gray-600">{message}</p>
             <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
               <p className="text-sm text-blue-800">
-                <strong>Next Step:</strong> Go back to your local development tab and click "I've Verified My Email" to continue with phone verification.
+                <strong>Next Step:</strong> Click the button below to continue with phone verification.
               </p>
             </div>
             <div className="space-y-2">
               <button
-                onClick={() => {
-                  if (window.location.hostname === 'ad-screenhub.netlify.app') {
-                    window.location.href = 'http://localhost:3001/auth?step=phone';
-                  } else {
-                    navigate('/auth?step=phone');
-                  }
-                }}
+                onClick={() => navigate('/auth?step=phone')}
                 className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 font-medium"
               >
-                Go to Local Development
+                Continue to Phone Verification
               </button>
             </div>
           </div>

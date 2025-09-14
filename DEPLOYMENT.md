@@ -37,3 +37,20 @@ The application now has a complete multi-step authentication system:
 
 ### Environment Variables:
 - `VITE_API_BASE_URL` (optional) - defaults to production API
+- `VITE_APP_ENV` (optional) - set to 'production' for production builds
+
+### Production Issues Fixed:
+1. ✅ Removed hardcoded localhost redirects
+2. ✅ Standardized API base URLs across components
+3. ✅ Enhanced token validation with expiration checking
+4. ✅ Improved error handling for registration and login
+5. ✅ Fixed email verification flow for production
+6. ✅ Added centralized API configuration
+
+### Testing Checklist:
+- [ ] Email verification redirects work properly
+- [ ] Phone verification OTP flow works
+- [ ] Registration completes successfully
+- [ ] Login works with proper token validation
+- [ ] Protected routes redirect unauthenticated users
+- [ ] Token expiration is handled gracefully
