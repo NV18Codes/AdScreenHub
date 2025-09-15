@@ -143,9 +143,9 @@
                 
                 if (response.ok && data.success) {
                     // Store the email verification token
-                    if (data.token) {
-                        localStorage.setItem('emailToken', data.token);
-                        console.log('Email token stored:', data.token);
+                    if (data.data.emailToken) {
+                        localStorage.setItem('emailToken', data.data.emailToken);
+                        console.log('Email token stored:', data.data.emailToken);
                     }
                     showSuccess();
                 } else if (response.status === 401) {
