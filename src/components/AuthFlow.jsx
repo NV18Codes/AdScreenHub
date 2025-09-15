@@ -343,7 +343,6 @@ export default function AuthFlow() {
       const res = await axios.post(`${API_BASE}/login`, { email, password });
       
       console.log('Login response:', res.data);
-      // Use auth context for login
         if (res.data.data.user && res.data.data.session.access_token) {
         login(res.data.data.user, res.data.data.session.access_token);
         setSuccess("Logged in successfully! Redirecting...");
