@@ -31,9 +31,8 @@ export default function EmailRedirect() {
         console.log('Email verification response:', response.data);
 
         // Store the email verification token
-        if (response.data.token) {
-          localStorage.setItem('emailToken', response.data.token);
-          console.log('Email token stored:', response.data.token);
+        if (response.data.data.emailToken) { // Changed from .token to .emailToken
+          localStorage.setItem('emailToken', response.data.data.emailToken); // Changed from .token to .emailToken
         }
 
         setStatus('success');

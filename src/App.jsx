@@ -12,6 +12,7 @@ import Checkout from './pages/Checkout';
 import FAQ from './pages/FAQ';
 import Terms from './pages/Terms';
 import Auth from './pages/Auth';
+import Login from './pages/login';
 import EmailRedirect from './pages/EmailRedirect';
 import ScrollToTop from './components/ScrollToTop';
 
@@ -56,7 +57,7 @@ function App() {
           
           {/* Authentication */}
           <Route path="/auth" element={<Auth />} />
-          <Route path="/login" element={<Auth />} />
+          <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Auth />} />
           <Route path="/verify-email" element={<EmailRedirect />} />
           
