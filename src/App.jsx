@@ -12,7 +12,7 @@ import Checkout from './pages/Checkout';
 import FAQ from './pages/FAQ';
 import Terms from './pages/Terms';
 import Auth from './pages/Auth';
-import Login from './pages/login';
+import Login from './pages/Login';
 import EmailRedirect from './pages/EmailRedirect';
 import ScrollToTop from './components/ScrollToTop';
 
