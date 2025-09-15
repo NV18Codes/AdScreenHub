@@ -1,4 +1,5 @@
-export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://adscreenapi-production.up.railway.app/api/v1';
+export const API_BASE_URL = 'http://localhost:9000/api/v1';
+// import.meta.env.VITE_API_BASE_URL || 'https://adscreenapi-production.up.railway.app/api/v1';
 
 // Centralized API endpoints
 export const API_ENDPOINTS = {

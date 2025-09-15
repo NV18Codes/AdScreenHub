@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import axios from "axios";
-import { API_BASE_URL, API_ENDPOINTS } from "../config/api";
+import { API_BASE_URL} from "../config/api";
 
 const API_BASE = `${API_BASE_URL}/auth`;
 
@@ -218,9 +218,10 @@ export default function AuthFlow() {
     try {
       const response = await axios.post(`${API_BASE}/verify-phone`, { phoneNumber: phone, otp });
       // Store the phone verification token
-      if (response.data.token) {
-        setPhoneToken(response.data.token);
-        localStorage.setItem('phoneToken', response.data.token);
+      console.log('Phone verification response:', response.data);
+      if (response.data.data.phoneToken) {
+        setPhoneToken(response.data.data.phoneToken);
+        localStorage.setItem('phoneToken', response.data.data.phoneToken);
       }
       setSuccess("Phone verified successfully!");
       setStep("register");
@@ -282,10 +283,13 @@ export default function AuthFlow() {
         setStep("phone");
         return;
       }
-      
+      console.log('Registration tokens check:', {
+        emailToken: emailTokenToUse,
+        phoneToken: phoneTokenToUse,
+        name,
+        password
+      });
       await axios.post(`${API_BASE}/complete-registration`, {
-        email,
-        phoneNumber: phone,
         name,
         password,
         emailToken: emailTokenToUse,
@@ -338,12 +342,13 @@ export default function AuthFlow() {
     try {
       const res = await axios.post(`${API_BASE}/login`, { email, password });
       
+      console.log('Login response:', res.data);
       // Use auth context for login
-      if (res.data.token && res.data.user) {
-        login(res.data.user, res.data.token);
+        if (res.data.data.user && res.data.data.session.access_token) {
+        login(res.data.data.user, res.data.data.session.access_token);
         setSuccess("Logged in successfully! Redirecting...");
-        
-        // Redirect to dashboard after a short delay
+        localStorage.setItem("authToken", res.data.data.session.access_token);
+        localStorage.setItem("user", JSON.stringify(res.data.data.user));
         setTimeout(() => {
           navigate("/dashboard");
         }, 1500);

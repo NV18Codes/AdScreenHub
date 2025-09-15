@@ -31,6 +31,7 @@ export default function Dashboard() {
   const [discountAmount, setDiscountAmount] = useState(0);
   const [couponError, setCouponError] = useState('');
   const [validatingCoupon, setValidatingCoupon] = useState(false);
+  const user = JSON.parse(localStorage.getItem('user'));
 
   const handleDateChange = (e) => {
     setSelectedDate(e.target.value);
