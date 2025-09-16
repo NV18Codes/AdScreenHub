@@ -21,34 +21,20 @@ const plans = [
 
 export default function Plans() {
   return (
-    <section className="px-8 py-24 relative overflow-hidden">
-      {/* Background Image */}
-      <div className="absolute inset-0">
-        <img 
-          src="/Banner.png" 
-          alt="Plans Background" 
-          className="w-full h-full object-cover opacity-10"
-          onError={(e) => {
-            console.error('Failed to load Banner.png');
-            e.target.style.display = 'none';
-          }}
-        />
-        <div className="absolute inset-0 bg-gray-50 bg-opacity-90"></div>
-      </div>
-      
-      <div className="relative z-10 max-w-7xl mx-auto">
-        <h2 className="heading-primary text-center mb-20">Our Plans</h2>
+    <section className="px-8 py-24 bg-white">
+      <div className="max-w-7xl mx-auto">
+        <h2 className="text-4xl md:text-5xl font-bold text-gray-900 text-center mb-20">Our Plans</h2>
         <div className="grid md:grid-cols-3 gap-8">
           {plans.map((plan, i) => (
             <div key={i} className="bg-blue-900 text-white rounded-2xl p-8 shadow-xl hover:shadow-2xl transition-shadow">
-              <h3 className="heading-tertiary text-center mb-8 text-white">{plan.name}</h3>
+              <h3 className="text-2xl md:text-3xl font-bold text-center mb-8 text-white">{plan.name}</h3>
               <div className="text-center mb-8">
-                <p className="text-white text-lg font-medium">{plan.duration}</p>
+                <p className="text-white text-xl font-semibold">{plan.duration}</p>
               </div>
               <div className="space-y-4 mb-8">
                 {plan.features.map((feature, idx) => (
                   <div key={idx} className="text-white text-center text-lg">
-                    {feature}
+                    • {feature}
                   </div>
                 ))}
               </div>

@@ -35,7 +35,7 @@ export default function Steps() {
         <div className="grid lg:grid-cols-2 gap-16 items-center">
           {/* Left Side - Steps */}
           <div>
-            <h2 className="section-heading mb-16">How to get started</h2>
+            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-16">How to get started</h2>
             <div className="space-y-8">
               {steps.map((step, i) => (
                 <div key={i} className="flex items-start space-x-6">
