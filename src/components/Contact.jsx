@@ -6,10 +6,10 @@ export default function Contact() {
   };
 
   return (
-    <section className="px-8 py-20 bg-white">
+    <section className="px-8 py-20 bg-white" style={{ paddingTop: '6rem' }}>
       <div className="max-w-4xl mx-auto">
         <div className="text-center mb-12">
-          <h2 className="text-5xl font-bold text-gray-800 mb-4 heading-font">Contact Us</h2>
+          <h2 className="section-heading mb-4">Contact Us</h2>
           <p className="text-xl text-gray-600">
             Get in touch with us for any inquiries or support
           </p>

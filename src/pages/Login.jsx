@@ -90,6 +90,18 @@ export default function Login() {
             {loading ? "Signing In..." : "Sign In"}
           </button>
         </form>
+        
+        <div className="text-center mt-4">
+          <p className="text-sm text-gray-600">
+            New here? <button 
+              type="button" 
+              onClick={() => navigate('/signup')}
+              className="text-blue-600 hover:text-blue-700 font-medium underline"
+            >
+              Create an account
+            </button>
+          </p>
+        </div>
         {error && (
           <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
             <p className="text-red-600 text-sm font-medium">{error}</p>

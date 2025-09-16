@@ -1,12 +1,26 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { getUserDisplayName, getUserEmail } from '../utils/userUtils';
 import styles from '../styles/Navbar.module.css';
 
 export default function Navbar() {
   const location = useLocation();
   const { user, logout, isAuthenticated } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  
+  // Debug: Log user object to see available fields
+  console.log('🔍 Navbar Debug:');
+  console.log('📋 User object:', user);
+  console.log('📋 User available fields:', user ? Object.keys(user) : 'No user data');
+  console.log('📋 Is authenticated:', isAuthenticated());
+  
+  // Get display name using utility function
+  const displayName = getUserDisplayName(user);
+  const userEmail = getUserEmail(user);
+  
+  console.log('📋 Display name:', displayName);
+  console.log('📋 User email:', userEmail);
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
@@ -16,8 +30,20 @@ export default function Navbar() {
     setIsMenuOpen(false);
   };
 
+  // Close menu when location changes
+  useEffect(() => {
+    closeMenu();
+  }, [location.pathname]);
+
   const scrollToSection = (sectionId) => {
     closeMenu();
+    
+    // If we're not on the home page, navigate to home first
+    if (location.pathname !== '/') {
+      window.location.href = `/#${sectionId}`;
+      return;
+    }
+    
     const element = document.getElementById(sectionId);
     if (element) {
       element.scrollIntoView({ behavior: 'smooth' });
@@ -28,7 +54,7 @@ export default function Navbar() {
     <nav className={styles.navbar}>
       <div className={styles.container}>
         <Link to="/" className={styles.logo} onClick={closeMenu}>
-          <img src="/logo-2.png" alt="AdScreenHub" className={styles.logoImage} />
+          <img src="/logo-2.png" alt="AdScreenHub Logo" className={styles.logoImage} />
         </Link>
 
         {/* Desktop Navigation */}
@@ -37,11 +63,12 @@ export default function Navbar() {
           <button onClick={() => scrollToSection('about')} className={styles.navLink}>About Us</button>
           <button onClick={() => scrollToSection('pricing')} className={styles.navLink}>Pricing</button>
           <button onClick={() => scrollToSection('blogs')} className={styles.navLink}>Blogs</button>
+          <Link to="/contact" className={styles.navLink} onClick={closeMenu}>Contact</Link>
           
           <div className={styles.authSection}>
             {isAuthenticated() ? (
               <>
-                <span className={styles.userName}>Welcome, {user?.name || 'User'}</span>
+                        <span className={styles.userName}>Welcome, {displayName}</span>
                 <Link to="/dashboard" className={`${styles.btn} ${styles.btnSecondary}`} onClick={closeMenu}>
                   Dashboard
                 </Link>
