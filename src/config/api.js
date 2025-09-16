@@ -82,6 +82,17 @@ export const authAPI = {
     makeRequest('/auth/login', { email, password })
 };
 
+// Data APIs
+export const dataAPI = {
+  getPlans: () => makeRequest('/data/plans', null, 'GET'),
+  
+  getLocationAvailability: (date) => 
+    makeRequest(`/data/locations/availability/${date}`, null, 'GET'),
+  
+  checkSlotAvailability: (locationId, startDate, planId) => 
+    makeRequest(`/data/locations/${locationId}/check-availability?startDate=${startDate}&planId=${planId}`, null, 'GET')
+};
+
 // Demo APIs
 export const ordersAPI = {
   createOrder: () => ({ success: true, data: { id: Date.now() } }),

@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useOrders } from '../hooks/useOrders';
 import { mockScreens, mockPlans } from '../data/mockData';
 import { isDateDisabled, validateFile, generateOrderId, compressImage, manageStorageQuota } from '../utils/validation';
+import { getUserDisplayName, getUserEmail } from '../utils/userUtils';
 import { useNavigate } from 'react-router-dom';
-import { couponsAPI } from '../config/api';
+import { couponsAPI, dataAPI } from '../config/api';
 import styles from '../styles/Dashboard.module.css';
 
 export default function Dashboard() {
@@ -32,18 +33,127 @@ export default function Dashboard() {
   const [couponError, setCouponError] = useState('');
   const [validatingCoupon, setValidatingCoupon] = useState(false);
   const user = JSON.parse(localStorage.getItem('user'));
+  
+  // Dynamic data state
+  const [plans, setPlans] = useState(mockPlans); // Initialize with mock data
+  const [locations, setLocations] = useState([]);
+  const [loadingPlans, setLoadingPlans] = useState(false);
+  const [loadingLocations, setLoadingLocations] = useState(false);
+  const [loadingAvailability, setLoadingAvailability] = useState(false);
+  const [availabilityData, setAvailabilityData] = useState({});
+  
+  // Debug: Log user object to see available fields
+  console.log('User object:', user);
+  console.log('Available user fields:', user ? Object.keys(user) : 'No user data');
+  console.log('🔍 Plans state:', plans);
+  console.log('🔍 Plans type:', typeof plans);
+  console.log('🔍 Plans is array:', Array.isArray(plans));
 
-  const handleDateChange = (e) => {
-    setSelectedDate(e.target.value);
-    setSelectedScreen(null);
-    setSelectedPlan(null);
+  // Fetch plans data
+  const fetchPlans = async () => {
+    setLoadingPlans(true);
+    try {
+      const result = await dataAPI.getPlans();
+      console.log('🔍 Plans API result:', result);
+      
+      if (result.success && result.data && Array.isArray(result.data)) {
+        console.log('✅ Using API plans data:', result.data);
+        setPlans(result.data);
+      } else {
+        console.warn('⚠️ API plans data invalid, using mock data:', result);
+        setPlans(mockPlans);
+      }
+    } catch (error) {
+      console.warn('⚠️ Plans API failed, using mock data:', error.message);
+      setPlans(mockPlans);
+    } finally {
+      setLoadingPlans(false);
+    }
   };
 
-  const handleScreenSelect = (screen) => {
-    // Check if screen has available inventory for selected date
-    if (selectedDate && !hasAvailableInventory(screen.id, selectedDate)) {
-      alert('This screen has no available inventory for the selected date. Please choose another date or screen.');
+  // Fetch location availability for a specific date
+  const fetchLocationAvailability = async (date) => {
+    if (!date) return;
+    
+    console.log('🔍 Fetching availability for date:', date);
+    setLoadingAvailability(true);
+    
+    try {
+      // Add timeout to prevent hanging
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('API timeout')), 5000)
+      );
+      
+      const apiPromise = dataAPI.getLocationAvailability(date);
+      const result = await Promise.race([apiPromise, timeoutPromise]);
+      
+      console.log('🔍 Availability API result:', result);
+      
+      if (result.success && result.data) {
+        console.log('🔍 Setting availability data:', result.data);
+        setAvailabilityData(result.data);
+      } else {
+        console.warn('⚠️ API returned no data or failed, using default availability');
+        // Don't set any availability data - let the UI handle it with defaults
+        setAvailabilityData({});
+      }
+    } catch (error) {
+      console.warn('⚠️ API call failed, using default availability:', error.message);
+      // Don't set any availability data - let the UI handle it with defaults
+      setAvailabilityData({});
+    } finally {
+      setLoadingAvailability(false);
+    }
+  };
+
+  // Check slot availability for specific location and plan
+  const checkSlotAvailability = async (locationId, startDate, planId) => {
+    try {
+      const result = await dataAPI.checkSlotAvailability(locationId, startDate, planId);
+      if (result.success) {
+        return result.data || { available: false, slots: 0 };
+      } else {
+        console.error('Failed to check slot availability:', result.error);
+        return { available: false, slots: 0 };
+      }
+    } catch (error) {
+      console.error('Error checking slot availability:', error);
+      return { available: false, slots: 0 };
+    }
+  };
+
+  const handleDateChange = async (e) => {
+    const newDate = e.target.value;
+    setSelectedDate(newDate);
+    setSelectedScreen(null);
+    setSelectedPlan(null);
+    
+    // Clear availability data when no date is selected
+    if (!newDate) {
+      setAvailabilityData({});
       return;
+    }
+    
+    // Fetch availability data for the selected date
+    await fetchLocationAvailability(newDate);
+  };
+
+  const handleScreenSelect = async (screen) => {
+    // Check if screen has available inventory for selected date
+    if (selectedDate) {
+      let availability;
+      if (availabilityData[screen.id]) {
+        // We have API data for this screen
+        availability = availabilityData[screen.id];
+      } else {
+        // No API data - assume available
+        availability = { available: true, slots: screen.totalInventory || 3 };
+      }
+      
+      if (!availability.available || availability.slots === 0) {
+        alert('This screen has no available inventory for the selected date. Please choose another date or screen.');
+        return;
+      }
     }
     setSelectedScreen(screen);
     setShowScreenModal(true);
@@ -169,18 +279,48 @@ export default function Dashboard() {
     }
   }, []);
 
+  // Fetch plans data on component mount
+  useEffect(() => {
+    fetchPlans();
+    
+    // Test API connectivity
+    testAPIConnectivity();
+  }, []);
+
+  // Test API connectivity
+  const testAPIConnectivity = async () => {
+    console.log('🔍 Testing API connectivity...');
+    try {
+      const result = await dataAPI.getPlans();
+      console.log('🔍 Plans API test result:', result);
+      
+      if (result.success) {
+        console.log('✅ Plans API is working');
+      } else {
+        console.warn('⚠️ Plans API returned error:', result.error);
+      }
+    } catch (error) {
+      console.warn('⚠️ Plans API test failed:', error.message);
+    }
+  };
+
   const handleFileUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
     // Updated allowed types to include more formats
-    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'video/mp4', 'video/mpeg4'];
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'video/mp4', 'video/mpeg4', 'video/mpeg', 'image/gif'];
     const maxSize = 15 * 1024 * 1024; // 15MB
 
-    const validation = validateFile(file, allowedTypes, maxSize);
-    
-    if (!validation.isValid) {
-      setUploadError(validation.errors.type || validation.errors.size);
+    // Check file type
+    if (!allowedTypes.includes(file.type)) {
+      setUploadError('Invalid file type. Please upload JPG, PNG, MP4, or GIF files only.');
+      return;
+    }
+
+    // Check file size
+    if (file.size > maxSize) {
+      setUploadError('File size too large. Please upload files smaller than 15MB.');
       return;
     }
 
@@ -257,15 +397,149 @@ export default function Dashboard() {
     return `${day}-${month}-${year}`;
   };
 
+  // Dashboard statistics functions
+  const getTotalOrders = () => {
+    const orders = JSON.parse(localStorage.getItem('adscreenhub_orders') || '[]');
+    return orders.length;
+  };
+
+  const getTotalSpent = () => {
+    const orders = JSON.parse(localStorage.getItem('adscreenhub_orders') || '[]');
+    const total = orders
+      .filter(order => order.status !== 'Cancelled Display')
+      .reduce((sum, order) => sum + (order.amount || 0), 0);
+    return total.toLocaleString('en-IN');
+  };
+
+  const getActiveOrders = () => {
+    const orders = JSON.parse(localStorage.getItem('adscreenhub_orders') || '[]');
+    return orders.filter(order => 
+      order.status === 'In Display' || order.status === 'Pending Approval'
+    ).length;
+  };
+
+  const getCompletedOrders = () => {
+    const orders = JSON.parse(localStorage.getItem('adscreenhub_orders') || '[]');
+    return orders.filter(order => order.status === 'Completed Display').length;
+  };
+
+  const getRecentOrders = () => {
+    const orders = JSON.parse(localStorage.getItem('adscreenhub_orders') || '[]');
+    return orders
+      .sort((a, b) => new Date(b.displayDate) - new Date(a.displayDate))
+      .slice(0, 3); // Show only 3 most recent orders
+  };
+
+  const getStatusClass = (status) => {
+    switch (status) {
+      case 'Pending Approval':
+        return styles.statusPending;
+      case 'In Display':
+        return styles.statusActive;
+      case 'Completed Display':
+        return styles.statusCompleted;
+      case 'Cancelled Display':
+        return styles.statusCancelled;
+      case 'Revise Your Design':
+        return styles.statusRevision;
+      default:
+        return styles.statusPending;
+    }
+  };
+
   return (
     <div className={styles.dashboard}>
       <div className={styles.container}>
         <div className={styles.header}>
           <div className={styles.headerContent}>
             <div>
-              <h1>Welcome back, {user?.fullName || user?.email?.split('@')[0] || 'User'}!</h1>
+              <h1>Welcome back, {user?.fullName || user?.name || user?.firstName || user?.email?.split('@')[0] || 'User'}!</h1>
               <p>Book your LED screen advertising campaign</p>
             </div>
+          </div>
+        </div>
+
+        {/* Dashboard Overview */}
+        <div className={styles.dashboardOverview}>
+          <div className={styles.overviewGrid}>
+            <div className={styles.overviewCard}>
+              <div className={styles.overviewIcon}>📋</div>
+              <div className={styles.overviewContent}>
+                <h3>Total Orders</h3>
+                <p className={styles.overviewNumber}>{getTotalOrders()}</p>
+                <span className={styles.overviewLabel}>Campaigns placed</span>
+              </div>
+            </div>
+            
+            <div className={styles.overviewCard}>
+              <div className={styles.overviewIcon}>₹</div>
+              <div className={styles.overviewContent}>
+                <h3>Total Spent</h3>
+                <p className={styles.overviewNumber}>₹{getTotalSpent()}</p>
+                <span className={styles.overviewLabel}>All time spending</span>
+              </div>
+            </div>
+            
+            <div className={styles.overviewCard}>
+              <div className={styles.overviewIcon}>▶️</div>
+              <div className={styles.overviewContent}>
+                <h3>Active Campaigns</h3>
+                <p className={styles.overviewNumber}>{getActiveOrders()}</p>
+                <span className={styles.overviewLabel}>Currently running</span>
+              </div>
+            </div>
+            
+            <div className={styles.overviewCard}>
+              <div className={styles.overviewIcon}>✓</div>
+              <div className={styles.overviewContent}>
+                <h3>Completed</h3>
+                <p className={styles.overviewNumber}>{getCompletedOrders()}</p>
+                <span className={styles.overviewLabel}>Successfully finished</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Recent Orders Section */}
+        <div className={styles.recentOrders}>
+          <div className={styles.sectionHeader}>
+            <h2>Recent Orders</h2>
+            <button 
+              className={styles.viewAllBtn}
+              onClick={() => navigate('/my-orders')}
+            >
+              View All Orders
+            </button>
+          </div>
+          
+          <div className={styles.ordersList}>
+            {getRecentOrders().length > 0 ? (
+              getRecentOrders().map((order) => (
+                <div key={order.id} className={styles.orderCard}>
+                  <div className={styles.orderInfo}>
+                    <h4>{order.screenName}</h4>
+                    <p className={styles.orderLocation}>{order.location}</p>
+                    <p className={styles.orderDate}>{formatDate(order.displayDate)}</p>
+                  </div>
+                  <div className={styles.orderStatus}>
+                    <span className={`${styles.statusBadge} ${getStatusClass(order.status)}`}>
+                      {order.status}
+                    </span>
+                    <p className={styles.orderAmount}>₹{order.amount}</p>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className={styles.noOrders}>
+                <p>No orders yet. Start your first campaign!</p>
+                <button 
+                  className={styles.startCampaignBtn}
+                  onClick={() => window.scrollTo({ top: 600, behavior: 'smooth' })}
+                >
+                  Book Your First Ad
+                </button>
+              </div>
+            )}
           </div>
         </div>
 
@@ -292,43 +566,76 @@ export default function Dashboard() {
           {selectedDate && (
             <div className={styles.screensSection}>
               <h2>Choose Your LED Screen</h2>
-              <div className={styles.screensGrid}>
-                {mockScreens.map((screen) => {
-                  const availableInventory = getAvailableInventory(screen.id, selectedDate);
-                  const isFullyBooked = availableInventory === 0;
-                  const hasInventory = availableInventory > 0;
-                  
-                  return (
-                    <div
-                      key={screen.id}
-                      className={`${styles.screenCard} ${isFullyBooked ? styles.fullyBooked : ''} ${hasInventory ? styles.available : ''}`}
-                      onClick={() => hasInventory ? handleScreenSelect(screen) : null}
-                    >
-                      <img src={screen.image} alt={screen.name} className={styles.screenImage} />
-                      <div className={styles.screenInfo}>
-                        <h3>{screen.name}</h3>
-                        <p className={styles.screenLocation}>{screen.location}</p>
-                        <p className={styles.screenSize}>{screen.size}</p>
-                        <p className={styles.screenPixels}>{screen.pixels}</p>
-                        <p className={styles.screenPrice}>Starting at ₹{screen.price}</p>
-                        
-                        {/* Inventory Status */}
-                        {isFullyBooked ? (
-                          <div className={styles.fullyBookedBadge}>
-                            <span>Fully Booked</span>
-                          </div>
-                        ) : (
-                          <div className={styles.inventoryInfo}>
-                            <span className={styles.availableSlots}>
-                              {availableInventory} slot{availableInventory !== 1 ? 's' : ''} available
-                            </span>
-                          </div>
-                        )}
+              {loadingAvailability ? (
+                <div className={styles.loadingMessage}>
+                  <p>Loading availability data...</p>
+                </div>
+              ) : (
+                <div className={styles.screensGrid}>
+                  {mockScreens.map((screen) => {
+                    // Determine availability based on date selection and API data
+                    let availability;
+                    let isFullyBooked = false;
+                    let hasInventory = true;
+                    
+                    if (!selectedDate) {
+                      // No date selected - show all screens as available
+                      availability = { available: true, slots: screen.totalInventory || 3 };
+                      isFullyBooked = false;
+                      hasInventory = true;
+                    } else if (availabilityData[screen.id]) {
+                      // Date selected and we have API data for this screen
+                      availability = availabilityData[screen.id];
+                      isFullyBooked = !availability.available || availability.slots === 0;
+                      hasInventory = availability.available && availability.slots > 0;
+                    } else {
+                      // Date selected but no API data for this screen - show as available
+                      availability = { available: true, slots: screen.totalInventory || 3 };
+                      isFullyBooked = false;
+                      hasInventory = true;
+                    }
+                    
+                    console.log(`🔍 Screen ${screen.id} (${screen.name}):`, {
+                      selectedDate,
+                      availability,
+                      isFullyBooked,
+                      hasInventory,
+                      availabilityData: availabilityData[screen.id],
+                      hasApiData: !!availabilityData[screen.id]
+                    });
+                    
+                    return (
+                      <div
+                        key={screen.id}
+                        className={`${styles.screenCard} ${isFullyBooked ? styles.fullyBooked : ''} ${hasInventory ? styles.available : ''}`}
+                        onClick={() => hasInventory ? handleScreenSelect(screen) : null}
+                      >
+                        <img src={screen.image} alt={screen.name} className={styles.screenImage} />
+                        <div className={styles.screenInfo}>
+                          <h3>{screen.name}</h3>
+                          <p className={styles.screenLocation}>{screen.location}</p>
+                          <p className={styles.screenSize}>{screen.size}</p>
+                          <p className={styles.screenPixels}>{screen.pixels}</p>
+                          <p className={styles.screenPrice}>LED Screen Available</p>
+                          
+                          {/* Inventory Status */}
+                          {isFullyBooked ? (
+                            <div className={styles.fullyBookedBadge}>
+                              <span>Fully Booked</span>
+                            </div>
+                          ) : (
+                            <div className={styles.inventoryInfo}>
+                              <span className={styles.availableSlots}>
+                                {availability.slots} slot{availability.slots !== 1 ? 's' : ''} available
+                              </span>
+                            </div>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  );
-                })}
-              </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -369,26 +676,38 @@ export default function Dashboard() {
 
               <div className={styles.plansSection}>
                 <h3>Select Your Plan</h3>
-                <div className={styles.plansGrid}>
-                  {mockPlans.map((plan) => (
-                    <div
-                      key={plan.id}
-                      className={`${styles.planCard} ${
-                        selectedPlan?.id === plan.id ? styles.selected : ''
-                      }`}
-                      onClick={() => handlePlanSelect(plan)}
-                    >
-                      <h4>{plan.name}</h4>
-                      <div className={styles.planPrice}>₹{plan.price.toLocaleString()}</div>
-                      <div className={styles.planDuration}>{plan.duration}</div>
-                      <ul className={styles.planFeatures}>
-                        {plan.features.map((feature, index) => (
-                          <li key={index}>{feature}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  ))}
-                </div>
+                {loadingPlans ? (
+                  <div className={styles.loadingMessage}>
+                    <p>Loading plans...</p>
+                  </div>
+                ) : (
+                  <div className={styles.plansGrid}>
+                    {Array.isArray(plans) && plans.length > 0 ? (
+                      plans.map((plan) => (
+                        <div
+                          key={plan.id}
+                          className={`${styles.planCard} ${
+                            selectedPlan?.id === plan.id ? styles.selected : ''
+                          }`}
+                          onClick={() => handlePlanSelect(plan)}
+                        >
+                          <h4>{plan.name}</h4>
+                          <div className={styles.planPrice}>Plan Available</div>
+                          <div className={styles.planDuration}>{plan.duration}</div>
+                          <ul className={styles.planFeatures}>
+                            {plan.features.map((feature, index) => (
+                              <li key={index}>{feature}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      ))
+                    ) : (
+                      <div className={styles.loadingMessage}>
+                        <p>No plans available. Please try again later.</p>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
 
               {selectedPlan && (
@@ -404,7 +723,7 @@ export default function Dashboard() {
                     <span>Date:</span> <span>{formatDate(selectedDate)}</span>
                   </div>
                   <div className={styles.summaryItem}>
-                    <span>Total:</span> <span>₹{selectedPlan.price.toLocaleString()}</span>
+                    <span>Plan:</span> <span>{selectedPlan.name}</span>
                   </div>
                   
                   <button
@@ -538,13 +857,13 @@ export default function Dashboard() {
               
               <div className={styles.modalHeader}>
                 <h2>Upload Your Design</h2>
-                <p>Please upload your advertisement design (JPG, PNG, MP4, MPEG4 formats only, max 15MB)</p>
+                <p>Please upload your advertisement design (JPG, PNG, MP4, MPEG4, MPEG, GIF formats only, max 15MB)</p>
               </div>
 
               <div className={styles.uploadSection}>
                 <input
                   type="file"
-                  accept=".jpg,.jpeg,.png,.mp4,.mpeg4"
+                  accept=".jpg,.jpeg,.png,.mp4,.mpeg4,.mpeg,.gif"
                   onChange={handleFileUpload}
                   className={styles.fileInput}
                   id="design-upload"
@@ -555,7 +874,7 @@ export default function Dashboard() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                     </svg>
                     <p>Click to upload or drag and drop</p>
-                    <p className={styles.fileTypes}>JPG, PNG, MP4, MPEG4 (max 15MB)</p>
+                    <p className={styles.fileTypes}>JPG, PNG, MP4, MPEG4, MPEG, GIF (max 15MB)</p>
                   </div>
                 </label>
 
@@ -771,7 +1090,7 @@ export default function Dashboard() {
                   </div>
                   <div className={styles.orderItem}>
                     <span>Plan:</span>
-                    <span>{mockPlans.find(p => p.id === newOrder.planId)?.name}</span>
+                    <span>{plans.find(p => p.id === newOrder.planId)?.name}</span>
                   </div>
                   <div className={styles.orderItem}>
                     <span>Display Date:</span>

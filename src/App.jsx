@@ -1,7 +1,6 @@
 import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
-import ProtectedRoute from './components/ProtectedRoute';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import Home from './pages/Home';
@@ -11,6 +10,7 @@ import MyOrders from './pages/MyOrders';
 import Checkout from './pages/Checkout';
 import FAQ from './pages/FAQ';
 import Terms from './pages/Terms';
+import Contact from './pages/Contact';
 import Auth from './pages/Auth';
 import Login from './pages/Login';
 import EmailRedirect from './pages/EmailRedirect';
@@ -52,8 +52,9 @@ function App() {
         <Routes>
           {/* Public Routes */}
           <Route path="/" element={<Layout><Home /></Layout>} />
-          <Route path="/faq" element={<Layout><FAQ /></Layout>} />
-          <Route path="/terms" element={<Layout><Terms /></Layout>} />
+                  <Route path="/faq" element={<Layout><FAQ /></Layout>} />
+                  <Route path="/terms" element={<Layout><Terms /></Layout>} />
+                  <Route path="/contact" element={<Layout><Contact /></Layout>} />
           
           {/* Authentication */}
           <Route path="/auth" element={<Auth />} />
@@ -61,11 +62,11 @@ function App() {
           <Route path="/signup" element={<Auth />} />
           <Route path="/verify-email" element={<EmailRedirect />} />
           
-          {/* Protected Dashboard Routes */}
-          <Route path="/dashboard" element={<ProtectedRoute><Layout><Dashboard /></Layout></ProtectedRoute>} />
-          <Route path="/profile" element={<ProtectedRoute><Layout><Profile /></Layout></ProtectedRoute>} />
-          <Route path="/my-orders" element={<ProtectedRoute><Layout><MyOrders /></Layout></ProtectedRoute>} />
-          <Route path="/checkout" element={<ProtectedRoute><Layout><Checkout /></Layout></ProtectedRoute>} />
+          {/* Dashboard Routes */}
+          <Route path="/dashboard" element={<Layout><Dashboard /></Layout>} />
+          <Route path="/profile" element={<Layout><Profile /></Layout>} />
+          <Route path="/my-orders" element={<Layout><MyOrders /></Layout>} />
+          <Route path="/checkout" element={<Layout><Checkout /></Layout>} />
 
           {/* Catch all */}
           <Route path="*" element={<Navigate to="/" replace />} />

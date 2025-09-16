@@ -147,7 +147,7 @@ export default function MyOrders() {
           <div className={styles.emptyState}>
             <h2>No orders yet</h2>
             <p>Start your first advertising campaign by booking an LED screen.</p>
-            <Link to="https://ad-screen-hub.vercel.app/book-ad" className={`${styles.btn} ${styles.btnPrimary}`}>
+            <Link to="/dashboard" className={`${styles.btn} ${styles.btnPrimary}`}>
               Book Your First Ad
             </Link>
           </div>

@@ -58,21 +58,6 @@
   filter: brightness(0) invert(1);
 }
 
-.logoIcon {
-  background-color: var(--white);
-  color: var(--primary-color);
-  padding: 0.25rem 0.5rem;
-  border-radius: 0.25rem;
-  font-size: 0.875rem;
-  font-weight: 700;
-  margin-right: 0.5rem;
-}
-
-.logoText {
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: var(--white);
-}
 
 .description {
   color: rgba(255, 255, 255, 0.8);
@@ -148,14 +133,6 @@
     font-size: 0.8rem;
   }
 
-  .logoText {
-    font-size: 1.125rem;
-  }
-
-  .logoIcon {
-    font-size: 0.75rem;
-    padding: 0.2rem 0.4rem;
-  }
   
   .footerBottom {
     flex-direction: column;
@@ -203,14 +180,6 @@
     font-size: 0.75rem;
   }
 
-  .logoText {
-    font-size: 1rem;
-  }
-
-  .logoIcon {
-    font-size: 0.7rem;
-    padding: 0.15rem 0.3rem;
-  }
 
   .footerBottom p {
     font-size: 0.75rem;

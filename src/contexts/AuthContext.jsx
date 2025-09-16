@@ -19,11 +19,42 @@ export const AuthProvider = ({ children }) => {
     const token = localStorage.getItem('token');
     const userData = localStorage.getItem('user');
     
+    console.log('🔍 AuthContext Debug - Initial Load:');
+    console.log('Token exists:', !!token);
+    console.log('User data exists:', !!userData);
+    
     if (token && userData) {
       try {
-        setUser(JSON.parse(userData));
+        const parsedUser = JSON.parse(userData);
+        console.log('📋 Parsed User Object:', parsedUser);
+        console.log('📋 User Object Keys:', Object.keys(parsedUser));
+        console.log('📋 User Object Values:', Object.values(parsedUser));
+        console.log('📋 User Object Type:', typeof parsedUser);
+        
+        // Check for different possible name fields
+        const possibleNames = [
+          parsedUser.fullName,
+          parsedUser.name,
+          parsedUser.firstName,
+          parsedUser.lastName,
+          parsedUser.displayName,
+          parsedUser.username,
+          parsedUser.email?.split('@')[0]
+        ];
+        console.log('📋 Possible Name Fields:', {
+          fullName: parsedUser.fullName,
+          name: parsedUser.name,
+          firstName: parsedUser.firstName,
+          lastName: parsedUser.lastName,
+          displayName: parsedUser.displayName,
+          username: parsedUser.username,
+          email: parsedUser.email,
+          emailPrefix: parsedUser.email?.split('@')[0]
+        });
+        
+        setUser(parsedUser);
       } catch (error) {
-        console.error('Error parsing user data:', error);
+        console.error('❌ Error parsing user data:', error);
         localStorage.removeItem('token');
         localStorage.removeItem('user');
       }
@@ -33,6 +64,24 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const login = (userData, token) => {
+    console.log('🔍 AuthContext Debug - Login:');
+    console.log('📋 Login User Data:', userData);
+    console.log('📋 Login User Data Keys:', Object.keys(userData));
+    console.log('📋 Login User Data Values:', Object.values(userData));
+    console.log('📋 Login User Data Type:', typeof userData);
+    
+    // Check for different possible name fields
+    console.log('📋 Login Name Fields:', {
+      fullName: userData.fullName,
+      name: userData.name,
+      firstName: userData.firstName,
+      lastName: userData.lastName,
+      displayName: userData.displayName,
+      username: userData.username,
+      email: userData.email,
+      emailPrefix: userData.email?.split('@')[0]
+    });
+    
     setUser(userData);
     localStorage.setItem('user', JSON.stringify(userData));
     localStorage.setItem('token', token);

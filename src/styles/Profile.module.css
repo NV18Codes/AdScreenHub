@@ -2,6 +2,7 @@
   min-height: 100vh;
   background-color: var(--gray-100);
   padding: 2rem 0;
+  padding-top: 6rem; /* Account for sticky navbar */
 }
 
 .container {
