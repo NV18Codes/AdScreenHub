@@ -74,10 +74,10 @@ export const authAPI = {
   
   verifyPhone: (phoneNumber, otp) => 
     makeRequest('/auth/verify-phone', { phoneNumber, otp }),
-  
-  register: (email, phoneNumber, name, password) => 
-    makeRequest('/auth/complete-registration', { email, phoneNumber, name, password }),
-  
+
+  register: (email, fullName, phoneNumber, name, password) => 
+    makeRequest('/auth/complete-registration', { email, fullName, phoneNumber, name, password }),
+
   login: (email, password) => 
     makeRequest('/auth/login', { email, password })
 };

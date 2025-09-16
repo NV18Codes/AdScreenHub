@@ -290,7 +290,7 @@ export default function AuthFlow() {
         password
       });
       await axios.post(`${API_BASE}/complete-registration`, {
-        name,
+        fullName:name,
         password,
         emailToken: emailTokenToUse,
         phoneToken: phoneTokenToUse,
