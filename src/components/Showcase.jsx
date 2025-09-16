@@ -13,23 +13,9 @@ export default function Showcase() {
   ];
 
   return (
-    <section className="px-8 py-20 relative overflow-hidden">
-      {/* Background Image */}
-      <div className="absolute inset-0">
-        <img 
-          src="/Banner.png" 
-          alt="Showcase Background" 
-          className="w-full h-full object-cover opacity-5"
-          onError={(e) => {
-            console.error('Failed to load Banner.png');
-            e.target.style.display = 'none';
-          }}
-        />
-        <div className="absolute inset-0 bg-white bg-opacity-95"></div>
-      </div>
-      
-      <div className="relative z-10 max-w-7xl mx-auto">
-        <h2 className="section-heading mb-16">
+    <section className="px-8 py-20 bg-white">
+      <div className="max-w-7xl mx-auto">
+        <h2 className="text-4xl md:text-5xl font-bold text-gray-900 text-center mb-16">
           Every message deserves a spotlight.
         </h2>
         
