@@ -1,10 +1,35 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import styles from '../styles/FAQ.module.css';
 
 export default function FAQ() {
+  const navigate = useNavigate();
+
+  const handleGoBack = () => {
+    console.log('FAQ Back button clicked!');
+    alert('FAQ Back button clicked! Navigating to home...');
+    console.log('Navigating to home page...');
+    try {
+      // Try React Router navigation first
+      navigate('/');
+    } catch (error) {
+      console.error('Navigation error:', error);
+      // Fallback to direct URL change
+      window.location.href = '/';
+    }
+  };
+
   return (
     <div className={styles.faqContainer}>
       <div className={styles.faqHeader}>
+        <button 
+          onClick={handleGoBack} 
+          className={styles.backButton}
+          type="button"
+          style={{ zIndex: 10 }}
+        >
+          ← Go Back
+        </button>
         <h1>Frequently Asked Questions</h1>
         <p>Everything you need to know about AdScreenHub's LED digital screen advertising platform</p>
       </div>

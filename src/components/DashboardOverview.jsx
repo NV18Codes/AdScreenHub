@@ -135,7 +135,7 @@ export default function DashboardOverview() {
               </svg>
               <h3>No orders yet</h3>
               <p>Start your advertising journey by booking your first ad!</p>
-              <Link to="/book-ad" className={styles.btnPrimary}>
+              <Link to="/my-orders" className={styles.btnPrimary}>
                 Book Your First Ad
               </Link>
             </div>

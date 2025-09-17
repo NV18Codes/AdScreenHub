@@ -20,20 +20,24 @@ export default function Hero() {
             e.target.style.display = 'none';
           }}
         />
-        <div className="absolute inset-0 bg-black bg-opacity-60"></div>
       </div>
       
-      <div className="relative z-10 text-center text-white px-8 max-w-5xl mx-auto">
-        <h1 className="heading-hero text-white mb-12 drop-shadow-2xl">
-          Advertise <span className="italic text-8xl md:text-9xl drop-shadow-2xl">BIG</span>, Spend small
+      <div className="relative z-10 text-center text-white px-8 max-w-6xl mx-auto">
+        {/* Main Headline */}
+        <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-8 leading-tight">
+          Advertise big, Spend small
         </h1>
-        <p className="text-3xl md:text-4xl mb-12 text-white font-medium drop-shadow-xl">
-          Go <span className="font-bold italic text-5xl md:text-6xl drop-shadow-2xl">BIG</span> with LED billboard advertising!
+        
+        {/* Sub-text/Tagline */}
+        <p className="text-xl md:text-2xl lg:text-3xl mb-12 font-medium leading-relaxed">
+          Starting at just <span className="font-bold text-2xl md:text-3xl lg:text-4xl">₹7/ad</span>, Go <span className="font-bold italic text-3xl md:text-3xl lg:text-4xl">BIG</span> with LED billboard advertising!
         </p>
+        
+        {/* Get Started Button */}
         <div className="flex justify-center">
           <button 
             onClick={handleGetStarted}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-12 py-6 rounded-full font-bold text-2xl transition-all duration-300 shadow-2xl hover:shadow-blue-500/25 hover:scale-105"
+            className="bg-white text-blue-900 px-12 py-6 rounded-full font-bold text-xl md:text-2xl transition-all duration-300 shadow-2xl hover:shadow-white/25 hover:scale-105 hover:bg-blue-50"
           >
             Get Started
           </button>

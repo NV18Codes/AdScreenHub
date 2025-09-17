@@ -6,9 +6,25 @@
 }
 
 .container {
-  max-width: 1200px;
+  max-width: 1400px;
   margin: 0 auto;
   padding: 0 1rem;
+}
+
+.pageLayout {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.ordersSection {
+  width: 100%;
+}
+
+.calendarSection {
+  width: 100%;
+  max-width: 1000px;
+  margin: 0 auto;
 }
 
 .header {

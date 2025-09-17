@@ -1,3 +1,6 @@
+import React from 'react';
+import LongerBookingCard from './LongerBookingCard';
+
 export default function Contact() {
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -72,14 +75,8 @@ export default function Contact() {
           </form>
         </div>
         
-        <div className="mt-12 text-center">
-          <div className="inline-flex items-center bg-blue-50 rounded-full px-6 py-3">
-            <div className="bg-blue-600 text-white px-2 py-1 rounded text-sm font-bold mr-3">AD</div>
-            <div className="text-xl font-bold text-blue-900">SCREEN HUB</div>
-          </div>
-          <p className="text-gray-600 mt-4">
-            Your trusted partner for LED billboard advertising
-          </p>
+        <div className="mt-12 flex justify-center">
+          <LongerBookingCard />
         </div>
       </div>
     </section>

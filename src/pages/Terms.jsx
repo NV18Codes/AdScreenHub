@@ -7,33 +7,28 @@ export default function Terms() {
   const location = useLocation();
 
   const handleGoBack = () => {
-    // Check if there's a referrer in the state
-    const referrer = location.state?.referrer;
-    
-    if (referrer) {
-      // If there's a specific referrer, go back to that page
-      navigate(referrer);
-    } else {
-      // Check if we came from the home page (footer link)
-      const fromHome = document.referrer.includes(window.location.origin) && 
-                      !document.referrer.includes('/dashboard') && 
-                      !document.referrer.includes('/my-orders') &&
-                      !document.referrer.includes('/profile');
-      
-      if (fromHome) {
-        // If from home page, go back to home
-        navigate('/');
-      } else {
-        // Default: go back to previous page
-        navigate(-1);
-      }
+    console.log('Back button clicked!');
+    alert('Back button clicked! Navigating to home...');
+    console.log('Navigating to home page...');
+    try {
+      // Try React Router navigation first
+      navigate('/');
+    } catch (error) {
+      console.error('Navigation error:', error);
+      // Fallback to direct URL change
+      window.location.href = '/';
     }
   };
 
   return (
     <div className={styles.container}>
       <div className={styles.header}>
-        <button onClick={handleGoBack} className={styles.backButton}>
+        <button 
+          onClick={handleGoBack} 
+          className={styles.backButton}
+          type="button"
+          style={{ zIndex: 10 }}
+        >
           ← Go Back
         </button>
         <h1 className={styles.title}>Terms of Service</h1>

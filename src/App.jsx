@@ -57,9 +57,9 @@ function App() {
                   <Route path="/contact" element={<Layout><Contact /></Layout>} />
           
           {/* Authentication */}
-          <Route path="/auth" element={<Auth />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<Auth />} />
+          <Route path="/auth" element={<Layout showFooter={false}><Auth /></Layout>} />
+          <Route path="/login" element={<Layout showFooter={false}><Login /></Layout>} />
+          <Route path="/signup" element={<Layout showFooter={false}><Auth /></Layout>} />
           <Route path="/verify-email" element={<EmailRedirect />} />
           
           {/* Dashboard Routes */}

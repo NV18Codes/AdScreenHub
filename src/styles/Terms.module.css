@@ -27,6 +27,8 @@
   display: flex;
   align-items: center;
   gap: 8px;
+  z-index: 10;
+  pointer-events: auto;
 }
 
 .backButton:hover {
