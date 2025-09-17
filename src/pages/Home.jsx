@@ -4,7 +4,6 @@ import Steps from '../components/Steps';
 import About from '../components/About';
 import Plans from '../components/Plans';
 import Showcase from '../components/Showcase';
-import Contact from '../components/Contact';
 
 export default function Home() {
   useEffect(() => {
@@ -38,17 +37,14 @@ export default function Home() {
       <div id="how-it-works">
         <Steps />
       </div>
+      <div id="showcase">
+        <Showcase />
+      </div>
       <div id="about">
         <About />
       </div>
       <div id="pricing">
         <Plans />
-      </div>
-      <div id="blogs">
-        <Showcase />
-      </div>
-      <div id="contact">
-        <Contact />
       </div>
     </div>
   );

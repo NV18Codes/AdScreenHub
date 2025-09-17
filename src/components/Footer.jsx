@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import LongerBookingCard from './LongerBookingCard';
 import styles from '../styles/Footer.module.css';
 
 export default function Footer() {
@@ -56,9 +57,27 @@ export default function Footer() {
                 alt="AdScreenHub Logo" 
                 className="h-16 w-auto mb-3 filter brightness-0 invert"
               />
-              <p className="text-white text-sm leading-relaxed max-w-xs">
+              <p className="text-white text-sm leading-relaxed max-w-xs mb-4">
                 Your trusted partner for LED billboard advertising
               </p>
+            </div>
+            {/* Social Media Links */}
+            <div>
+              <h3>Follow Us</h3>
+              <div className={styles.socialLinks}>
+                {socialLinks.map((social, index) => (
+                  <a 
+                    key={index}
+                    href={social.url} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className={styles.socialLink} 
+                    aria-label={social.name}
+                  >
+                    {social.icon}
+                  </a>
+                ))}
+              </div>
             </div>
           </div>
 
@@ -66,9 +85,9 @@ export default function Footer() {
             <h3>Quick Links</h3>
             <ul className={styles.footerLinks}>
               <li><Link to="/">Home</Link></li>
-              <li><Link to="/about">About</Link></li>
-              <li><Link to="/pricing">Pricing</Link></li>
-              <li><Link to="/how-it-works">How It Works</Link></li>
+              <li><Link to="/#about">About</Link></li>
+              <li><Link to="/#pricing">Pricing</Link></li>
+              <li><Link to="/#how-it-works">How It Works</Link></li>
             </ul>
           </div>
 
@@ -85,26 +104,13 @@ export default function Footer() {
             <h3>Legal</h3>
             <ul className={styles.footerLinks}>
               <li><Link to="/terms" state={{ referrer: location.pathname }}>Terms & Conditions</Link></li>
+              <li><Link to="/privacy">Privacy Policy</Link></li>
               <li><Link to="/refund-policy">Refund Policy</Link></li>
             </ul>
           </div>
 
           <div className={styles.footerSection}>
-            <h3>Follow Us</h3>
-            <div className={styles.socialLinks}>
-              {socialLinks.map((social, index) => (
-                <a 
-                  key={index}
-                  href={social.url} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className={styles.socialLink} 
-                  aria-label={social.name}
-                >
-                  {social.icon}
-                </a>
-              ))}
-            </div>
+            <LongerBookingCard variant="footer" />
           </div>
         </div>
 

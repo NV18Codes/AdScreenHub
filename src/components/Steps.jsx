@@ -1,28 +1,31 @@
-// Using Banner.png for all icons
+import calendarIcon from '../assets/icons/calendar.svg';
+import locationIcon from '../assets/icons/location.svg';
+import uploadIcon from '../assets/icons/upload.svg';
+import approveIcon from '../assets/icons/approve.svg';
 
 const steps = [
   { 
-    icon: "/Banner.png", 
+    icon: calendarIcon, 
     text: "SELECT DATE & LOCATION",
     description: "Choose when and where you want your ad to appear"
   },
   { 
-    icon: "/Banner.png", 
+    icon: calendarIcon, 
     text: "CHOOSE EXPOSURE PLAN",
     description: "Select the right plan for your campaign goals"
   },
   { 
-    icon: "/Banner.png", 
+    icon: uploadIcon, 
     text: "UPLOAD YOUR DESIGN",
     description: "Upload your creative content in the required format"
   },
   { 
-    icon: "/Banner.png", 
+    icon: approveIcon, 
     text: "GET YOUR DESIGN APPROVED",
     description: "Our team reviews and approves your content"
   },
   { 
-    icon: "/Banner.png", 
+    icon: approveIcon, 
     text: "MAKE YOURSELF KNOWN",
     description: "Your ad goes live on our LED screens"
   },

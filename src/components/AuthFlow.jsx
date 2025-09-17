@@ -114,6 +114,10 @@ export default function AuthFlow() {
         break;
       case 'phone':
         setPhone(sanitizedValue);
+        // Clear OTP when phone number changes
+        if (otp) {
+          setOtp('');
+        }
         break;
       case 'otp':
         setOtp(sanitizedValue);
@@ -132,6 +136,19 @@ export default function AuthFlow() {
     }
   };
 
+  // Check if email already exists
+  const checkEmailExists = async (emailToCheck) => {
+    try {
+      const response = await axios.post(`${API_BASE}/check-email-exists`, { 
+        email: emailToCheck 
+      });
+      return response.data.exists;
+    } catch (err) {
+      console.error('Error checking email existence:', err);
+      return false;
+    }
+  };
+
   // Start email verification
   const handleEmailSubmit = async (e) => {
     e.preventDefault();
@@ -145,6 +162,14 @@ export default function AuthFlow() {
     setSuccess("");
     
     try {
+      // First check if email already exists
+      const emailExists = await checkEmailExists(email);
+      if (emailExists) {
+        setError("An account with this email already exists. Please use the login form instead.");
+        setLoading(false);
+        return;
+      }
+
       // Store email in localStorage for verification process
       localStorage.setItem('pendingEmail', email);
       
@@ -152,7 +177,7 @@ export default function AuthFlow() {
         email,
         redirectUrl: `https://ad-screenhub.netlify.app/verify-email.html`
       });
-      setSuccess("Verification email sent! Please check your inbox and click the link.");
+      setSuccess("Verification email sent! Please check your inbox and click the link to continue with phone verification.");
       setStep("waitForEmailVerify");
     } catch (err) {
       setError(err.response?.data?.message || "Error sending email. Please try again.");
@@ -184,6 +209,19 @@ export default function AuthFlow() {
     }
   };
 
+  // Check if phone already exists
+  const checkPhoneExists = async (phoneToCheck) => {
+    try {
+      const response = await axios.post(`${API_BASE}/check-phone-exists`, { 
+        phoneNumber: phoneToCheck 
+      });
+      return response.data.exists;
+    } catch (err) {
+      console.error('Error checking phone existence:', err);
+      return false;
+    }
+  };
+
   // Start phone verification
   const handlePhoneSubmit = async (e) => {
     e.preventDefault();
@@ -197,6 +235,14 @@ export default function AuthFlow() {
     setSuccess("");
     
     try {
+      // First check if phone already exists
+      const phoneExists = await checkPhoneExists(phone);
+      if (phoneExists) {
+        setError("An account with this phone number already exists. Please use the login form instead.");
+        setLoading(false);
+        return;
+      }
+
       await axios.post(`${API_BASE}/start-phone-verification`, { phoneNumber: phone });
       setSuccess("OTP sent to your phone!");
       setStep("otp");
@@ -293,14 +339,48 @@ export default function AuthFlow() {
         name,
         password
       });
-      await axios.post(`${API_BASE}/complete-registration`, {
+      const registrationResponse = await axios.post(`${API_BASE}/complete-registration`, {
         fullName:name,
         password,
         emailToken: emailTokenToUse,
         phoneToken: phoneTokenToUse,
       });
-      setSuccess("Registration successful! Please log in.");
-      setStep("login");
+      
+      // Use the access token from registration response directly
+      if (registrationResponse.data.success && registrationResponse.data.data) {
+        const userData = registrationResponse.data.data.user;
+        const accessToken = registrationResponse.data.data.session?.access_token;
+        
+        if (userData && accessToken) {
+          // Store user data and token directly from registration response
+          localStorage.setItem('user', JSON.stringify(userData));
+          localStorage.setItem('authToken', accessToken);
+          localStorage.setItem('token', accessToken);
+          
+          // Clear verification tokens and pending email
+          localStorage.removeItem('emailToken');
+          localStorage.removeItem('phoneToken');
+          localStorage.removeItem('pendingEmail');
+          
+          // Use the login function from AuthContext with the registration data
+          login(userData, accessToken);
+          
+          // Redirect to dashboard immediately
+          setSuccess("Registration successful! Welcome to AdScreenHub!");
+          setTimeout(() => {
+            navigate('/dashboard');
+          }, 1000);
+        } else {
+          // Registration successful but missing token data
+          console.error('Registration response missing user or token:', registrationResponse.data);
+          setError("Registration successful but missing authentication data. Please try logging in.");
+          setStep("login");
+        }
+      } else {
+        // Registration failed
+        setError("Registration failed. Please try again.");
+      }
+      
       // Clear password fields for security
       setPassword("");
       setConfirmPassword("");

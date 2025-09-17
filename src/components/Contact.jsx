@@ -1,11 +1,25 @@
 import React from 'react';
-import LongerBookingCard from './LongerBookingCard';
 
 export default function Contact() {
   const handleSubmit = (e) => {
     e.preventDefault();
-    // Handle form submission logic here
-    console.log('Contact form submitted');
+    
+    // Get form data
+    const formData = new FormData(e.target);
+    const data = {
+      name: formData.get('name'),
+      email: formData.get('email'),
+      phone: formData.get('phone'),
+      message: formData.get('message')
+    };
+    
+    // Show success message
+    alert(`Thank you ${data.name}! Your message has been sent. We'll get back to you soon at ${data.email}.`);
+    
+    // Reset form
+    e.target.reset();
+    
+    console.log('Contact form submitted:', data);
   };
 
   return (
@@ -14,7 +28,7 @@ export default function Contact() {
         <div className="text-center mb-12">
           <h2 className="section-heading mb-4">Contact Us</h2>
           <p className="text-xl text-gray-600">
-            Get in touch with us for any inquiries or support
+            Get in touch with us using the form or send us an e-mail to : info@adscreenhub.com
           </p>
         </div>
         
@@ -36,18 +50,32 @@ export default function Contact() {
               </div>
               
               <div>
-                <label htmlFor="phone" className="block text-sm font-semibold text-gray-700 mb-2">
-                  Phone Number *
+                <label htmlFor="email" className="block text-sm font-semibold text-gray-700 mb-2">
+                  Email Address *
                 </label>
                 <input 
-                  type="tel" 
-                  id="phone"
-                  name="phone"
+                  type="email" 
+                  id="email"
+                  name="email"
                   required
-                  placeholder="Enter your phone number"
+                  placeholder="Enter your email address"
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                 />
               </div>
+            </div>
+            
+            <div>
+              <label htmlFor="phone" className="block text-sm font-semibold text-gray-700 mb-2">
+                Phone Number *
+              </label>
+              <input 
+                type="tel" 
+                id="phone"
+                name="phone"
+                required
+                placeholder="Enter your phone number"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+              />
             </div>
             
             <div>
@@ -73,10 +101,6 @@ export default function Contact() {
               </button>
             </div>
           </form>
-        </div>
-        
-        <div className="mt-12 flex justify-center">
-          <LongerBookingCard />
         </div>
       </div>
     </section>

@@ -32,6 +32,7 @@ export default function Dashboard() {
   const [couponError, setCouponError] = useState('');
   const [validatingCoupon, setValidatingCoupon] = useState(false);
   const user = JSON.parse(localStorage.getItem('user'));
+  const displayName = getUserDisplayName(user);
   
   // Dynamic data state - removed mock data
   const [plans, setPlans] = useState([]);
@@ -497,7 +498,7 @@ export default function Dashboard() {
         <div className={styles.header}>
           <div className={styles.headerContent}>
             <div>
-              <h1>Welcome back, {user?.fullName || user?.name || user?.firstName || user?.email?.split('@')[0] || 'User'}!</h1>
+              <h1>Hi, {displayName}!</h1>
               <p>Book your LED screen advertising campaign</p>
             </div>
           </div>

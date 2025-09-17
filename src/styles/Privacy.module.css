@@ -69,21 +69,21 @@
   scrollbar-color: #1319B3 #e5e7eb;
 }
 
-.content::-webkit-scrollbar {
+.scrollableContent::-webkit-scrollbar {
   width: 8px;
 }
 
-.content::-webkit-scrollbar-track {
+.scrollableContent::-webkit-scrollbar-track {
   background: #e5e7eb;
   border-radius: 4px;
 }
 
-.content::-webkit-scrollbar-thumb {
+.scrollableContent::-webkit-scrollbar-thumb {
   background: #1319B3;
   border-radius: 4px;
 }
 
-.content::-webkit-scrollbar-thumb:hover {
+.scrollableContent::-webkit-scrollbar-thumb:hover {
   background: #0f147a;
 }
 
@@ -140,16 +140,31 @@
   left: -15px;
 }
 
-.contactLink {
+.contactSection {
+  background: #f8fafc;
+  padding: 25px;
+  border-radius: 15px;
+  border-left: 4px solid #1319B3;
+  margin-top: 30px;
+}
+
+.contactEmail {
   color: #1319B3;
   text-decoration: none;
   font-weight: 500;
   transition: all 0.3s ease;
 }
 
-.contactLink:hover {
+.contactEmail:hover {
   color: #667eea;
   text-decoration: underline;
+}
+
+.lastUpdated {
+  font-size: 0.9rem;
+  color: #6b7280;
+  font-style: italic;
+  margin-top: 15px;
 }
 
 /* Mobile Responsive */
@@ -166,7 +181,7 @@
     align-self: flex-start;
   }
   
-  .content {
+  .scrollableContent {
     margin: 10px;
     padding: 20px;
     border-radius: 15px;
@@ -189,7 +204,7 @@
 }
 
 @media (max-width: 480px) {
-  .content {
+  .scrollableContent {
     padding: 15px;
     margin: 5px;
     max-height: 50vh;

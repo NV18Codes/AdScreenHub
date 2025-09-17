@@ -1,5 +1,5 @@
 .footer {
-  background-color: #1f2937;
+  background-color: #1319B3;
   color: var(--white);
   padding: 3rem 0 1rem;
 }
@@ -21,6 +21,19 @@
 @media (max-width: 1024px) {
   .footerContent {
     grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  }
+}
+
+/* Mobile: Move longer booking card to top */
+@media (max-width: 768px) {
+  .footerContent {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .footerSection:last-child {
+    order: -1; /* Move the longer booking card (last section) to the top */
+    margin-bottom: 2rem;
   }
 }
 

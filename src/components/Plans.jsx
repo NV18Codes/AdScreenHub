@@ -38,7 +38,6 @@ export default function Plans() {
                     e.target.style.display = 'none';
                   }}
                 />
-                <div className="absolute inset-0 bg-blue-900 bg-opacity-80"></div>
               </div>
               
               {/* Content */}
@@ -56,7 +55,7 @@ export default function Plans() {
                 <div className="space-y-2">
                   {plan.features.map((feature, idx) => (
                     <div key={idx} className="text-white text-sm">
-                      • {feature}
+                      {feature}
                     </div>
                   ))}
                 </div>
