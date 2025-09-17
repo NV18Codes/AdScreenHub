@@ -26,17 +26,40 @@ export default function Plans() {
         <h2 className="text-4xl md:text-5xl font-bold text-gray-900 text-center mb-20">Our Plans</h2>
         <div className="grid md:grid-cols-3 gap-8">
           {plans.map((plan, i) => (
-            <div key={i} className="bg-blue-900 text-white rounded-2xl p-8 shadow-xl hover:shadow-2xl transition-shadow">
-              <h3 className="text-2xl md:text-3xl font-bold text-center mb-8 text-white">{plan.name}</h3>
-              <div className="text-center mb-8">
-                <p className="text-white text-xl font-semibold">{plan.duration}</p>
+            <div key={i} className="relative overflow-hidden">
+              {/* Banner.png Background */}
+              <div className="absolute inset-0">
+                <img 
+                  src="/Banner.png" 
+                  alt="Plan Background" 
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    console.error('Failed to load Banner.png');
+                    e.target.style.display = 'none';
+                  }}
+                />
+                <div className="absolute inset-0 bg-blue-900 bg-opacity-80"></div>
               </div>
-              <div className="space-y-4 mb-8">
-                {plan.features.map((feature, idx) => (
-                  <div key={idx} className="text-white text-center text-lg">
-                    • {feature}
-                  </div>
-                ))}
+              
+              {/* Content */}
+              <div className="relative z-10 text-white p-8 text-center">
+                <h3 className="text-2xl md:text-3xl font-bold mb-4">{plan.name}</h3>
+                
+                {/* Pricing Section */}
+                <div className="mb-6">
+                  <div className="text-blue-200 text-sm font-medium mb-1">Starting @</div>
+                  <div className="text-4xl md:text-5xl font-bold mb-1">{plan.price}</div>
+                  <div className="text-blue-200 text-sm font-medium">+GST</div>
+                </div>
+                
+                {/* Features */}
+                <div className="space-y-2">
+                  {plan.features.map((feature, idx) => (
+                    <div key={idx} className="text-white text-sm">
+                      • {feature}
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           ))}

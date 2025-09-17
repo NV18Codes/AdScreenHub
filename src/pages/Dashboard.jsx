@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useOrders } from '../hooks/useOrders';
-import { mockScreens, mockPlans } from '../data/mockData';
 import { isDateDisabled, validateFile, generateOrderId, compressImage, manageStorageQuota } from '../utils/validation';
 import { getUserDisplayName, getUserEmail } from '../utils/userUtils';
 import { useNavigate } from 'react-router-dom';
@@ -34,8 +33,8 @@ export default function Dashboard() {
   const [validatingCoupon, setValidatingCoupon] = useState(false);
   const user = JSON.parse(localStorage.getItem('user'));
   
-  // Dynamic data state
-  const [plans, setPlans] = useState(mockPlans); // Initialize with mock data
+  // Dynamic data state - removed mock data
+  const [plans, setPlans] = useState([]);
   const [locations, setLocations] = useState([]);
   const [loadingPlans, setLoadingPlans] = useState(false);
   const [loadingLocations, setLoadingLocations] = useState(false);
@@ -49,6 +48,21 @@ export default function Dashboard() {
   console.log('🔍 Plans type:', typeof plans);
   console.log('🔍 Plans is array:', Array.isArray(plans));
 
+  // Transform API plan data to match frontend format
+  const transformPlanData = (apiPlans) => {
+    return apiPlans.map(plan => ({
+      id: plan.id,
+      name: plan.name.toUpperCase(), // Convert to uppercase to match mock data
+      price: plan.price,
+      duration: `${plan.duration_days} day${plan.duration_days > 1 ? 's' : ''}`,
+      adSlots: plan.features.slots,
+      features: [
+        `${plan.features.slots} ad slots (${plan.features.duration_sec} sec/slot)`,
+        ...plan.features.features
+      ]
+    }));
+  };
+
   // Fetch plans data
   const fetchPlans = async () => {
     setLoadingPlans(true);
@@ -56,16 +70,23 @@ export default function Dashboard() {
       const result = await dataAPI.getPlans();
       console.log('🔍 Plans API result:', result);
       
-      if (result.success && result.data && Array.isArray(result.data)) {
-        console.log('✅ Using API plans data:', result.data);
-        setPlans(result.data);
+      // Handle the actual API response structure
+      if (result.success && result.data && result.data.data && Array.isArray(result.data.data)) {
+        console.log('✅ Using API plans data (nested):', result.data.data);
+        const transformedPlans = transformPlanData(result.data.data);
+        setPlans(transformedPlans);
+      } else if (result.success && result.data && Array.isArray(result.data)) {
+        console.log('✅ Using API plans data (direct):', result.data);
+        const transformedPlans = transformPlanData(result.data);
+        setPlans(transformedPlans);
       } else {
-        console.warn('⚠️ API plans data invalid, using mock data:', result);
-        setPlans(mockPlans);
+        console.log('🔍 Full API response structure:', result);
+        console.error('❌ API plans data invalid - unexpected structure:', result);
+        setPlans([]);
       }
     } catch (error) {
-      console.warn('⚠️ Plans API failed, using mock data:', error.message);
-      setPlans(mockPlans);
+      console.error('❌ Plans API failed:', error.message);
+      setPlans([]);
     } finally {
       setLoadingPlans(false);
     }
@@ -89,12 +110,33 @@ export default function Dashboard() {
       
       console.log('🔍 Availability API result:', result);
       
-      if (result.success && result.data) {
-        console.log('🔍 Setting availability data:', result.data);
-        setAvailabilityData(result.data);
+      // Handle the actual API response structure
+      let locationsData = null;
+      if (result.success && result.data && result.data.data && Array.isArray(result.data.data)) {
+        locationsData = result.data.data;
+        console.log('✅ Using API location data (nested):', locationsData);
+      } else if (result.success && result.data && Array.isArray(result.data)) {
+        locationsData = result.data;
+        console.log('✅ Using API location data (direct):', locationsData);
+      }
+      
+      if (locationsData) {
+        console.log('🔍 Setting availability data:', locationsData);
+        // Transform array to object with screen IDs as keys
+        const transformedData = {};
+        locationsData.forEach(location => {
+          transformedData[location.id] = {
+            available: location.available_slots > 0,
+            slots: location.available_slots,
+            totalSlots: location.total_slots,
+            name: location.name,
+            description: location.description
+          };
+        });
+        setAvailabilityData(transformedData);
       } else {
-        console.warn('⚠️ API returned no data or failed, using default availability');
-        // Don't set any availability data - let the UI handle it with defaults
+        console.log('🔍 Full API response structure:', result);
+        console.error('❌ Location availability API failed - unexpected structure:', result);
         setAvailabilityData({});
       }
     } catch (error) {
@@ -111,7 +153,9 @@ export default function Dashboard() {
     try {
       const result = await dataAPI.checkSlotAvailability(locationId, startDate, planId);
       if (result.success) {
-        return result.data || { available: false, slots: 0 };
+        // Handle the actual API response structure
+        const data = result.data?.data || result.data;
+        return data || { available: false, slots: 0 };
       } else {
         console.error('Failed to check slot availability:', result.error);
         return { available: false, slots: 0 };
@@ -534,7 +578,7 @@ export default function Dashboard() {
                 <p>No orders yet. Start your first campaign!</p>
                 <button 
                   className={styles.startCampaignBtn}
-                  onClick={() => window.scrollTo({ top: 600, behavior: 'smooth' })}
+                  onClick={() => navigate('/my-orders')}
                 >
                   Book Your First Ad
                 </button>
@@ -543,102 +587,6 @@ export default function Dashboard() {
           </div>
         </div>
 
-        <div className={styles.bookingSection}>
-          <div className={styles.dateSection}>
-            <h2>Select Display Start Date</h2>
-            <div className={styles.dateInputWrapper}>
-              <svg className={styles.calendarIcon} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </svg>
-              <input
-                type="date"
-                value={selectedDate}
-                onChange={handleDateChange}
-                min={minDateString}
-                className={styles.dateInput}
-              />
-            </div>
-            <p className={styles.dateNote}>
-              Note: Bookings must be made at least 2 days in advance
-            </p>
-          </div>
-
-          {selectedDate && (
-            <div className={styles.screensSection}>
-              <h2>Choose Your LED Screen</h2>
-              {loadingAvailability ? (
-                <div className={styles.loadingMessage}>
-                  <p>Loading availability data...</p>
-                </div>
-              ) : (
-                <div className={styles.screensGrid}>
-                  {mockScreens.map((screen) => {
-                    // Determine availability based on date selection and API data
-                    let availability;
-                    let isFullyBooked = false;
-                    let hasInventory = true;
-                    
-                    if (!selectedDate) {
-                      // No date selected - show all screens as available
-                      availability = { available: true, slots: screen.totalInventory || 3 };
-                      isFullyBooked = false;
-                      hasInventory = true;
-                    } else if (availabilityData[screen.id]) {
-                      // Date selected and we have API data for this screen
-                      availability = availabilityData[screen.id];
-                      isFullyBooked = !availability.available || availability.slots === 0;
-                      hasInventory = availability.available && availability.slots > 0;
-                    } else {
-                      // Date selected but no API data for this screen - show as available
-                      availability = { available: true, slots: screen.totalInventory || 3 };
-                      isFullyBooked = false;
-                      hasInventory = true;
-                    }
-                    
-                    console.log(`🔍 Screen ${screen.id} (${screen.name}):`, {
-                      selectedDate,
-                      availability,
-                      isFullyBooked,
-                      hasInventory,
-                      availabilityData: availabilityData[screen.id],
-                      hasApiData: !!availabilityData[screen.id]
-                    });
-                    
-                    return (
-                      <div
-                        key={screen.id}
-                        className={`${styles.screenCard} ${isFullyBooked ? styles.fullyBooked : ''} ${hasInventory ? styles.available : ''}`}
-                        onClick={() => hasInventory ? handleScreenSelect(screen) : null}
-                      >
-                        <img src={screen.image} alt={screen.name} className={styles.screenImage} />
-                        <div className={styles.screenInfo}>
-                          <h3>{screen.name}</h3>
-                          <p className={styles.screenLocation}>{screen.location}</p>
-                          <p className={styles.screenSize}>{screen.size}</p>
-                          <p className={styles.screenPixels}>{screen.pixels}</p>
-                          <p className={styles.screenPrice}>LED Screen Available</p>
-                          
-                          {/* Inventory Status */}
-                          {isFullyBooked ? (
-                            <div className={styles.fullyBookedBadge}>
-                              <span>Fully Booked</span>
-                            </div>
-                          ) : (
-                            <div className={styles.inventoryInfo}>
-                              <span className={styles.availableSlots}>
-                                {availability.slots} slot{availability.slots !== 1 ? 's' : ''} available
-                              </span>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          )}
-        </div>
 
         {/* Screen Selection Modal */}
         {showScreenModal && selectedScreen && (

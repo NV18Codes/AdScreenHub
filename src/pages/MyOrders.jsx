@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useOrders } from '../hooks/useOrders';
 import { formatDate, formatCurrency, validateFile, compressImage, manageStorageQuota } from '../utils/validation';
 import { Link } from 'react-router-dom';
+import BookingCalendar from '../components/BookingCalendar';
 import styles from '../styles/MyOrders.module.css';
 
 export default function MyOrders() {
@@ -143,16 +144,23 @@ export default function MyOrders() {
           <p>Track your advertising campaigns</p>
         </div>
 
-        {orders.length === 0 ? (
-          <div className={styles.emptyState}>
-            <h2>No orders yet</h2>
-            <p>Start your first advertising campaign by booking an LED screen.</p>
-            <Link to="/dashboard" className={`${styles.btn} ${styles.btnPrimary}`}>
-              Book Your First Ad
-            </Link>
-          </div>
-        ) : (
-          <div className={styles.ordersList}>
+        <div className={styles.pageLayout}>
+          <div className={styles.ordersSection}>
+            {orders.length === 0 ? (
+              <div className={styles.emptyState}>
+                <h2>No orders yet</h2>
+                <p>Start your first advertising campaign by booking an LED screen.</p>
+                <button 
+                  onClick={() => {
+                    document.querySelector('.booking-calendar')?.scrollIntoView({ behavior: 'smooth' });
+                  }}
+                  className={`${styles.btn} ${styles.btnPrimary}`}
+                >
+                  Book Your First Ad
+                </button>
+              </div>
+            ) : (
+              <div className={styles.ordersList}>
             {orders.map((order) => (
               <div key={order.id} className={styles.orderCard}>
                 <div className={styles.orderHeader}>
@@ -238,7 +246,16 @@ export default function MyOrders() {
               </div>
             ))}
           </div>
-        )}
+            )}
+          </div>
+          
+          {/* Booking Calendar - Right Side */}
+          <div className={styles.calendarSection}>
+            <div className="booking-calendar">
+              <BookingCalendar />
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Image Modal */}

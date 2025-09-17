@@ -59,40 +59,46 @@ export default function Navbar() {
 
         {/* Desktop Navigation */}
         <div className={`${styles.navLinks} ${isMenuOpen ? styles.active : ''}`}>
-          <button onClick={() => scrollToSection('how-it-works')} className={styles.navLink}>How It Works?</button>
-          <button onClick={() => scrollToSection('about')} className={styles.navLink}>About Us</button>
-          <button onClick={() => scrollToSection('pricing')} className={styles.navLink}>Pricing</button>
-          <button onClick={() => scrollToSection('blogs')} className={styles.navLink}>Blogs</button>
-          <Link to="/contact" className={styles.navLink} onClick={closeMenu}>Contact</Link>
-          
-          <div className={styles.authSection}>
-            {isAuthenticated() ? (
-              <>
-                        <span className={styles.userName}>Welcome, {displayName}</span>
-                <Link to="/dashboard" className={`${styles.btn} ${styles.btnSecondary}`} onClick={closeMenu}>
-                  Dashboard
-                </Link>
+          {isAuthenticated() ? (
+            <>
+              {/* Authenticated Navigation */}
+              <Link to="/dashboard" className={styles.navLink} onClick={closeMenu}>Dashboard</Link>
+              <Link to="/my-orders" className={styles.navLink} onClick={closeMenu}>My Orders</Link>
+              <Link to="/profile" className={styles.navLink} onClick={closeMenu}>Profile</Link>
+              
+              <div className={styles.authSection}>
+                <span className={styles.userName}>Welcome, {displayName}</span>
                 <button 
                   onClick={() => {
                     logout();
                     closeMenu();
+                    window.location.href = '/';
                   }} 
                   className={`${styles.btn} ${styles.btnPrimary}`}
                 >
                   Logout
                 </button>
-              </>
-            ) : (
-              <>
+              </div>
+            </>
+          ) : (
+            <>
+              {/* Public Navigation */}
+              <button onClick={() => scrollToSection('how-it-works')} className={styles.navLink}>How It Works?</button>
+              <button onClick={() => scrollToSection('about')} className={styles.navLink}>About Us</button>
+              <button onClick={() => scrollToSection('pricing')} className={styles.navLink}>Pricing</button>
+              <button onClick={() => scrollToSection('blogs')} className={styles.navLink}>Blogs</button>
+              <Link to="/contact" className={styles.navLink} onClick={closeMenu}>Contact</Link>
+              
+              <div className={styles.authSection}>
                 <Link to="/login" className={`${styles.btn} ${styles.btnSecondary}`} onClick={closeMenu}>
                   Sign In
                 </Link>
                 <Link to="/signup" className={`${styles.btn} ${styles.btnPrimary}`} onClick={closeMenu}>
                   Sign Up
                 </Link>
-              </>
-            )}
-          </div>
+              </div>
+            </>
+          )}
         </div>
 
         {/* Mobile Menu Button */}

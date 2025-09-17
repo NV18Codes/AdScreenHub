@@ -49,6 +49,20 @@ export default function Footer() {
         <div className={styles.footerContent}>
 
           <div className={styles.footerSection}>
+            {/* Logo and Tagline */}
+            <div className="flex flex-col items-start mb-6">
+              <img 
+                src="/social-media-logo-removebg-preview.png" 
+                alt="AdScreenHub Logo" 
+                className="h-16 w-auto mb-3 filter brightness-0 invert"
+              />
+              <p className="text-white text-sm leading-relaxed max-w-xs">
+                Your trusted partner for LED billboard advertising
+              </p>
+            </div>
+          </div>
+
+          <div className={styles.footerSection}>
             <h3>Quick Links</h3>
             <ul className={styles.footerLinks}>
               <li><Link to="/">Home</Link></li>
@@ -95,27 +109,8 @@ export default function Footer() {
         </div>
 
         <div className={styles.footerBottom}>
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 w-full">
-            <p>&copy; {new Date().getFullYear()} ADSCREENHUB. All rights reserved.</p>
-            
-            {/* Looking for a longer booking section */}
-            <div className="bg-white bg-opacity-10 rounded-lg p-4 max-w-xs">
-              <h4 className="text-white font-semibold mb-2">Looking for a longer booking?</h4>
-              <p className="text-white text-opacity-80 text-sm mb-3">
-                Want to run a long-term campaign? Our team can create a solution just for you.
-              </p>
-              <button 
-                onClick={() => {
-                  const contactSection = document.getElementById('contact');
-                  if (contactSection) {
-                    contactSection.scrollIntoView({ behavior: 'smooth' });
-                  }
-                }}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-              >
-                CONTACT US
-              </button>
-            </div>
+          <div className="flex flex-col md:flex-row justify-center items-center gap-6 w-full">
+            <p className="text-white text-sm">&copy; {new Date().getFullYear()} ADSCREENHUB. All rights reserved.</p>
           </div>
         </div>
       </div>
