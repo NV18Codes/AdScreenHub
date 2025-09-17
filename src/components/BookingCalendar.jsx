@@ -38,6 +38,8 @@ export default function BookingCalendar() {
   const [loadingLocations, setLoadingLocations] = useState(false);
   const [loadingAvailability, setLoadingAvailability] = useState(false);
   const [availabilityData, setAvailabilityData] = useState({});
+  const [slotAvailabilityStatus, setSlotAvailabilityStatus] = useState({});
+  const [showUnavailableModal, setShowUnavailableModal] = useState(false);
 
   // Transform API plan data to match frontend format
   const transformPlanData = (apiPlans) => {
@@ -233,9 +235,18 @@ export default function BookingCalendar() {
         console.log('🔍 Condition check (!isAvailable):', !availabilityResult.data?.data?.isAvailable);
         
         // Handle nested data structure: result.data.data.isAvailable
-        if (availabilityResult.success && availabilityResult.data && availabilityResult.data.data && !availabilityResult.data.data.isAvailable) {
-          console.log('❌ Slot not available - showing alert');
-          alert('This screen has no available slots for the selected date and plan. Please choose another date, screen, or plan.');
+        const isSlotAvailable = availabilityResult.data?.data?.isAvailable;
+        
+        // Update slot availability status for visual feedback
+        const statusKey = `${selectedScreen.id}-${selectedDate}-${plan.id}`;
+        setSlotAvailabilityStatus(prev => ({
+          ...prev,
+          [statusKey]: isSlotAvailable
+        }));
+        
+        if (availabilityResult.success && availabilityResult.data && availabilityResult.data.data && !isSlotAvailable) {
+          console.log('❌ Slot not available - showing modal');
+          setShowUnavailableModal(true);
           setSelectedPlan(null); // Reset plan selection
           return;
         } else {
@@ -583,6 +594,9 @@ export default function BookingCalendar() {
                         key={plan.id}
                         className={`${styles.planCard} ${
                           selectedPlan?.id === plan.id ? styles.selected : ''
+                        } ${
+                          slotAvailabilityStatus[`${selectedScreen.id}-${selectedDate}-${plan.id}`] === true ? styles.available : 
+                          slotAvailabilityStatus[`${selectedScreen.id}-${selectedDate}-${plan.id}`] === false ? styles.unavailable : ''
                         }`}
                         onClick={() => handlePlanSelect(plan)}
                       >
@@ -629,6 +643,42 @@ export default function BookingCalendar() {
                 </button>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Unavailable Slot Modal */}
+      {showUnavailableModal && (
+        <div className={styles.modalOverlay} onClick={() => setShowUnavailableModal(false)}>
+          <div className={styles.unavailableModal} onClick={(e) => e.stopPropagation()}>
+            <button
+              className={styles.modalClose}
+              onClick={() => setShowUnavailableModal(false)}
+            >
+              ×
+            </button>
+            
+            <div className={styles.unavailableContent}>
+              <div className={styles.unavailableIcon}>🚫</div>
+              <h2>Already Booked!</h2>
+              <p>This screen is already booked for the selected date and plan combination.</p>
+              
+              <div className={styles.suggestionBox}>
+                <h3>Try these alternatives:</h3>
+                <ul>
+                  <li>📅 Choose a different date</li>
+                  <li>📍 Select another location</li>
+                  <li>📋 Pick a different plan</li>
+                </ul>
+              </div>
+              
+              <button 
+                onClick={() => setShowUnavailableModal(false)}
+                className={styles.modalBtn}
+              >
+                Got it, let me try again
+              </button>
+            </div>
           </div>
         </div>
       )}
