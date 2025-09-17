@@ -28,7 +28,7 @@ export default function Contact() {
         <div className="text-center mb-12">
           <h2 className="section-heading mb-4">Contact Us</h2>
           <p className="text-xl text-gray-600">
-            Get in touch with us using the form or send us an e-mail to : info@adscreenhub.com
+            Get in touch with us using the form or send us an e-mail to : <a href="mailto:info@adscreenhub.com" className="text-blue-600 hover:text-blue-800 underline">info@adscreenhub.com</a>
           </p>
         </div>
         
