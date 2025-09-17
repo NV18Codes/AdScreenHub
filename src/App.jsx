@@ -10,11 +10,13 @@ import MyOrders from './pages/MyOrders';
 import Checkout from './pages/Checkout';
 import FAQ from './pages/FAQ';
 import Terms from './pages/Terms';
+import Privacy from './pages/Privacy';
 import Contact from './pages/Contact';
 import Auth from './pages/Auth';
 import Login from './pages/Login';
 import EmailRedirect from './pages/EmailRedirect';
 import ScrollToTop from './components/ScrollToTop';
+import { AuthRouteGuard, ProtectedRoute } from './components/AuthGuard';
 
 // Path normalizer to fix double slashes
 const PathNormalizer = () => {
@@ -54,19 +56,20 @@ function App() {
           <Route path="/" element={<Layout><Home /></Layout>} />
                   <Route path="/faq" element={<Layout><FAQ /></Layout>} />
                   <Route path="/terms" element={<Layout><Terms /></Layout>} />
+                  <Route path="/privacy" element={<Layout><Privacy /></Layout>} />
                   <Route path="/contact" element={<Layout><Contact /></Layout>} />
           
-          {/* Authentication */}
-          <Route path="/auth" element={<Layout showFooter={false}><Auth /></Layout>} />
-          <Route path="/login" element={<Layout showFooter={false}><Login /></Layout>} />
-          <Route path="/signup" element={<Layout showFooter={false}><Auth /></Layout>} />
+          {/* Authentication - Protected from authenticated users */}
+          <Route path="/auth" element={<AuthRouteGuard><Layout showFooter={false}><Auth /></Layout></AuthRouteGuard>} />
+          <Route path="/login" element={<AuthRouteGuard><Layout showFooter={false}><Login /></Layout></AuthRouteGuard>} />
+          <Route path="/signup" element={<AuthRouteGuard><Layout showFooter={false}><Auth /></Layout></AuthRouteGuard>} />
           <Route path="/verify-email" element={<EmailRedirect />} />
           
-          {/* Dashboard Routes */}
-          <Route path="/dashboard" element={<Layout><Dashboard /></Layout>} />
-          <Route path="/profile" element={<Layout><Profile /></Layout>} />
-          <Route path="/my-orders" element={<Layout><MyOrders /></Layout>} />
-          <Route path="/checkout" element={<Layout><Checkout /></Layout>} />
+          {/* Dashboard Routes - Protected from unauthenticated users */}
+          <Route path="/dashboard" element={<ProtectedRoute><Layout><Dashboard /></Layout></ProtectedRoute>} />
+          <Route path="/profile" element={<ProtectedRoute><Layout><Profile /></Layout></ProtectedRoute>} />
+          <Route path="/my-orders" element={<ProtectedRoute><Layout><MyOrders /></Layout></ProtectedRoute>} />
+          <Route path="/checkout" element={<ProtectedRoute><Layout><Checkout /></Layout></ProtectedRoute>} />
 
           {/* Catch all */}
           <Route path="*" element={<Navigate to="/" replace />} />

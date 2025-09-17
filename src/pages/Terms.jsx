@@ -23,18 +23,11 @@ export default function Terms() {
   return (
     <div className={styles.container}>
       <div className={styles.header}>
-        <button 
-          onClick={handleGoBack} 
-          className={styles.backButton}
-          type="button"
-          style={{ zIndex: 10 }}
-        >
-          ← Go Back
-        </button>
         <h1 className={styles.title}>Terms of Service</h1>
+        <p className={styles.subtitle}>Please read these terms carefully before using AdScreenHub's services</p>
       </div>
       
-      <div className={styles.content}>
+      <div className={styles.scrollableContent}>
         <section className={styles.section}>
           <h2>Introduction</h2>
           <p>1.1 Thank you for choosing AdScreenHub.com (hereinafter referred to as "AdScreenHub") operated by

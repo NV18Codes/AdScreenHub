@@ -6,14 +6,14 @@ export default function LongerBookingCard({ className = "", variant = "default" 
 
   if (variant === "footer") {
     return (
-      <div className="bg-white bg-opacity-10 rounded-lg p-4 max-w-xs">
+      <div className="bg-white bg-opacity-10 rounded-lg p-4 w-full max-w-sm">
         <h4 className="text-white font-semibold mb-2">Looking for a longer booking?</h4>
         <p className="text-white text-opacity-80 text-sm mb-3">
           Want to run a long-term campaign? Our team can create a solution just for you.
         </p>
         <button 
           onClick={handleContactClick}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors w-full"
         >
           CONTACT US
         </button>

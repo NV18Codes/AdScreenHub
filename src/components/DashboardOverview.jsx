@@ -1,10 +1,14 @@
 import React from 'react';
 import { useOrders } from '../hooks/useOrders';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
+import { getUserDisplayName } from '../utils/userUtils';
 import styles from '../styles/DashboardOverview.module.css';
 
 export default function DashboardOverview() {
   const { orders } = useOrders();
+  const { user } = useAuth();
+  const displayName = getUserDisplayName(user);
 
   // Calculate stats - exclude cancelled orders from total spent
   const totalOrders = orders.length;
@@ -23,7 +27,7 @@ export default function DashboardOverview() {
       <div className={styles.container}>
         <div className={styles.header}>
           <h1>Dashboard Overview</h1>
-          <p>Welcome back, {user?.fullName || user?.email?.split('@')[0] || 'User'}! Here's your advertising summary.</p>
+          <p>Hi, {displayName}! Here's your advertising summary.</p>
         </div>
 
         {/* Stats Grid */}

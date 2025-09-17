@@ -67,7 +67,7 @@ export default function Navbar() {
               <Link to="/profile" className={styles.navLink} onClick={closeMenu}>Profile</Link>
               
               <div className={styles.authSection}>
-                <span className={styles.userName}>Welcome, {displayName}</span>
+                <span className={styles.userName}>Hi, {displayName}</span>
                 <button 
                   onClick={() => {
                     logout();
@@ -86,7 +86,6 @@ export default function Navbar() {
               <button onClick={() => scrollToSection('how-it-works')} className={styles.navLink}>How It Works?</button>
               <button onClick={() => scrollToSection('about')} className={styles.navLink}>About Us</button>
               <button onClick={() => scrollToSection('pricing')} className={styles.navLink}>Pricing</button>
-              <button onClick={() => scrollToSection('blogs')} className={styles.navLink}>Blogs</button>
               <Link to="/contact" className={styles.navLink} onClick={closeMenu}>Contact</Link>
               
               <div className={styles.authSection}>
