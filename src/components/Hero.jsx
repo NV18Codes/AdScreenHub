@@ -25,7 +25,7 @@ export default function Hero() {
       <div className="relative z-10 text-center text-white px-8 max-w-6xl mx-auto">
         {/* Main Headline */}
         <h1 className="text-6xl md:text-7xl lg:text-8xl font-bold mb-8 leading-tight">
-          Advertise Big, <br>Spend Small</br>
+          Advertise Big,<br></br>Spend Small
         </h1>
         
         {/* Sub-text/Tagline */}
