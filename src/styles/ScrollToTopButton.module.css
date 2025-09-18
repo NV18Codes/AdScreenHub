@@ -1,0 +1,64 @@
+.scrollToTopButton {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  width: 3.5rem;
+  height: 3.5rem;
+  background: #1319B3;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 20px rgba(19, 25, 179, 0.3);
+  transition: all 0.3s ease;
+  z-index: 1000;
+  opacity: 0.9;
+}
+
+.scrollToTopButton:hover {
+  background: #0f147a;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(19, 25, 179, 0.4);
+  opacity: 1;
+}
+
+.scrollToTopButton:active {
+  transform: translateY(0);
+}
+
+.arrowIcon {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+/* Mobile adjustments */
+@media (max-width: 768px) {
+  .scrollToTopButton {
+    bottom: 1.5rem;
+    right: 1.5rem;
+    width: 3rem;
+    height: 3rem;
+  }
+  
+  .arrowIcon {
+    width: 1.25rem;
+    height: 1.25rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .scrollToTopButton {
+    bottom: 1rem;
+    right: 1rem;
+    width: 2.5rem;
+    height: 2.5rem;
+  }
+  
+  .arrowIcon {
+    width: 1rem;
+    height: 1rem;
+  }
+}

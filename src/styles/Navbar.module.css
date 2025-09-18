@@ -83,6 +83,22 @@
   color: var(--primary-color);
 }
 
+.navLink.active {
+  color: var(--primary-color);
+  position: relative;
+}
+
+.navLink.active::after {
+  content: '';
+  position: absolute;
+  bottom: -8px;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--primary-color);
+  border-radius: 2px;
+}
+
 .authSection {
   display: flex;
   align-items: center;

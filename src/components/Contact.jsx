@@ -26,7 +26,7 @@ export default function Contact() {
     <section className="px-8 py-20 bg-white" style={{ paddingTop: '6rem' }}>
       <div className="max-w-4xl mx-auto">
         <div className="text-center mb-12">
-          <h2 className="section-heading mb-4">Contact Us</h2>
+          <h2 className="text-4xl md:text-5xl font-bold text-black text-center mb-4">Contact Us</h2>
           <p className="text-xl text-gray-600">
             Get in touch with us using the form or send us an e-mail to : <a href="mailto:info@adscreenhub.com" className="text-blue-600 hover:text-blue-800 underline">info@adscreenhub.com</a>
           </p>

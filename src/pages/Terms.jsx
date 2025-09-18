@@ -7,9 +7,7 @@ export default function Terms() {
   const location = useLocation();
 
   const handleGoBack = () => {
-    console.log('Back button clicked!');
-    alert('Back button clicked! Navigating to home...');
-    console.log('Navigating to home page...');
+    console.log('Terms Back button clicked!');
     try {
       // Try React Router navigation first
       navigate('/');
@@ -23,6 +21,13 @@ export default function Terms() {
   return (
     <div className={styles.container}>
       <div className={styles.header}>
+        <button 
+          onClick={handleGoBack} 
+          className={styles.backButton}
+          type="button"
+        >
+          ← Go Back
+        </button>
         <h1 className={styles.title}>Terms of Service</h1>
         <p className={styles.subtitle}>Please read these terms carefully before using AdScreenHub's services</p>
       </div>

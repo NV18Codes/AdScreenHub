@@ -32,7 +32,7 @@ export default function Showcase() {
   }, []);
 
   return (
-    <section className="px-4 sm:px-6 py-20 bg-white">
+    <section className="px-4 sm:px-6 py-16 bg-white">
       <div className="max-w-7xl mx-auto">
         <h2 className="text-4xl md:text-5xl font-bold text-gray-900 text-center mb-8">
           Every message deserves a spotlight.
@@ -41,7 +41,7 @@ export default function Showcase() {
         {/* Collage container */}
          <div
            ref={containerRef}
-           className="relative w-full max-w-5xl mx-auto h-[800px] sm:h-[900px] md:h-[1000px] overflow-hidden"
+           className="relative w-full max-w-5xl mx-auto h-[600px] sm:h-[700px] md:h-[800px] overflow-hidden px-4"
          >
           {/* SVG Connecting Lines */}
           <svg className="absolute inset-0 w-full h-full pointer-events-none">
@@ -74,10 +74,10 @@ export default function Showcase() {
            {adExamples.map((ad, i) => (
              <div
                key={i}
-               className="collage-item absolute aspect-square w-[120px] sm:w-[160px] md:w-[200px] group transition-transform duration-500 hover:scale-110"
+               className="collage-item absolute aspect-square w-[100px] sm:w-[140px] md:w-[180px] group transition-transform duration-500 hover:scale-110"
                style={{
-                 top: `${(i * 13) % 70 + 10}%`,
-                 left: `${(i * 19) % 70 + 5}%`,
+                 top: `${(i * 13) % 60 + 15}%`,
+                 left: `${(i * 19) % 60 + 15}%`,
                  transform: `rotate(${i % 2 === 0 ? -6 : 6}deg)`,
                  zIndex: i % 3,
                }}

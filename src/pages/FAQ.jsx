@@ -7,8 +7,6 @@ export default function FAQ() {
 
   const handleGoBack = () => {
     console.log('FAQ Back button clicked!');
-    alert('FAQ Back button clicked! Navigating to home...');
-    console.log('Navigating to home page...');
     try {
       // Try React Router navigation first
       navigate('/');
@@ -20,23 +18,22 @@ export default function FAQ() {
   };
 
   return (
-    <div className={styles.faqContainer}>
-      <div className={styles.faqHeader}>
+    <div className={styles.container}>
+      <div className={styles.header}>
         <button 
           onClick={handleGoBack} 
           className={styles.backButton}
           type="button"
-          style={{ zIndex: 10 }}
         >
           ← Go Back
         </button>
-        <h1>Frequently Asked Questions</h1>
-        <p>Everything you need to know about AdScreenHub's LED digital screen advertising platform</p>
+        <h1 className={styles.title}>Frequently Asked Questions</h1>
+        <p className={styles.subtitle}>Everything you need to know about AdScreenHub's LED digital screen advertising platform</p>
       </div>
 
-      <div className={styles.faqContent}>
+      <div className={styles.scrollableContent}>
         {/* Company Overview */}
-        <section className={styles.faqSection}>
+        <section className={styles.section}>
           <h2>About AdScreenHub</h2>
           <p>
             AdScreenHub.com ("AdScreenHub") is an AI-powered online advertising technology ("AdTech")
@@ -51,7 +48,7 @@ export default function FAQ() {
         </section>
 
         {/* Ad Creative Section */}
-        <section className={styles.faqSection}>
+        <section className={styles.section}>
           <h2>Ad Creative</h2>
           
           <div className={styles.faqItem}>
@@ -99,7 +96,7 @@ export default function FAQ() {
         </section>
 
         {/* Campaign Management Section */}
-        <section className={styles.faqSection}>
+        <section className={styles.section}>
           <h2>Campaign Management</h2>
           
           <div className={styles.faqItem}>
@@ -153,7 +150,7 @@ export default function FAQ() {
         </section>
 
         {/* Plans & Pricing Section */}
-        <section className={styles.faqSection}>
+        <section className={styles.section}>
           <h2>Plans & Pricing</h2>
           
           <div className={styles.faqItem}>
@@ -214,7 +211,7 @@ export default function FAQ() {
         </section>
 
         {/* Approvals & Restrictions Section */}
-        <section className={styles.faqSection}>
+        <section className={styles.section}>
           <h2>Approvals & Restrictions</h2>
           
           <div className={styles.faqItem}>
@@ -296,7 +293,7 @@ export default function FAQ() {
         </section>
 
         {/* Payment & Billing Section */}
-        <section className={styles.faqSection}>
+        <section className={styles.section}>
           <h2>Payment & Billing</h2>
           
           <div className={styles.faqItem}>
@@ -311,7 +308,7 @@ export default function FAQ() {
         </section>
 
         {/* Ad Performance & Reporting Section */}
-        <section className={styles.faqSection}>
+        <section className={styles.section}>
           <h2>Ad Performance & Reporting</h2>
           
           <div className={styles.faqItem}>

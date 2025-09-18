@@ -16,6 +16,7 @@ import Auth from './pages/Auth';
 import Login from './pages/Login';
 import EmailRedirect from './pages/EmailRedirect';
 import ScrollToTop from './components/ScrollToTop';
+import ScrollToTopButton from './components/ScrollToTopButton';
 import { AuthRouteGuard, ProtectedRoute } from './components/AuthGuard';
 
 // Path normalizer to fix double slashes
@@ -50,6 +51,7 @@ function App() {
     <AuthProvider>
       <Router>
         <ScrollToTop />
+        <ScrollToTopButton />
         <PathNormalizer />
         <Routes>
           {/* Public Routes */}
