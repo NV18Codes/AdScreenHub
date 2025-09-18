@@ -1,0 +1,140 @@
+.container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  padding: 20px 0;
+  padding-top: 6rem; /* Account for sticky navbar */
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 30px;
+  position: relative;
+}
+
+.backButton {
+  position: absolute;
+  left: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: #1319B3;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  z-index: 10;
+  pointer-events: auto;
+}
+
+.backButton:hover {
+  background: #0f147a;
+  transform: translateY(-50%) translateX(-2px);
+}
+
+.title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  text-align: center;
+  margin: 0;
+  background: linear-gradient(135deg, #1319B3 0%, #667eea 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  color: #1319B3;
+}
+
+.subtitle {
+  font-size: 1.1rem;
+  color: #6b7280;
+  text-align: center;
+  margin: 10px 0 0 0;
+}
+
+.emailLink {
+  color: #1319B3;
+  text-decoration: none;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.emailLink:hover {
+  color: #667eea;
+  text-decoration: underline;
+}
+
+.scrollableContent {
+  max-width: 900px;
+  margin: 0 auto;
+  background: white;
+  border-radius: 20px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+  padding: 40px;
+  line-height: 1.7;
+  max-height: 70vh;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #1319B3 #e5e7eb;
+}
+
+.scrollableContent::-webkit-scrollbar {
+  width: 8px;
+}
+
+.scrollableContent::-webkit-scrollbar-track {
+  background: #e5e7eb;
+  border-radius: 4px;
+}
+
+.scrollableContent::-webkit-scrollbar-thumb {
+  background: #1319B3;
+  border-radius: 4px;
+}
+
+.scrollableContent::-webkit-scrollbar-thumb:hover {
+  background: #0f147a;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .header {
+    margin-bottom: 20px;
+  }
+  
+  .backButton {
+    position: static;
+    transform: none;
+    margin-bottom: 20px;
+    width: auto;
+    align-self: flex-start;
+  }
+  
+  .scrollableContent {
+    margin: 10px;
+    padding: 20px;
+    border-radius: 15px;
+    max-height: 60vh;
+  }
+  
+  .title {
+    font-size: 2rem;
+    margin-bottom: 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .scrollableContent {
+    padding: 15px;
+    margin: 5px;
+    max-height: 50vh;
+  }
+  
+  .title {
+    font-size: 1.8rem;
+    margin-bottom: 15px;
+  }
+}

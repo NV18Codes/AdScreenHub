@@ -522,7 +522,7 @@ export default function AuthFlow() {
               </p>
               <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
                 <p className="text-sm text-yellow-800">
-                  <strong>Important:</strong> After clicking the email link, you'll be redirected to our production site. Once you see "Email verified successfully!", come back to this tab and click "I've Verified My Email" below.
+                  After clicking the email link, you'll be redirected to our production site. Once you see "Email verified successfully!", come back to this tab and click "I've Verified My Email" below.
                 </p>
               </div>
             </div>

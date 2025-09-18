@@ -1,6 +1,21 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
+import styles from '../styles/Contact.module.css';
 
 export default function Contact() {
+  const navigate = useNavigate();
+
+  const handleGoBack = () => {
+    console.log('Contact Back button clicked!');
+    try {
+      // Try React Router navigation first
+      navigate('/');
+    } catch (error) {
+      console.error('Navigation error:', error);
+      // Fallback to direct URL change
+      window.location.href = '/';
+    }
+  };
   const handleSubmit = (e) => {
     e.preventDefault();
     
@@ -23,14 +38,20 @@ export default function Contact() {
   };
 
   return (
-    <section className="px-8 py-20 bg-white" style={{ paddingTop: '6rem' }}>
-      <div className="max-w-4xl mx-auto">
-        <div className="text-center mb-12">
-          <h2 className="text-4xl md:text-5xl font-bold text-black text-center mb-4">Contact Us</h2>
-          <p className="text-xl text-gray-600">
-            Get in touch with us using the form or send us an e-mail to : <a href="mailto:info@adscreenhub.com" className="text-blue-600 hover:text-blue-800 underline">info@adscreenhub.com</a>
-          </p>
-        </div>
+    <div className={styles.container}>
+      <div className={styles.header}>
+        <button 
+          onClick={handleGoBack} 
+          className={styles.backButton}
+          type="button"
+        >
+          ← Go Back
+        </button>
+        <h1 className={styles.title}>Contact Us</h1>
+        <p className={styles.subtitle}>Get in touch with us using the form or send us an e-mail to : <a href="mailto:info@adscreenhub.com" className={styles.emailLink}>info@adscreenhub.com</a></p>
+      </div>
+      
+      <div className={styles.scrollableContent}>
         
         <div className="bg-gray-50 rounded-2xl p-8 shadow-lg">
           <form onSubmit={handleSubmit} className="space-y-6">
@@ -103,6 +124,6 @@ export default function Contact() {
           </form>
         </div>
       </div>
-    </section>
+    </div>
   );
 }
