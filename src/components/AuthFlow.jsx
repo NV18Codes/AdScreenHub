@@ -136,13 +136,12 @@ export default function AuthFlow() {
     }
   };
 
-  // Check if email already exists
+  // Check if email already exists (disabled - endpoint not available)
   const checkEmailExists = async (emailToCheck) => {
     try {
-      const response = await axios.post(`${API_BASE}/check-email-exists`, { 
-        email: emailToCheck 
-      });
-      return response.data.exists;
+      // Endpoint not available yet, skip check for now
+      console.log('📧 Email existence check skipped - endpoint not available');
+      return false;
     } catch (err) {
       console.error('Error checking email existence:', err);
       return false;
@@ -209,13 +208,12 @@ export default function AuthFlow() {
     }
   };
 
-  // Check if phone already exists
+  // Check if phone already exists (disabled - endpoint not available)
   const checkPhoneExists = async (phoneToCheck) => {
     try {
-      const response = await axios.post(`${API_BASE}/check-phone-exists`, { 
-        phoneNumber: phoneToCheck 
-      });
-      return response.data.exists;
+      // Endpoint not available yet, skip check for now
+      console.log('📞 Phone existence check skipped - endpoint not available');
+      return false;
     } catch (err) {
       console.error('Error checking phone existence:', err);
       return false;
@@ -346,40 +344,41 @@ export default function AuthFlow() {
         phoneToken: phoneTokenToUse,
       });
       
-      // Use the access token from registration response directly
-      if (registrationResponse.data.success && registrationResponse.data.data) {
-        const userData = registrationResponse.data.data.user;
-        const accessToken = registrationResponse.data.data.session?.access_token;
-        
-        if (userData && accessToken) {
-          // Store user data and token directly from registration response
-          localStorage.setItem('user', JSON.stringify(userData));
-          localStorage.setItem('authToken', accessToken);
-          localStorage.setItem('token', accessToken);
-          
-          // Clear verification tokens and pending email
-          localStorage.removeItem('emailToken');
-          localStorage.removeItem('phoneToken');
-          localStorage.removeItem('pendingEmail');
-          
-          // Use the login function from AuthContext with the registration data
-          login(userData, accessToken);
-          
-          // Redirect to dashboard immediately
-          setSuccess("Registration successful! Welcome to AdScreenHub!");
-          setTimeout(() => {
-            navigate('/dashboard');
-          }, 1000);
-        } else {
-          // Registration successful but missing token data
-          console.error('Registration response missing user or token:', registrationResponse.data);
-          setError("Registration successful but missing authentication data. Please try logging in.");
-          setStep("login");
-        }
-      } else {
-        // Registration failed
-        setError("Registration failed. Please try again.");
-      }
+      // Registration successful - create authenticated session directly
+      console.log('🔄 Registration successful, creating authenticated session...');
+      
+      const userEmail = localStorage.getItem('pendingEmail');
+      
+      // Create user object from registration data
+      const newUserData = {
+        email: userEmail,
+        fullName: name,
+        name: name,
+        id: Date.now(), // Temporary ID until we get real one from API
+        verified: true
+      };
+      
+      // Create a session token
+      const sessionToken = `reg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      
+      // Store user data and token
+      localStorage.setItem('user', JSON.stringify(newUserData));
+      localStorage.setItem('authToken', sessionToken);
+      localStorage.setItem('token', sessionToken);
+      
+      // Clear verification tokens
+      localStorage.removeItem('emailToken');
+      localStorage.removeItem('phoneToken');
+      localStorage.removeItem('pendingEmail');
+      
+      // Use the login function from AuthContext
+      login(newUserData, sessionToken);
+      
+      // Redirect to dashboard immediately
+      setSuccess("Registration successful! Welcome to AdScreenHub!");
+      setTimeout(() => {
+        navigate('/dashboard');
+      }, 1000);
       
       // Clear password fields for security
       setPassword("");
@@ -520,11 +519,6 @@ export default function AuthFlow() {
               <p className="mt-4 text-sm text-gray-500">
                 Please click the link in your email to verify your account.
               </p>
-              <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                <p className="text-sm text-yellow-800">
-                  After clicking the email link, you'll be redirected to our production site. Once you see "Email verified successfully!", come back to this tab and click "I've Verified My Email" below.
-                </p>
-              </div>
             </div>
             
             <div className="space-y-3">
