@@ -14,6 +14,8 @@ import Privacy from './pages/Privacy';
 import Contact from './pages/Contact';
 import Auth from './pages/Auth';
 import Login from './pages/Login';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
 import EmailRedirect from './pages/EmailRedirect';
 import ScrollToTop from './components/ScrollToTop';
 import ScrollToTopButton from './components/ScrollToTopButton';
@@ -65,6 +67,8 @@ function App() {
           <Route path="/auth" element={<AuthRouteGuard><Layout showFooter={false}><Auth /></Layout></AuthRouteGuard>} />
           <Route path="/login" element={<AuthRouteGuard><Layout showFooter={false}><Login /></Layout></AuthRouteGuard>} />
           <Route path="/signup" element={<AuthRouteGuard><Layout showFooter={false}><Auth /></Layout></AuthRouteGuard>} />
+          <Route path="/forgot-password" element={<AuthRouteGuard><Layout showFooter={false}><ForgotPassword /></Layout></AuthRouteGuard>} />
+          <Route path="/reset-password" element={<AuthRouteGuard><Layout showFooter={false}><ResetPassword /></Layout></AuthRouteGuard>} />
           <Route path="/verify-email" element={<EmailRedirect />} />
           
           {/* Dashboard Routes - Protected from unauthenticated users */}
