@@ -499,6 +499,7 @@ export default function AuthFlow() {
         setError(response.error || "Failed to resend email. Please try again.");
       }
     } catch (err) {
+      console.error('Email resend error:', err);
       setError("Failed to resend email. Please try again.");
     } finally {
       setResendEmailLoading(false);
@@ -522,6 +523,7 @@ export default function AuthFlow() {
         setError(response.error || "Failed to resend OTP. Please try again.");
       }
     } catch (err) {
+      console.error('OTP resend error:', err);
       setError("Failed to resend OTP. Please try again.");
     } finally {
       setResendOTPLoading(false);
@@ -530,15 +532,26 @@ export default function AuthFlow() {
 
   // Initialize OTP timer when step changes to OTP
   useEffect(() => {
-    if (step === "otp" && resendOTPTimer === 0) {
-      // Allow immediate resend when first entering OTP step
-      console.log("OTP step entered - resend available immediately");
+    if (step === "otp") {
+      // Always block resend for 10 seconds when OTP step is entered
+      setResendOTPTimer(10); // 10 seconds initial block
+      console.log("OTP step entered - blocking resend for 10 seconds");
+    }
+  }, [step]);
+
+  // Initialize Email timer when email is sent
+  useEffect(() => {
+    if (step === "waitForEmailVerify") {
+      // Always block resend for 10 seconds when email verification step is entered
+      setResendEmailTimer(10); // 10 seconds initial block
+      console.log("Email verification step entered - blocking resend for 10 seconds");
     }
   }, [step]);
 
   // 🚀 NEW: Forgot Password
   const handleForgotPassword = async (e) => {
     e.preventDefault();
+    console.log('🔐 Forgot Password submitted!', { forgotPasswordEmail });
     
     if (!forgotPasswordEmail) {
       setError("Email is required");
@@ -550,16 +563,21 @@ export default function AuthFlow() {
     setSuccess("");
     
     try {
+      console.log('📧 Calling forgotPassword API with email:', forgotPasswordEmail);
       const response = await authAPI.forgotPassword(forgotPasswordEmail);
+      console.log('🔐 Forgot Password API response:', response);
       
       if (response.success) {
         setSuccess("Password reset OTP sent! Please check your email.");
         setStep("reset-password");
         setEmail(forgotPasswordEmail); // Store email for reset
+        console.log('✅ Forgot password successful, moving to reset step');
       } else {
+        console.log('❌ Forgot password failed:', response.error);
         setError(response.error || "Failed to send reset email. Please try again.");
       }
     } catch (err) {
+      console.error('💥 Forgot password error:', err);
       setError("Failed to send reset email. Please try again.");
     } finally {
       setLoading(false);
@@ -698,7 +716,7 @@ export default function AuthFlow() {
                 className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
               >
                 {resendEmailLoading ? "Sending..." : 
-                 resendEmailTimer > 0 ? `Resend in ${Math.floor(resendEmailTimer / 60)}:${(resendEmailTimer % 60).toString().padStart(2, '0')}` : 
+                 resendEmailTimer > 0 ? `Resend Email in ${resendEmailTimer}s` : 
                  "Resend Verification Email"}
               </button>
               
@@ -804,7 +822,7 @@ export default function AuthFlow() {
                   className="w-full bg-green-600 text-white py-3 px-4 rounded-lg hover:bg-green-700 focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
                 >
                   {resendOTPLoading ? "Sending..." : 
-                   resendOTPTimer > 0 ? `Resend in ${Math.floor(resendOTPTimer / 60)}:${(resendOTPTimer % 60).toString().padStart(2, '0')}` : 
+                   resendOTPTimer > 0 ? `Resend OTP in ${resendOTPTimer}s` : 
                    "Resend OTP"}
                 </button>
                 

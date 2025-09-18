@@ -13,7 +13,8 @@ export const API_ENDPOINTS = {
     RESEND_OTP: '/auth/resend-otp',
     RESEND_EMAIL: '/auth/resend-email-verification',
     FORGOT_PASSWORD: '/auth/forgot-password',
-    RESET_PASSWORD: '/auth/reset-password'
+    RESET_PASSWORD: '/auth/reset-password',
+    SIGNOUT: '/auth/signout'
   }
 };
 
@@ -96,7 +97,10 @@ export const authAPI = {
     makeRequest('/auth/forgot-password', { email }),
 
   resetPassword: (email, otp, password) => 
-    makeRequest('/auth/reset-password', { email, otp, password })
+    makeRequest('/auth/reset-password', { email, otp, password }),
+
+  signout: () => 
+    makeRequest('/auth/signout', {})
 };
 
 // Data APIs

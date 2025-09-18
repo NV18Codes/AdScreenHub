@@ -104,10 +104,17 @@ export default function Navbar() {
               <div className={styles.authSection}>
                 <span className={styles.userName}>Hi, {displayName}</span>
                 <button 
-                  onClick={() => {
-                    logout();
-                    closeMenu();
-                    window.location.href = '/';
+                  onClick={async () => {
+                    try {
+                      await logout();
+                      closeMenu();
+                      window.location.href = '/';
+                    } catch (error) {
+                      console.error('Logout error:', error);
+                      // Force redirect even if logout fails
+                      closeMenu();
+                      window.location.href = '/';
+                    }
                   }} 
                   className={`${styles.btn} ${styles.btnPrimary}`}
                 >

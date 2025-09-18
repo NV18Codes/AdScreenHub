@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { authAPI } from '../config/api';
 
 const AuthContext = createContext();
 
@@ -87,12 +88,27 @@ export const AuthProvider = ({ children }) => {
     localStorage.setItem('token', token);
   };
 
-  const logout = () => {
+  const logout = async () => {
+    try {
+      // Call signout API
+      console.log('🚪 Calling signout API...');
+      await authAPI.signout();
+      console.log('✅ Signout API called successfully');
+    } catch (error) {
+      console.error('❌ Signout API error:', error);
+      // Continue with logout even if API fails
+    }
+    
+    // Clear local state and storage
     setUser(null);
     localStorage.removeItem('user');
     localStorage.removeItem('token');
     localStorage.removeItem('emailToken');
     localStorage.removeItem('phoneToken');
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('pendingEmail');
+    
+    console.log('🚪 User logged out successfully');
   };
 
   const isAuthenticated = () => {
