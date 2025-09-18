@@ -117,13 +117,7 @@ export default function AuthFlow() {
     let otpInterval;
     if (resendOTPTimer > 0) {
       otpInterval = setInterval(() => {
-        setResendOTPTimer(prev => {
-          const newValue = prev - 1;
-          if (newValue % 30 === 0) { // Log every 30 seconds
-            console.log("🚨 OTP Timer countdown:", newValue, "seconds remaining");
-          }
-          return newValue;
-        });
+        setResendOTPTimer(prev => prev - 1);
       }, 1000);
     }
     return () => clearInterval(otpInterval);
@@ -551,23 +545,16 @@ export default function AuthFlow() {
   // Initialize OTP timer when step changes to OTP
   useEffect(() => {
     if (step === "otp") {
-      // Force reset to 5 minutes - clear any existing timer first
-      setResendOTPTimer(0);
-      setTimeout(() => {
-        const fiveMinutes = 300; // 5 minutes = 300 seconds
-        console.log("🚨 FORCING OTP timer to 5 minutes (300 seconds)");
-        setResendOTPTimer(fiveMinutes);
-        console.log("🚨 Timer forced to:", fiveMinutes);
-      }, 100);
+      // Set to 5 minutes when entering OTP step
+      setResendOTPTimer(300); // 5 minutes = 300 seconds
     }
   }, [step]);
 
   // Initialize Email timer when email is sent
   useEffect(() => {
     if (step === "waitForEmailVerify") {
-      // Block resend for 10 minutes from the first time
-      setResendEmailTimer(600); // 10 minutes (600 seconds)
-      console.log("Email verification step entered - blocking resend for 10 minutes");
+      // Set to 10 minutes when entering email verification step
+      setResendEmailTimer(600); // 10 minutes = 600 seconds
     }
   }, [step]);
 
@@ -837,31 +824,16 @@ export default function AuthFlow() {
                   {loading ? "Verifying..." : "Verify OTP"}
                 </button>
                 
-                {/* 🚀 NEW: Resend OTP Button - Always visible */}
+                {/* 🚀 NEW: Resend OTP Button */}
                 <button
                   type="button"
-                  onClick={() => {
-                    console.log("🔴 RESEND OTP CLICKED - Current timer:", resendOTPTimer);
-                    handleResendOTP();
-                  }}
+                  onClick={handleResendOTP}
                   disabled={resendOTPTimer > 0 || resendOTPLoading}
                   className="w-full bg-green-600 text-white py-3 px-4 rounded-lg hover:bg-green-700 focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
                 >
                   {resendOTPLoading ? "Sending..." : 
-                   resendOTPTimer > 0 ? `Resend OTP in ${Math.floor(resendOTPTimer / 60)}:${(resendOTPTimer % 60).toString().padStart(2, '0')} (${resendOTPTimer}s total)` : 
+                   resendOTPTimer > 0 ? `Resend OTP in ${Math.floor(resendOTPTimer / 60)}:${(resendOTPTimer % 60).toString().padStart(2, '0')}` : 
                    "Resend OTP"}
-                </button>
-                
-                {/* 🚨 DEBUG: Force reset timer button */}
-                <button
-                  type="button"
-                  onClick={() => {
-                    console.log("🚨 FORCE RESET OTP TIMER TO 5 MINUTES");
-                    setResendOTPTimer(300);
-                  }}
-                  className="w-full bg-red-600 text-white py-2 px-4 rounded-lg text-sm"
-                >
-                  🚨 DEBUG: Force 5min Timer
                 </button>
                 
                 <button
