@@ -7,8 +7,7 @@ export default function WhyAdScreenHub() {
     <section className="px-8 py-16 bg-gray-50">
       <div className="max-w-7xl mx-auto">
         <div className={styles.titleContainer}>
-          <h2 className="text-4xl md:text-5xl font-bold text-gray-900 text-center mb-12 flex items-center justify-center gap-4">
-            Why 
+          <div className={styles.overlappingTitle}>
             <img 
               src="/Animation-transparent-bkgd.gif" 
               alt="AdScreenHub Animation" 
@@ -18,7 +17,10 @@ export default function WhyAdScreenHub() {
                 e.target.style.display = 'none';
               }}
             />
-          </h2>
+            <h2 className={styles.overlappingText}>
+              Why
+            </h2>
+          </div>
         </div>
         
         <div className={styles.example}>
