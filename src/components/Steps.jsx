@@ -24,8 +24,8 @@ const ApproveIcon = () => (
 );
 
 const ScreenIcon = () => (
-  <svg className="w-7 h-7" fill="currentColor" viewBox="0 0 24 24">
-    <path d="M21 3H3c-1.1 0-2 .9-2 2v11c0 1.1.9 2 2 2h6l-2 2v1h8v-1l-2-2h6c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 11H3V5h18v9zm-10-7v5l4-2.5-4-2.5z"/>
+  <svg className="w-10 h-10" fill="currentColor" viewBox="0 0 24 24">
+    <path d="M4 6h16v10H4V6zm2 2v6h12V8H6zm6 8l2 2H10l2-2z"/>
   </svg>
 );
 

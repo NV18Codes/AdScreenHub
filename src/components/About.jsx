@@ -28,7 +28,7 @@ export default function About() {
           {/* Right Side - Design Inspiration */}
           <div className="lg:w-3/5 lg:ml-auto">
             <div className="bg-blue-50 rounded-xl p-8 shadow-lg">
-              <h3 className="text-2xl md:text-3xl font-bold text-gray-900 mb-6">Need design inspiration?</h3>
+              <h3 className="text-2xl md:text-3xl font-bold text-gray-900 mb-6 text-center">Need Design Inspiration?</h3>
               <div className="space-y-6">
                 <div className="text-center">
                   <p className="text-gray-700 mb-4">Put your creative mind to work using AI</p>

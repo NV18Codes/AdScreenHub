@@ -9,7 +9,11 @@ export const API_ENDPOINTS = {
     START_PHONE_VERIFICATION: '/auth/start-phone-verification',
     VERIFY_PHONE: '/auth/verify-phone',
     COMPLETE_REGISTRATION: '/auth/complete-registration',
-    LOGIN: '/auth/login'
+    LOGIN: '/auth/login',
+    RESEND_OTP: '/auth/resend-otp',
+    RESEND_EMAIL: '/auth/resend-email-verification',
+    FORGOT_PASSWORD: '/auth/forgot-password',
+    RESET_PASSWORD: '/auth/reset-password'
   }
 };
 
@@ -79,7 +83,20 @@ export const authAPI = {
     makeRequest('/auth/complete-registration', { email, fullName, phoneNumber, name, password }),
 
   login: (email, password) => 
-    makeRequest('/auth/login', { email, password })
+    makeRequest('/auth/login', { email, password }),
+
+  // 🚀 NEW API INTEGRATIONS
+  resendOTP: (phoneNumber) => 
+    makeRequest('/auth/resend-otp', { phoneNumber }),
+
+  resendEmailVerification: (email) => 
+    makeRequest('/auth/resend-email-verification', { email }),
+
+  forgotPassword: (email) => 
+    makeRequest('/auth/forgot-password', { email }),
+
+  resetPassword: (email, otp, password) => 
+    makeRequest('/auth/reset-password', { email, otp, password })
 };
 
 // Data APIs
