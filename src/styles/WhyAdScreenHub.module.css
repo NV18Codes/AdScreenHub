@@ -19,7 +19,7 @@
 
 .overlappingText {
   position: absolute;
-  left: -4rem;
+  left: -3.5rem;
   top: 50%;
   transform: translateY(-50%);
   font-size: 2.25rem;
@@ -37,20 +37,43 @@
   }
   
   .overlappingText {
-    left: -3rem;
+    left: -2.5rem;
     font-size: 2rem;
   }
 }
 
 @media (max-width: 480px) {
+  .overlappingTitle {
+    position: relative;
+    display: inline-block;
+  }
+  
   .titleAnimation {
-    height: 8rem;
-    max-width: 800px;
+    height: 6rem;
+    max-width: 600px;
   }
   
   .overlappingText {
-    left: -2rem;
+    position: absolute;
+    left: 50%;
+    top: -0.5rem;
+    transform: translateX(-50%);
     font-size: 1.75rem;
+    margin: 0;
+    z-index: 10;
+  }
+}
+
+/* Extra small screens */
+@media (max-width: 360px) {
+  .titleAnimation {
+    height: 5rem;
+    max-width: 500px;
+  }
+  
+  .overlappingText {
+    font-size: 1.5rem;
+    top: -0.25rem;
   }
 }
 
