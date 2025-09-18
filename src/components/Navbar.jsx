@@ -8,6 +8,7 @@ export default function Navbar() {
   const location = useLocation();
   const { user, logout, isAuthenticated } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [activeSection, setActiveSection] = useState('');
   
   // Debug: Log user object to see available fields
   console.log('🔍 Navbar Debug:');
@@ -33,6 +34,40 @@ export default function Navbar() {
   // Close menu when location changes
   useEffect(() => {
     closeMenu();
+  }, [location.pathname]);
+
+  // Detect active section on scroll
+  useEffect(() => {
+    const handleScroll = () => {
+      if (location.pathname !== '/') return;
+      
+      const sections = ['how-it-works', 'about', 'pricing'];
+      let currentSection = '';
+      
+      for (const sectionId of sections) {
+        const element = document.getElementById(sectionId);
+        if (element) {
+          const rect = element.getBoundingClientRect();
+          if (rect.top <= 100 && rect.bottom >= 100) {
+            currentSection = sectionId;
+            break;
+          }
+        }
+      }
+      
+      setActiveSection(currentSection);
+    };
+
+    if (location.pathname === '/') {
+      window.addEventListener('scroll', handleScroll);
+      handleScroll(); // Check initial position
+    } else {
+      setActiveSection('');
+    }
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+    };
   }, [location.pathname]);
 
   const scrollToSection = (sectionId) => {
@@ -62,9 +97,9 @@ export default function Navbar() {
           {isAuthenticated() ? (
             <>
               {/* Authenticated Navigation */}
-              <Link to="/dashboard" className={styles.navLink} onClick={closeMenu}>Dashboard</Link>
-              <Link to="/my-orders" className={styles.navLink} onClick={closeMenu}>My Orders</Link>
-              <Link to="/profile" className={styles.navLink} onClick={closeMenu}>Profile</Link>
+              <Link to="/dashboard" className={`${styles.navLink} ${location.pathname === '/dashboard' ? styles.active : ''}`} onClick={closeMenu}>Dashboard</Link>
+              <Link to="/my-orders" className={`${styles.navLink} ${location.pathname === '/my-orders' ? styles.active : ''}`} onClick={closeMenu}>My Orders</Link>
+              <Link to="/profile" className={`${styles.navLink} ${location.pathname === '/profile' ? styles.active : ''}`} onClick={closeMenu}>Profile</Link>
               
               <div className={styles.authSection}>
                 <span className={styles.userName}>Hi, {displayName}</span>
@@ -83,10 +118,10 @@ export default function Navbar() {
           ) : (
             <>
               {/* Public Navigation */}
-              <button onClick={() => scrollToSection('how-it-works')} className={styles.navLink}>How It Works?</button>
-              <button onClick={() => scrollToSection('about')} className={styles.navLink}>About Us</button>
-              <button onClick={() => scrollToSection('pricing')} className={styles.navLink}>Pricing</button>
-              <Link to="/contact" className={styles.navLink} onClick={closeMenu}>Contact</Link>
+              <button onClick={() => scrollToSection('how-it-works')} className={`${styles.navLink} ${activeSection === 'how-it-works' ? styles.active : ''}`}>How It Works?</button>
+              <button onClick={() => scrollToSection('about')} className={`${styles.navLink} ${activeSection === 'about' ? styles.active : ''}`}>About Us</button>
+              <button onClick={() => scrollToSection('pricing')} className={`${styles.navLink} ${activeSection === 'pricing' ? styles.active : ''}`}>Pricing</button>
+              <Link to="/contact" className={`${styles.navLink} ${location.pathname === '/contact' ? styles.active : ''}`} onClick={closeMenu}>Contact</Link>
               
               <div className={styles.authSection}>
                 <Link to="/login" className={`${styles.btn} ${styles.btnSecondary}`} onClick={closeMenu}>

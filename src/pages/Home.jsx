@@ -3,6 +3,7 @@ import Hero from '../components/Hero';
 import Steps from '../components/Steps';
 import About from '../components/About';
 import Plans from '../components/Plans';
+import WhyAdScreenHub from '../components/WhyAdScreenHub';
 import Showcase from '../components/Showcase';
 
 export default function Home() {
@@ -45,6 +46,9 @@ export default function Home() {
       </div>
       <div id="pricing">
         <Plans />
+      </div>
+      <div id="why-adscreenhub">
+        <WhyAdScreenHub />
       </div>
     </div>
   );

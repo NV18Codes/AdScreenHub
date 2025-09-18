@@ -1,0 +1,514 @@
+/* Why AdScreenHub Animation Layout */
+.titleContainer {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.titleAnimation {
+  height: 8rem;
+  width: auto;
+  max-width: 800px;
+  object-fit: contain;
+}
+
+/* Responsive adjustments for title animation */
+@media (max-width: 768px) {
+  .titleAnimation {
+    height: 6rem;
+    max-width: 600px;
+  }
+}
+
+@media (max-width: 480px) {
+  .titleAnimation {
+    height: 6rem;
+    max-width: 600px;
+  }
+}
+
+/* Hexagon Layout */
+.example {
+  position: relative;
+  width: 40rem;
+  max-width: 1100px;
+  height: 40rem;
+  margin: 2rem auto;
+  background: radial-gradient(circle, #38b6ff 0%, #1319b3 70%, transparent 70%, transparent 100%),
+              radial-gradient(circle, #1319b3 0%, #38b6ff 70%, transparent 70%, transparent 100%),
+              radial-gradient(circle, #1319b3 0%, #38b6ff 70%, transparent 70%, transparent 100%);
+  background-repeat: no-repeat;
+  background-size: 20rem 20rem, 15rem 15rem, 10rem 10rem;
+  background-position: 5rem 5rem, 20rem 10rem, 14rem 24rem;
+}
+
+@keyframes rise {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+.hexagon {
+  position: absolute;
+  height: 10rem;
+  width: 10rem;
+  filter: drop-shadow(-2px 7px 10px rgba(100, 100, 100, 0.5));
+}
+
+.hexagon::before {
+  content: '';
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  background: linear-gradient(-120deg, #bde9fb 0%, #FFFFFF 100%);
+  clip-path: polygon(25% 5%, 75% 5%, 100% 50%, 75% 95%, 25% 95%, 0% 50%);
+}
+
+.hexagon.big {
+  height: 15rem;
+  width: 15rem;
+  animation-delay: 2s;
+  animation: rise 2.5s ease-in-out infinite alternate;
+  top: 3rem;
+  left: 5rem;
+}
+
+.hexagon.big .text {
+  font-size: 21px;
+}
+
+.hexagon.semiBig {
+  height: 15rem;
+  width: 15rem;
+  animation-delay: 3s;
+  animation: rise 3s ease-in-out infinite alternate;
+  top: 11rem;
+  left: 18rem;
+}
+
+.hexagon.semiBig .text {
+  font-size: 20px;
+}
+
+.hexagon.normal {
+  animation-delay: 2s;
+  animation: rise 2s ease-in-out infinite alternate;
+}
+
+.hexagon.normal .text {
+  font-size: 14px;
+  text-align: center;
+}
+
+.hexagon.normal:nth-of-type(3) {
+  top: 0;
+  left: 19rem;
+}
+
+.hexagon.normal:nth-of-type(4) {
+  top: 22rem;
+  left: 10rem;
+}
+
+.hexagon.normal:nth-of-type(5) {
+  top: 27rem;
+  left: 20rem;
+}
+
+.hexagon.small {
+  height: 6rem;
+  width: 6rem;
+  animation-delay: 4s;
+  animation: rise 1s ease-in-out infinite alternate;
+}
+
+.hexagon.small .text {
+  font-size: 10px;
+  text-align: center;
+}
+
+.hexagon.small:nth-of-type(6) {
+  top: 30rem;
+  left: 5rem;
+}
+
+.hexagon.small:nth-of-type(7) {
+  top: 10rem;
+  left: 32rem;
+}
+
+.hexagon.small:nth-of-type(8) {
+  top: 1rem;
+  left: 1rem;
+}
+
+.hexagon.small:nth-of-type(9) {
+  top: 23rem;
+  left: 31rem;
+}
+
+.text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translateX(-50%) translateY(-50%);
+  width: 60%;
+  text-align: center;
+  font-weight: bold;
+  z-index: 2;
+  color: #000000;
+}
+
+@media screen and (max-width: 45rem) {
+  .example {
+    height: 50rem;
+    width: 30rem;
+    background-size: 20rem 20rem, 17rem 17rem, 10rem 10rem;
+    background-position: 2rem 3rem, 10rem 16rem, 10rem 32rem;
+  }
+  
+  .hexagon.big {
+    top: 3rem;
+    left: 5rem;
+  }
+  
+  .hexagon.semiBig {
+    top: 17rem;
+    left: 14rem;
+  }
+  
+  .hexagon.normal:nth-of-type(3) {
+    top: 0;
+    left: 19rem;
+  }
+  
+  .hexagon.normal:nth-of-type(4) {
+    top: 27rem;
+    left: 6rem;
+  }
+  
+  .hexagon.normal:nth-of-type(5) {
+    top: 33rem;
+    left: 16rem;
+  }
+  
+  .hexagon.small:nth-of-type(6) {
+    top: 14rem;
+    left: 1rem;
+  }
+  
+  .hexagon.small:nth-of-type(7) {
+    top: 40rem;
+    left: 11rem;
+  }
+  
+  .hexagon.small:nth-of-type(8) {
+    top: 1rem;
+    left: 1rem;
+  }
+  
+  .hexagon.small:nth-of-type(9) {
+    top: 11rem;
+    left: 20rem;
+  }
+}
+
+@media screen and (max-width: 30rem) {
+  .example {
+    width: 20rem;
+    height: 62rem;
+    background-size: 18rem 18rem, 17rem 17rem, 10rem 10rem;
+    background-position: 1.5rem 7rem, 0rem 25rem, 7rem 42rem;
+  }
+  
+  .hexagon.big {
+    top: 4rem;
+    left: 4rem;
+  }
+  
+  .hexagon.semiBig {
+    top: 20rem;
+    left: 1rem;
+  }
+  
+  .hexagon.normal:nth-of-type(3) {
+    top: 35rem;
+    left: 7rem;
+  }
+  
+  .hexagon.normal:nth-of-type(4) {
+    top: 43rem;
+    left: 0rem;
+  }
+  
+  .hexagon.normal:nth-of-type(5) {
+    top: 48rem;
+    left: 9rem;
+  }
+  
+  .hexagon.small:nth-of-type(6) {
+    top: 20rem;
+    left: 14rem;
+    height: 4rem;
+    width: 4rem;
+  }
+  
+  .hexagon.small:nth-of-type(7) {
+    top: 54rem;
+    left: 3rem;
+  }
+  
+  .hexagon.small:nth-of-type(8) {
+    top: 1rem;
+    left: 1rem;
+  }
+  
+  .hexagon.small:nth-of-type(9) {
+    top: 36rem;
+    left: 4rem;
+    height: 3rem;
+    width: 3rem;
+  }
+}
+
+@media screen and (max-width: 45rem) {
+  .example {
+    height: 50rem;
+    width: 30rem;
+    background-size: 20rem 20rem, 17rem 17rem, 10rem 10rem;
+    background-position: 2rem 3rem, 10rem 16rem, 10rem 32rem;
+  }
+}
+
+@media screen and (max-width: 30rem) {
+  .example {
+    width: 20rem;
+    height: 62rem;
+    background-size: 18rem 18rem, 17rem 17rem, 10rem 10rem;
+    background-position: 1.5rem 7rem, 0rem 25rem, 7rem 42rem;
+  }
+}
+
+@keyframes rise {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+.hexagon {
+  position: absolute;
+  height: 10rem;
+  width: 10rem;
+  filter: drop-shadow(-2px 7px 10px rgba(100, 100, 100, 0.5));
+}
+
+.hexagon::before {
+  content: '';
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  background: linear-gradient(-120deg, #bde9fb 0%, #FFFFFF 100%);
+  clip-path: polygon(25% 5%, 75% 5%, 100% 50%, 75% 95%, 25% 95%, 0% 50%);
+}
+
+.hexagon.big {
+  height: 15rem;
+  width: 15rem;
+  animation-delay: 2s;
+  animation: rise 2.5s ease-in-out infinite alternate;
+  top: 3rem;
+  left: 5rem;
+}
+
+.hexagon.big .text {
+  font-size: 21px;
+}
+
+.hexagon.semiBig {
+  height: 15rem;
+  width: 15rem;
+  animation-delay: 3s;
+  animation: rise 3s ease-in-out infinite alternate;
+  top: 11rem;
+  left: 18rem;
+}
+
+.hexagon.semiBig .text {
+  font-size: 20px;
+}
+
+.hexagon.normal {
+  animation-delay: 2s;
+  animation: rise 2s ease-in-out infinite alternate;
+}
+
+.hexagon.normal .text {
+  font-size: 14px;
+  text-align: center;
+}
+
+.hexagon.normal:nth-of-type(3) {
+  top: 0;
+  left: 19rem;
+}
+
+.hexagon.normal:nth-of-type(4) {
+  top: 22rem;
+  left: 10rem;
+}
+
+.hexagon.normal:nth-of-type(5) {
+  top: 27rem;
+  left: 20rem;
+}
+
+.hexagon.small {
+  height: 6rem;
+  width: 6rem;
+  animation-delay: 4s;
+  animation: rise 1s ease-in-out infinite alternate;
+}
+
+.hexagon.small .text {
+  font-size: 10px;
+  text-align: center;
+}
+
+.hexagon.small:nth-of-type(6) {
+  top: 30rem;
+  left: 5rem;
+}
+
+.hexagon.small:nth-of-type(7) {
+  top: 10rem;
+  left: 32rem;
+}
+
+.hexagon.small:nth-of-type(8) {
+  top: 1rem;
+  left: 1rem;
+}
+
+.hexagon.small:nth-of-type(9) {
+  top: 23rem;
+  left: 31rem;
+}
+
+.text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translateX(-50%) translateY(-50%);
+  width: 60%;
+  text-align: center;
+  font-weight: bold;
+  z-index: 2;
+  color: #000000;
+}
+
+@media screen and (max-width: 45rem) {
+  .hexagon.big {
+    top: 3rem;
+    left: 5rem;
+  }
+  
+  .hexagon.semiBig {
+    top: 17rem;
+    left: 14rem;
+  }
+  
+  .hexagon.normal:nth-of-type(3) {
+    top: 0;
+    left: 19rem;
+  }
+  
+  .hexagon.normal:nth-of-type(4) {
+    top: 27rem;
+    left: 6rem;
+  }
+  
+  .hexagon.normal:nth-of-type(5) {
+    top: 33rem;
+    left: 16rem;
+  }
+  
+  .hexagon.small:nth-of-type(6) {
+    top: 14rem;
+    left: 1rem;
+  }
+  
+  .hexagon.small:nth-of-type(7) {
+    top: 40rem;
+    left: 11rem;
+  }
+  
+  .hexagon.small:nth-of-type(8) {
+    top: 1rem;
+    left: 1rem;
+  }
+  
+  .hexagon.small:nth-of-type(9) {
+    top: 11rem;
+    left: 20rem;
+  }
+}
+
+@media screen and (max-width: 30rem) {
+  .hexagon.big {
+    top: 4rem;
+    left: 4rem;
+  }
+  
+  .hexagon.semiBig {
+    top: 20rem;
+    left: 1rem;
+  }
+  
+  .hexagon.normal:nth-of-type(3) {
+    top: 35rem;
+    left: 7rem;
+  }
+  
+  .hexagon.normal:nth-of-type(4) {
+    top: 43rem;
+    left: 0rem;
+  }
+  
+  .hexagon.normal:nth-of-type(5) {
+    top: 48rem;
+    left: 9rem;
+  }
+  
+  .hexagon.small:nth-of-type(6) {
+    top: 20rem;
+    left: 14rem;
+    height: 4rem;
+    width: 4rem;
+  }
+  
+  .hexagon.small:nth-of-type(7) {
+    top: 54rem;
+    left: 3rem;
+  }
+  
+  .hexagon.small:nth-of-type(8) {
+    top: 1rem;
+    left: 1rem;
+  }
+  
+  .hexagon.small:nth-of-type(9) {
+    top: 36rem;
+    left: 4rem;
+    height: 3rem;
+    width: 3rem;
+  }
+}

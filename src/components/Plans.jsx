@@ -1,3 +1,4 @@
+
 const plans = [
   {
     name: "SPARK",
@@ -21,12 +22,12 @@ const plans = [
 
 export default function Plans() {
   return (
-    <section className="px-8 py-24 bg-white">
+    <section className="px-8 py-16 bg-white">
       <div className="max-w-7xl mx-auto">
-        <h2 className="text-4xl md:text-5xl font-bold text-gray-900 text-center mb-20">Our Plans</h2>
+        <h2 className="text-4xl md:text-5xl font-bold text-gray-900 text-center mb-12">Our Plans</h2>
         <div className="grid md:grid-cols-3 gap-8">
           {plans.map((plan, i) => (
-            <div key={i} className="relative overflow-hidden">
+            <div key={i} className="relative overflow-hidden rounded-xl transition-transform duration-300 hover:-translate-y-2 hover:shadow-xl">
               {/* Banner.png Background */}
               <div className="absolute inset-0">
                 <img 

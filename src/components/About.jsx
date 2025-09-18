@@ -9,12 +9,12 @@ export default function About() {
   };
 
   return (
-    <section className="px-8 py-24 bg-gray-50">
+    <section className="px-8 py-16 bg-gray-50">
       <div className="max-w-7xl mx-auto">
         <div className="grid lg:grid-cols-2 gap-16 items-start">
           {/* Left Side - About Us */}
           <div>
-            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-8">About Us</h2>
+            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-8 text-center lg:text-left">About Us</h2>
             <p className="text-gray-700 text-xl leading-relaxed text-justify">
               ADSCREENHUB is an AdTech-enabled media buying platform and marketplace based in Bengaluru, India. 
               Our platform provides end-to-end ease to plan, book, and track outdoor advertising campaigns. 
