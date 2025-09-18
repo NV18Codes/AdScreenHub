@@ -8,6 +8,9 @@ export default function WhyAdScreenHub() {
       <div className="max-w-7xl mx-auto">
         <div className={styles.titleContainer}>
           <div className={styles.overlappingTitle}>
+            <h2 className={styles.overlappingText}>
+              Why
+            </h2>
             <img 
               src="/Animation-transparent-bkgd.gif" 
               alt="AdScreenHub Animation" 
@@ -17,9 +20,6 @@ export default function WhyAdScreenHub() {
                 e.target.style.display = 'none';
               }}
             />
-            <h2 className={styles.overlappingText}>
-              Why
-            </h2>
           </div>
         </div>
         
