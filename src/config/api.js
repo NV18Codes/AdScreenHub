@@ -1,6 +1,8 @@
-export const API_BASE_URL = 'https://adscreenapi-production.up.railway.app/api/v1';
+import { API_BASE_URL } from './constants.js';
 
-//'http://localhost:9000/api/v1';
+// Re-export API_BASE_URL for backward compatibility
+export { API_BASE_URL };
+
 // Centralized API endpoints
 export const API_ENDPOINTS = {
   AUTH: {
@@ -15,6 +17,27 @@ export const API_ENDPOINTS = {
     FORGOT_PASSWORD: '/auth/forgot-password',
     RESET_PASSWORD: '/auth/reset-password',
     SIGNOUT: '/auth/signout'
+  },
+  DATA: {
+    GET_LOCATIONS_BY_DATE: '/data/locations/availability',
+    GET_PLANS: '/data/plans',
+    GET_PLANS_BY_LOCATION: '/data/plans/location',
+    CHECK_AVAILABILITY: '/data/availability'
+  },
+  FILES: {
+    GET_SIGNED_UPLOAD_URL: '/files/signed-upload-url',
+    // Alternative patterns to try
+    GET_UPLOAD_URL: '/files/upload-url',
+    GET_SIGNED_URL: '/files/signed-url',
+    UPLOAD: '/upload'
+  },
+  ORDERS: {
+    INITIATE: '/orders/initiate',
+    VERIFY_PAYMENT: '/orders/verify-payment',
+    GET_ORDERS: '/orders',
+    // Alternative patterns to try
+    CREATE: '/orders/create',
+    BOOK: '/orders/book'
   }
 };
 
@@ -22,9 +45,10 @@ export const API_ENDPOINTS = {
 const makeRequest = async (endpoint, body = null, method = 'POST', customHeaders = {}) => {
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
+    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s timeout
 
     const token = localStorage.getItem('token');
+    
 
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
       method,
@@ -103,24 +127,43 @@ export const authAPI = {
     makeRequest('/auth/signout', {})
 };
 
-// Data APIs
+// Data APIs - REAL ENDPOINTS ONLY
 export const dataAPI = {
-  getPlans: () => makeRequest('/data/plans', null, 'GET'),
+  getPlans: () => makeRequest(API_ENDPOINTS.DATA.GET_PLANS, null, 'GET'),
   
   getLocationAvailability: (date) => 
-    makeRequest(`/data/locations/availability/${date}`, null, 'GET'),
+    makeRequest(`${API_ENDPOINTS.DATA.GET_LOCATIONS_BY_DATE}/${date}`, null, 'GET'),
   
-  checkSlotAvailability: (locationId, startDate, planId) => 
-    makeRequest(`/data/locations/${locationId}/check-availability?startDate=${startDate}&planId=${planId}`, null, 'GET')
+  getPlansByLocation: (locationId) => 
+    makeRequest(`${API_ENDPOINTS.DATA.GET_PLANS_BY_LOCATION}/${locationId}`, null, 'GET'),
+  
+  checkAvailability: (locationId, planId, startDate) => 
+    makeRequest(`${API_ENDPOINTS.DATA.CHECK_AVAILABILITY}/${locationId}?planId=${planId}&startDate=${startDate}`, null, 'GET')
 };
 
-// Demo APIs
+// File Upload APIs - REAL ENDPOINTS ONLY
+export const filesAPI = {
+  getSignedUploadUrl: (fileName, fileType) => 
+    makeRequest(API_ENDPOINTS.FILES.GET_SIGNED_UPLOAD_URL, { fileName, fileType })
+};
+
+// Order APIs - REAL ENDPOINTS ONLY
 export const ordersAPI = {
-  createOrder: () => ({ success: true, data: { id: Date.now() } }),
-  getOrders: () => ({ success: true, data: [] }),
-  getOrderById: () => ({ success: true, data: null }),
-  updateOrder: (id, data) => ({ success: true, data: { id, ...data } }),
-  cancelOrder: (id) => ({ success: true, data: { id, status: 'cancelled' } })
+  initiateOrder: (orderData) => 
+    makeRequest(API_ENDPOINTS.ORDERS.INITIATE, orderData),
+  
+  verifyPayment: (verificationData) => 
+    makeRequest(API_ENDPOINTS.ORDERS.VERIFY_PAYMENT, verificationData),
+  
+  getOrders: () => 
+    makeRequest(API_ENDPOINTS.ORDERS.GET_ORDERS, null, 'GET'),
+  
+  // Alternative order endpoints to try
+  getAllOrders: () => 
+    makeRequest('/orders/all', null, 'GET'),
+  
+  getUserOrders: () => 
+    makeRequest('/orders/user', null, 'GET')
 };
 
 export const couponsAPI = {

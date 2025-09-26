@@ -573,17 +573,13 @@ export default function AuthFlow() {
     setSuccess("");
     
     try {
-      console.log('📧 Calling forgotPassword API with email:', forgotPasswordEmail);
       const response = await authAPI.forgotPassword(forgotPasswordEmail);
-      console.log('🔐 Forgot Password API response:', response);
       
       if (response.success) {
         setSuccess("Password reset OTP sent! Please check your email.");
         setStep("reset-password");
         setEmail(forgotPasswordEmail); // Store email for reset
-        console.log('✅ Forgot password successful, moving to reset step');
       } else {
-        console.log('❌ Forgot password failed:', response.error);
         setError(response.error || "Failed to send reset email. Please try again.");
       }
     } catch (err) {
@@ -1246,7 +1242,7 @@ export default function AuthFlow() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4" style={{ paddingTop: '6rem' }}>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100 flex items-center justify-center p-4" style={{ paddingTop: '6rem' }}>
       <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md">
         {renderStep()}
         

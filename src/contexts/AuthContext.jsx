@@ -20,17 +20,10 @@ export const AuthProvider = ({ children }) => {
     const token = localStorage.getItem('token');
     const userData = localStorage.getItem('user');
     
-    console.log('🔍 AuthContext Debug - Initial Load:');
-    console.log('Token exists:', !!token);
-    console.log('User data exists:', !!userData);
     
     if (token && userData) {
       try {
         const parsedUser = JSON.parse(userData);
-        console.log('📋 Parsed User Object:', parsedUser);
-        console.log('📋 User Object Keys:', Object.keys(parsedUser));
-        console.log('📋 User Object Values:', Object.values(parsedUser));
-        console.log('📋 User Object Type:', typeof parsedUser);
         
         // Check for different possible name fields
         const possibleNames = [
@@ -42,16 +35,6 @@ export const AuthProvider = ({ children }) => {
           parsedUser.username,
           parsedUser.email?.split('@')[0]
         ];
-        console.log('📋 Possible Name Fields:', {
-          fullName: parsedUser.fullName,
-          name: parsedUser.name,
-          firstName: parsedUser.firstName,
-          lastName: parsedUser.lastName,
-          displayName: parsedUser.displayName,
-          username: parsedUser.username,
-          email: parsedUser.email,
-          emailPrefix: parsedUser.email?.split('@')[0]
-        });
         
         setUser(parsedUser);
       } catch (error) {
@@ -65,23 +48,6 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const login = (userData, token) => {
-    console.log('🔍 AuthContext Debug - Login:');
-    console.log('📋 Login User Data:', userData);
-    console.log('📋 Login User Data Keys:', Object.keys(userData));
-    console.log('📋 Login User Data Values:', Object.values(userData));
-    console.log('📋 Login User Data Type:', typeof userData);
-    
-    // Check for different possible name fields
-    console.log('📋 Login Name Fields:', {
-      fullName: userData.fullName,
-      name: userData.name,
-      firstName: userData.firstName,
-      lastName: userData.lastName,
-      displayName: userData.displayName,
-      username: userData.username,
-      email: userData.email,
-      emailPrefix: userData.email?.split('@')[0]
-    });
     
     setUser(userData);
     localStorage.setItem('user', JSON.stringify(userData));
@@ -91,9 +57,7 @@ export const AuthProvider = ({ children }) => {
   const logout = async () => {
     try {
       // Call signout API
-      console.log('🚪 Calling signout API...');
       await authAPI.signout();
-      console.log('✅ Signout API called successfully');
     } catch (error) {
       console.error('❌ Signout API error:', error);
       // Continue with logout even if API fails

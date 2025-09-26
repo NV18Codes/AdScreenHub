@@ -21,27 +21,85 @@
   width: 100%;
 }
 
-.calendarSection {
-  width: 100%;
-  max-width: 1000px;
-  margin: 0 auto;
+.bookNewSection {
+  margin-bottom: 2rem;
+  text-align: center;
 }
 
+.bookNewBtn {
+  padding: 1rem 2rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(37, 99, 235, 0.2);
+  transition: all 0.3s ease;
+}
+
+.bookNewBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.3);
+}
+
+
 .header {
-  text-align: center;
   margin-bottom: 3rem;
 }
 
-.header h1 {
+.headerContent {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.headerText {
+  text-align: left;
+}
+
+.headerText h1 {
   color: var(--text-dark);
   font-size: 2.5rem;
   font-weight: 700;
   margin-bottom: 0.5rem;
 }
 
-.header p {
+.headerText p {
   color: var(--text-light);
   font-size: 1.125rem;
+}
+
+.headerActions {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.refreshBtn {
+  padding: 0.75rem 1.5rem;
+  font-size: 0.9rem;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.refreshBtn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+}
+
+.refreshBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.errorMessage {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #dc2626;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  text-align: center;
 }
 
 .emptyState {
@@ -674,4 +732,164 @@
   .previewImage {
     max-height: 150px;
   }
+  
+  .paymentForm {
+    gap: 1rem;
+  }
+  
+  .formInput {
+    padding: 0.6rem;
+    font-size: 0.9rem;
+  }
+}
+
+/* Payment Verification Modal Styles */
+.paymentForm {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  margin: 2rem 0;
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.formGroup label {
+  font-weight: 600;
+  color: var(--text-dark);
+  font-size: 0.9rem;
+}
+
+.formInput {
+  padding: 0.75rem;
+  border: 2px solid var(--gray-300);
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: all 0.2s ease;
+  background-color: var(--white);
+}
+
+.formInput:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+/* Order Info Styles */
+.razorpayOrderId,
+.paymentId {
+  font-size: 0.85rem;
+  color: var(--text-light);
+  margin: 0.25rem 0;
+}
+
+.razorpayOrderId strong,
+.paymentId strong {
+  color: var(--text-dark);
+}
+
+.orderPlan {
+  margin: 0.5rem 0;
+  color: var(--text-light);
+}
+
+.orderUid {
+  font-size: 0.85rem;
+  color: var(--text-light);
+  margin: 0.25rem 0;
+  font-family: 'Courier New', monospace;
+}
+
+.orderUid strong {
+  color: var(--text-dark);
+}
+
+.planDescription {
+  font-size: 0.9rem;
+  color: var(--text-light);
+  margin: 0.25rem 0;
+}
+
+.planDescription strong {
+  color: var(--text-dark);
+}
+
+.planDuration {
+  font-size: 0.9rem;
+  color: var(--text-light);
+  margin: 0.25rem 0;
+}
+
+.planDuration strong {
+  color: var(--text-dark);
+}
+
+.paymentStatus {
+  display: flex;
+  align-items: center;
+  margin: 0.5rem 0;
+}
+
+.paymentVerified {
+  color: var(--success);
+  font-weight: 600;
+  font-size: 0.9rem;
+  background: rgba(16, 185, 129, 0.1);
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.orderAddress,
+.orderGst,
+.orderCoupon {
+  margin: 1rem 0;
+  padding: 1rem;
+  background: var(--gray-50);
+  border-radius: 8px;
+  border-left: 4px solid var(--primary-color);
+}
+
+.orderAddress h4,
+.orderGst h4,
+.orderCoupon h4 {
+  margin: 0 0 0.5rem 0;
+  color: var(--text-dark);
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.orderAddress p,
+.orderGst p {
+  margin: 0;
+  color: var(--text-light);
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.couponCode {
+  font-family: 'Courier New', monospace;
+  background: var(--primary-50);
+  color: var(--primary-700);
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-weight: 600;
+  display: inline-block;
+}
+
+.creativeInfo {
+  margin-top: 0.5rem;
+}
+
+.creativeInfo p {
+  margin: 0.25rem 0;
+  font-size: 0.9rem;
+  color: var(--text-light);
+}
+
+.creativeInfo strong {
+  color: var(--text-dark);
 }

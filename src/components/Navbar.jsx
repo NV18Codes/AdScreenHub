@@ -11,17 +11,11 @@ export default function Navbar() {
   const [activeSection, setActiveSection] = useState('');
   
   // Debug: Log user object to see available fields
-  console.log('🔍 Navbar Debug:');
-  console.log('📋 User object:', user);
-  console.log('📋 User available fields:', user ? Object.keys(user) : 'No user data');
-  console.log('📋 Is authenticated:', isAuthenticated());
   
   // Get display name using utility function
   const displayName = getUserDisplayName(user);
   const userEmail = getUserEmail(user);
   
-  console.log('📋 Display name:', displayName);
-  console.log('📋 User email:', userEmail);
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);

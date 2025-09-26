@@ -83,19 +83,14 @@ export default function BookingCalendar() {
     setLoadingPlans(true);
     try {
       const result = await dataAPI.getPlans();
-      console.log('🔍 Plans API result:', result);
-      
       // Handle nested data structure: result.data.data
       if (result.success && result.data && result.data.data && Array.isArray(result.data.data)) {
-        console.log('✅ Using API plans data (nested):', result.data.data);
         const transformedPlans = transformPlanData(result.data.data);
         setPlans(transformedPlans);
       } else if (result.success && result.data && Array.isArray(result.data)) {
-        console.log('✅ Using API plans data (direct):', result.data);
         const transformedPlans = transformPlanData(result.data);
         setPlans(transformedPlans);
       } else {
-        console.error('❌ Plans API failed - unexpected structure:', result);
         setPlans([]);
       }
     } catch (error) {
@@ -121,16 +116,13 @@ export default function BookingCalendar() {
       const apiPromise = dataAPI.getLocationAvailability(date);
       const result = await Promise.race([apiPromise, timeoutPromise]);
       
-      console.log('🔍 Location availability API result:', result);
       
       // Handle nested data structure: result.data.data
       let locationsData = null;
       if (result.success && result.data && result.data.data && Array.isArray(result.data.data)) {
         locationsData = result.data.data;
-        console.log('✅ Using API location data (nested):', locationsData);
       } else if (result.success && result.data && Array.isArray(result.data)) {
         locationsData = result.data;
-        console.log('✅ Using API location data (direct):', locationsData);
       }
       
       if (locationsData) {
@@ -168,10 +160,8 @@ export default function BookingCalendar() {
   // Load plans when component mounts (only if authenticated)
   useEffect(() => {
     if (isAuthenticated()) {
-      console.log('🚀 BookingCalendar: Loading plans on component mount');
       fetchPlans();
     } else {
-      console.log('⚠️ BookingCalendar: User not authenticated, skipping API calls');
     }
   }, [isAuthenticated]);
 
@@ -215,24 +205,13 @@ export default function BookingCalendar() {
   };
 
   const handlePlanSelect = async (plan) => {
-    console.log('📋 Plan selected:', plan.name);
     setSelectedPlan(plan);
     
     // Step 3: Check specific slot availability if we have screen, date, and plan
     if (selectedScreen && selectedDate) {
-      console.log('🚀 Step 3: Checking slot availability for:', {
-        locationId: selectedScreen.id,
-        startDate: selectedDate,
-        planId: plan.id
-      });
       
       try {
         const availabilityResult = await dataAPI.checkSlotAvailability(selectedScreen.id, selectedDate, plan.id);
-        console.log('✅ Slot availability check result:', availabilityResult);
-        console.log('🔍 Full API response:', availabilityResult.data);
-        console.log('🔍 Nested data:', availabilityResult.data?.data);
-        console.log('🔍 isAvailable value:', availabilityResult.data?.data?.isAvailable);
-        console.log('🔍 Condition check (!isAvailable):', !availabilityResult.data?.data?.isAvailable);
         
         // Handle nested data structure: result.data.data.isAvailable
         const isSlotAvailable = availabilityResult.data?.data?.isAvailable;
@@ -245,12 +224,10 @@ export default function BookingCalendar() {
         }));
         
         if (availabilityResult.success && availabilityResult.data && availabilityResult.data.data && !isSlotAvailable) {
-          console.log('❌ Slot not available - showing modal');
           setShowUnavailableModal(true);
           setSelectedPlan(null); // Reset plan selection
           return;
         } else {
-          console.log('✅ Slot is available - proceeding with selection');
         }
       } catch (error) {
         console.warn('⚠️ Slot availability check failed, proceeding with booking:', error);
@@ -601,7 +578,7 @@ export default function BookingCalendar() {
                         onClick={() => handlePlanSelect(plan)}
                       >
                         <h4>{plan.name}</h4>
-                        <div className={styles.planPrice}>₹{plan.price.toLocaleString('en-IN')}</div>
+                        <div className={styles.planPrice}>₹{(plan.price || 0).toLocaleString('en-IN')}</div>
                         <div className={styles.planDuration}>{plan.duration}</div>
                         <ul className={styles.planFeatures}>
                           {plan.features.map((feature, index) => (
@@ -632,7 +609,7 @@ export default function BookingCalendar() {
                   <span>Date:</span> <span>{formatDate(selectedDate)}</span>
                 </div>
                 <div className={styles.summaryItem}>
-                  <span>Price:</span> <span>₹{selectedPlan.price.toLocaleString('en-IN')}</span>
+                  <span>Price:</span> <span>₹{(selectedPlan.price || 0).toLocaleString('en-IN')}</span>
                 </div>
                 
                 <button

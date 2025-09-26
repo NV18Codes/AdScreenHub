@@ -16,5 +16,13 @@ export default defineConfig({
   server: {
     port: 3000, // Use a different port to avoid conflicts
     host: true,
+    proxy: {
+      '/api': {
+        target: 'https://2yuh2s8tyv.us-east-1.awsapprunner.com',
+        changeOrigin: true,
+        secure: true,
+        rewrite: (path) => path.replace(/^\/api/, '/api/v1')
+      }
+    }
   },
 })

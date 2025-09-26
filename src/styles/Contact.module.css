@@ -41,7 +41,7 @@
   font-weight: 700;
   text-align: center;
   margin: 0;
-  background: linear-gradient(135deg, #1319B3 0%, #667eea 100%);
+  background: linear-gradient(135deg, #1e40af 0%, #2563eb 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -63,7 +63,7 @@
 }
 
 .emailLink:hover {
-  color: #667eea;
+  color: #2563eb;
   text-decoration: underline;
 }
 

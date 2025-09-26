@@ -17,8 +17,12 @@ import Login from './pages/Login';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import EmailRedirect from './pages/EmailRedirect';
+import BookingFlow from './components/BookingFlow';
+import BookingSuccess from './pages/BookingSuccess';
+import BookingFailed from './pages/BookingFailed';
 import ScrollToTop from './components/ScrollToTop';
 import ScrollToTopButton from './components/ScrollToTopButton';
+import ApiConnectivityTest from './components/ApiConnectivityTest';
 import { AuthRouteGuard, ProtectedRoute } from './components/AuthGuard';
 
 // Path normalizer to fix double slashes
@@ -76,6 +80,14 @@ function App() {
           <Route path="/profile" element={<ProtectedRoute><Layout><Profile /></Layout></ProtectedRoute>} />
           <Route path="/my-orders" element={<ProtectedRoute><Layout><MyOrders /></Layout></ProtectedRoute>} />
           <Route path="/checkout" element={<ProtectedRoute><Layout><Checkout /></Layout></ProtectedRoute>} />
+          <Route path="/booking" element={<ProtectedRoute><Layout><BookingFlow /></Layout></ProtectedRoute>} />
+          
+          {/* Booking Result Pages */}
+          <Route path="/booking-success" element={<Layout><BookingSuccess /></Layout>} />
+          <Route path="/booking-failed" element={<Layout><BookingFailed /></Layout>} />
+
+          {/* API Testing - Development Only */}
+          <Route path="/api-test" element={<Layout><ApiConnectivityTest /></Layout>} />
 
           {/* Catch all */}
           <Route path="*" element={<Navigate to="/" replace />} />

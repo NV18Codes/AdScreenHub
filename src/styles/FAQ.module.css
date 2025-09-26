@@ -41,7 +41,7 @@
   font-weight: 700;
   text-align: center;
   margin: 0;
-  background: linear-gradient(135deg, #1319B3 0%, #667eea 100%);
+  background: linear-gradient(135deg, #1e40af 0%, #2563eb 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -127,7 +127,7 @@
   left: 0;
   width: 60px;
   height: 2px;
-  background: linear-gradient(90deg, #1319B3, #667eea);
+  background: linear-gradient(90deg, #1e40af, #2563eb);
   border-radius: 1px;
 }
 
@@ -287,7 +287,7 @@
   left: 0;
   width: 60px;
   height: 2px;
-  background: linear-gradient(90deg, #1319B3, #667eea);
+  background: linear-gradient(90deg, #1e40af, #2563eb);
   border-radius: 1px;
 }
 
@@ -306,7 +306,7 @@
 }
 
 .contactEmail:hover {
-  color: #667eea;
+  color: #2563eb;
   text-decoration: underline;
 }
 
