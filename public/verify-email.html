@@ -116,6 +116,10 @@
     </div>
 
     <script>
+        // 🚀 CENTRALIZED API CONFIGURATION
+        const PRODUCTION_API_URL = 'https://2yuh2s8tyv.us-east-1.awsapprunner.com/api/v1';
+        const API_BASE_URL = PRODUCTION_API_URL; // Update this URL to change the API endpoint
+        
         async function verifyEmail() {
             const urlParams = new URLSearchParams(window.location.search);
             const selector = urlParams.get('selector');
@@ -130,7 +134,7 @@
             
             try {
                 console.log('Calling verify-email API...');
-                const response = await fetch('https://adscreenapi-production.up.railway.app/api/v1/auth/verify-email', {
+                const response = await fetch(`${API_BASE_URL}/auth/verify-email`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',

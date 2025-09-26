@@ -1,14 +1,9 @@
 // Utility function to get user display name
 export const getUserDisplayName = (user) => {
   if (!user) {
-    console.log('🔍 getUserDisplayName: No user provided');
     return 'User';
   }
 
-  console.log('🔍 getUserDisplayName Debug:');
-  console.log('📋 User object:', user);
-  console.log('📋 User type:', typeof user);
-  console.log('📋 User keys:', Object.keys(user));
 
   // Check for different possible name fields in order of preference
   const possibleNames = [
@@ -20,16 +15,12 @@ export const getUserDisplayName = (user) => {
     user.email?.split('@')[0]
   ];
 
-  console.log('📋 Possible names:', possibleNames);
-
   // Find the first non-empty name
   const displayName = possibleNames.find(name => 
     name && 
     typeof name === 'string' && 
     name.trim().length > 0
   );
-
-  console.log('📋 Selected display name:', displayName);
 
   if (displayName) {
     return displayName.trim();
@@ -38,11 +29,9 @@ export const getUserDisplayName = (user) => {
   // Fallback to email prefix if available
   if (user.email) {
     const emailPrefix = user.email.split('@')[0];
-    console.log('📋 Using email prefix:', emailPrefix);
     return emailPrefix;
   }
 
-  console.log('📋 Using fallback: User');
   return 'User';
 };
 
@@ -50,8 +39,6 @@ export const getUserDisplayName = (user) => {
 export const getUserEmail = (user) => {
   if (!user) return '';
   
-  console.log('🔍 getUserEmail Debug:');
-  console.log('📋 User email:', user.email);
   
   return user.email || '';
 };

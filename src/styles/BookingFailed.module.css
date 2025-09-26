@@ -1,0 +1,259 @@
+.container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+  padding: 2rem;
+}
+
+.errorCard {
+  background: white;
+  border-radius: 20px;
+  padding: 3rem;
+  max-width: 600px;
+  width: 100%;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.errorCard::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 5px;
+  background: linear-gradient(90deg, #e74c3c, #c0392b);
+}
+
+.errorIcon {
+  margin-bottom: 2rem;
+}
+
+.errorSymbol {
+  display: inline-block;
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: #e74c3c;
+  position: relative;
+  animation: errorPulse 2s ease-in-out infinite;
+}
+
+@keyframes errorPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+.errorCircle {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 40px;
+  height: 40px;
+}
+
+.errorLine1 {
+  position: absolute;
+  width: 3px;
+  height: 30px;
+  background: white;
+  left: 18px;
+  top: 5px;
+  transform: rotate(45deg);
+  border-radius: 2px;
+}
+
+.errorLine2 {
+  position: absolute;
+  width: 3px;
+  height: 30px;
+  background: white;
+  left: 18px;
+  top: 5px;
+  transform: rotate(-45deg);
+  border-radius: 2px;
+}
+
+.errorCard h1 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #333;
+  margin-bottom: 1rem;
+  background: linear-gradient(135deg, #e74c3c, #c0392b);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.errorMessage {
+  font-size: 1.2rem;
+  color: #666;
+  margin-bottom: 2rem;
+  line-height: 1.6;
+  background: #f8d7da;
+  padding: 1rem;
+  border-radius: 10px;
+  border: 1px solid #f5c6cb;
+}
+
+.reasons {
+  background: #f8f9fa;
+  border-radius: 15px;
+  padding: 2rem;
+  margin-bottom: 2rem;
+  text-align: left;
+}
+
+.reasons h3 {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #e74c3c;
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+.reasons ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.reasons li {
+  padding: 0.5rem 0;
+  color: #666;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+}
+
+.primaryButton {
+  background: linear-gradient(135deg, #e74c3c, #c0392b);
+  color: white;
+  border: none;
+  padding: 1rem 2rem;
+  border-radius: 10px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(231, 76, 60, 0.3);
+}
+
+.primaryButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(231, 76, 60, 0.4);
+}
+
+.secondaryButton {
+  background: #6c757d;
+  color: white;
+  border: none;
+  padding: 1rem 2rem;
+  border-radius: 10px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.secondaryButton:hover {
+  background: #5a6268;
+  transform: translateY(-2px);
+}
+
+.help {
+  background: #e8f4fd;
+  border-radius: 15px;
+  padding: 2rem;
+  text-align: left;
+}
+
+.help h3 {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #1976d2;
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+.help p {
+  color: #666;
+  margin-bottom: 1rem;
+  line-height: 1.6;
+}
+
+.contactInfo {
+  background: white;
+  border-radius: 10px;
+  padding: 1rem;
+  border: 1px solid #e0e0e0;
+}
+
+.contactInfo p {
+  margin: 0.5rem 0;
+  color: #333;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+  .container {
+    padding: 1rem;
+  }
+  
+  .errorCard {
+    padding: 2rem;
+  }
+  
+  .errorCard h1 {
+    font-size: 2rem;
+  }
+  
+  .actions {
+    flex-direction: column;
+  }
+  
+  .primaryButton,
+  .secondaryButton {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .errorCard {
+    padding: 1.5rem;
+  }
+  
+  .errorCard h1 {
+    font-size: 1.8rem;
+  }
+  
+  .errorMessage {
+    font-size: 1rem;
+  }
+  
+  .reasons {
+    padding: 1.5rem;
+  }
+  
+  .help {
+    padding: 1.5rem;
+  }
+}

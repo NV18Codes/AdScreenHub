@@ -1,19 +1,45 @@
 import React, { useState } from 'react';
 import { useOrders } from '../hooks/useOrders';
 import { formatDate, formatCurrency, validateFile, compressImage, manageStorageQuota } from '../utils/validation';
-import { Link } from 'react-router-dom';
-import BookingCalendar from '../components/BookingCalendar';
+import { Link, useNavigate } from 'react-router-dom';
 import styles from '../styles/MyOrders.module.css';
 
 export default function MyOrders() {
-  const { orders, loading, cancelOrder, reviseOrder } = useOrders();
+  const { orders, loading, cancelOrder, reviseOrder, verifyPayment, refreshOrders } = useOrders();
+  const navigate = useNavigate();
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [showImageModal, setShowImageModal] = useState(false);
   const [showReviseModal, setShowReviseModal] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [reviseOrderId, setReviseOrderId] = useState(null);
   const [newDesignFile, setNewDesignFile] = useState(null);
   const [newDesignPreview, setNewDesignPreview] = useState(null);
   const [uploadError, setUploadError] = useState('');
+  const [paymentData, setPaymentData] = useState({
+    orderId: '',
+    razorpay_order_id: '',
+    razorpay_payment_id: '',
+    razorpay_signature: ''
+  });
+  const [paymentVerifying, setPaymentVerifying] = useState(false);
+  const [refreshError, setRefreshError] = useState('');
+  const [refreshing, setRefreshing] = useState(false);
+
+  // Handle refresh orders
+  const handleRefreshOrders = async () => {
+    setRefreshing(true);
+    setRefreshError('');
+    try {
+      const result = await refreshOrders();
+      if (!result.success) {
+        setRefreshError(result.error || 'Failed to refresh orders');
+      }
+    } catch (error) {
+      setRefreshError('Failed to refresh orders');
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   // Check if order can be revised (only if status is "Revise Your Design" and not within 12 hours of start date)
   const canReviseOrder = (order) => {
@@ -111,6 +137,51 @@ export default function MyOrders() {
     setUploadError('');
   };
 
+  const handlePaymentVerification = async () => {
+    if (!paymentData.orderId || !paymentData.razorpay_order_id || !paymentData.razorpay_payment_id || !paymentData.razorpay_signature) {
+      alert('Please fill in all payment verification fields');
+      return;
+    }
+
+    setPaymentVerifying(true);
+    try {
+      const result = await verifyPayment(
+        paymentData.orderId,
+        paymentData.razorpay_order_id,
+        paymentData.razorpay_payment_id,
+        paymentData.razorpay_signature
+      );
+
+      if (result.success) {
+        alert('Payment verified successfully!');
+        setShowPaymentModal(false);
+        setPaymentData({
+          orderId: '',
+          razorpay_order_id: '',
+          razorpay_payment_id: '',
+          razorpay_signature: ''
+        });
+      } else {
+        alert(`Payment verification failed: ${result.error}`);
+      }
+    } catch (error) {
+      alert(`Payment verification error: ${error.message}`);
+    } finally {
+      setPaymentVerifying(false);
+    }
+  };
+
+  const openPaymentModal = (order) => {
+    setSelectedOrder(order);
+    setPaymentData({
+      orderId: order.id.toString(),
+      razorpay_order_id: order.razorpay_order_id || order.razorpayOrderId || '',
+      razorpay_payment_id: order.razorpay_payment_id || order.razorpayPaymentId || '',
+      razorpay_signature: order.razorpay_signature || order.razorpaySignature || ''
+    });
+    setShowPaymentModal(true);
+  };
+
   const getStatusColor = (status) => {
     switch (status) {
       case 'Pending Approval':
@@ -136,24 +207,44 @@ export default function MyOrders() {
     );
   }
 
+  // Ensure orders is always an array
+  const safeOrders = Array.isArray(orders) ? orders : [];
+  
+
   return (
     <div className={styles.myOrders}>
       <div className={styles.container}>
         <div className={styles.header}>
-          <h1>My Orders</h1>
-          <p>Track your advertising campaigns</p>
+          <div className={styles.headerContent}>
+            <div className={styles.headerText}>
+              <h1>My Orders</h1>
+              <p>Track your advertising campaigns</p>
+            </div>
+            <div className={styles.headerActions}>
+              <button
+                onClick={handleRefreshOrders}
+                disabled={refreshing || loading}
+                className={`${styles.btn} ${styles.btnSecondary} ${styles.refreshBtn}`}
+              >
+                {refreshing ? 'Refreshing...' : 'Refresh'}
+              </button>
+            </div>
+          </div>
+          {refreshError && (
+            <div className={styles.errorMessage}>
+              {refreshError}
+            </div>
+          )}
         </div>
 
         <div className={styles.pageLayout}>
           <div className={styles.ordersSection}>
-            {orders.length === 0 ? (
+            {safeOrders.length === 0 ? (
               <div className={styles.emptyState}>
                 <h2>No orders yet</h2>
                 <p>Start your first advertising campaign by booking an LED screen.</p>
                 <button 
-                  onClick={() => {
-                    document.querySelector('.booking-calendar')?.scrollIntoView({ behavior: 'smooth' });
-                  }}
+                  onClick={() => navigate('/booking')}
                   className={`${styles.btn} ${styles.btnPrimary}`}
                 >
                   Book Your First Ad
@@ -161,23 +252,52 @@ export default function MyOrders() {
               </div>
             ) : (
               <div className={styles.ordersList}>
-            {orders.map((order) => (
+                {/* Book New Ad Button for users with existing orders */}
+                <div className={styles.bookNewSection}>
+                  <button 
+                    onClick={() => navigate('/booking')}
+                    className={`${styles.btn} ${styles.btnPrimary} ${styles.bookNewBtn}`}
+                  >
+                    Book New Ad
+                  </button>
+                </div>
+                
+                {safeOrders.map((order) => (
               <div key={order.id} className={styles.orderCard}>
                 <div className={styles.orderHeader}>
                   <div className={styles.orderInfo}>
                     <h3>Order #{order.id}</h3>
+                    <p className={styles.orderUid}>
+                      <strong>Order UID:</strong> {order.orderUid || order.id}
+                    </p>
                     <p className={styles.orderDate}>
-                      Ordered on {formatDate(order.orderDate)}
+                      Ordered on {formatDate(order.createdAt || order.orderDate)}
                     </p>
                     <p className={styles.displayDate}>
-                      Display Date: {formatDate(order.displayDate)}
+                      Display Date: {formatDate(order.startDate || order.displayDate)}
                     </p>
                     <p className={styles.orderLocation}>
-                      <strong>Location:</strong> {order.location}
+                      <strong>Location:</strong> {order.locationName || order.location}
                     </p>
-                    <p className={styles.orderScreen}>
-                      <strong>Screen:</strong> {order.screenName}
+                    <p className={styles.orderPlan}>
+                      <strong>Plan:</strong> {order.planName || 'Standard Plan'}
                     </p>
+                    <p className={styles.planDescription}>
+                      <strong>Description:</strong> {order.planDescription || 'N/A'}
+                    </p>
+                    <p className={styles.planDuration}>
+                      <strong>Duration:</strong> {order.planDuration || 1} day(s)
+                    </p>
+                    {order.razorpay_order_id && (
+                      <p className={styles.razorpayOrderId}>
+                        <strong>Razorpay Order ID:</strong> {order.razorpay_order_id}
+                      </p>
+                    )}
+                    {order.paymentId && (
+                      <p className={styles.paymentId}>
+                        <strong>Payment ID:</strong> {order.paymentId}
+                      </p>
+                    )}
                   </div>
                   <div className={`${styles.orderStatus} ${getStatusColor(order.status)}`}>
                     {order.status}
@@ -186,23 +306,31 @@ export default function MyOrders() {
 
                 <div className={styles.orderDetails}>
                   <div className={styles.orderAmount}>
-                    <strong>Total Amount:</strong> {formatCurrency(order.totalAmount)}
+                    <strong>Total Amount:</strong> {formatCurrency(order.totalAmount || order.amount || order.price || 0)}
                   </div>
                   
-                  {/* Design Thumbnail - Show for all orders */}
-                  <div className={styles.orderThumbnail}>
-                    <h4>Your Design</h4>
-                    <img
-                      src={order.thumbnail}
-                      alt="Ad Preview"
-                      onClick={() => {
-                        setSelectedOrder(order);
-                        setShowImageModal(true);
-                      }}
-                      className={styles.thumbnailImage}
-                    />
-                    <small>Click to view full size</small>
-                  </div>
+                  {/* Creative File - Show for all orders */}
+                  {order.creativeFilePath && (
+                    <div className={styles.orderThumbnail}>
+                      <h4>Your Creative</h4>
+                      <div className={styles.creativeInfo}>
+                        <p><strong>File:</strong> {order.creativeFileName || 'Creative File'}</p>
+                        <p><strong>Path:</strong> {order.creativeFilePath}</p>
+                        {order.thumbnail && (
+                          <img
+                            src={order.thumbnail}
+                            alt="Creative Preview"
+                            onClick={() => {
+                              setSelectedOrder(order);
+                              setShowImageModal(true);
+                            }}
+                            className={styles.thumbnailImage}
+                          />
+                        )}
+                        <small>Click to view full size</small>
+                      </div>
+                    </div>
+                  )}
 
                   {/* Admin Proof Image - Show for completed and in-display orders */}
                   {order.adminProofImage && (order.status === 'In Display' || order.status === 'Completed Display') && (
@@ -220,14 +348,60 @@ export default function MyOrders() {
                       <small>Click to view proof of display</small>
                     </div>
                   )}
+                  
+                  {/* Delivery Address - Show for all orders */}
+                  {order.deliveryAddress && (
+                    <div className={styles.orderAddress}>
+                      <h4>Delivery Address</h4>
+                      <p>
+                        {order.deliveryAddress.street && `${order.deliveryAddress.street}, `}
+                        {order.deliveryAddress.city && `${order.deliveryAddress.city}, `}
+                        {order.deliveryAddress.state && `${order.deliveryAddress.state} `}
+                        {order.deliveryAddress.zip && order.deliveryAddress.zip}
+                      </p>
+                    </div>
+                  )}
+                  
+                  {/* GST Information - Show if available */}
+                  {order.gstInfo && (
+                    <div className={styles.orderGst}>
+                      <h4>GST Information</h4>
+                      <p>{order.gstInfo}</p>
+                    </div>
+                  )}
+                  
+                  {/* Coupon Code - Show if used */}
+                  {order.couponCode && (
+                    <div className={styles.orderCoupon}>
+                      <h4>Coupon Used</h4>
+                      <p className={styles.couponCode}>{order.couponCode}</p>
+                    </div>
+                  )}
                 </div>
 
                 <div className={styles.orderActions}>
+                  {/* Payment Verification Button - Show for orders with Razorpay order ID but no payment verification */}
+                  {order.razorpay_order_id && !order.paymentVerified && (
+                    <button
+                      onClick={() => openPaymentModal(order)}
+                      className={`${styles.btn} ${styles.btnPrimary}`}
+                    >
+                      Verify Payment
+                    </button>
+                  )}
+                  
+                  {/* Payment Status - Show if payment is verified */}
+                  {order.paymentVerified && (
+                    <div className={styles.paymentStatus}>
+                      <span className={styles.paymentVerified}>✅ Payment Verified</span>
+                    </div>
+                  )}
+                  
                   {/* Revise Design Button - Only show if status is "Revise Your Design" and timing allows */}
                   {canReviseOrder(order) && (
                     <button
                       onClick={() => handleReviseOrder(order.id)}
-                      className={`${styles.btn} ${styles.btnPrimary}`}
+                      className={`${styles.btn} ${styles.btnSecondary}`}
                     >
                       Upload New Design
                     </button>
@@ -244,17 +418,11 @@ export default function MyOrders() {
                   )}
                 </div>
               </div>
-            ))}
-          </div>
+                ))}
+              </div>
             )}
           </div>
           
-          {/* Booking Calendar - Right Side */}
-          <div className={styles.calendarSection}>
-            <div className="booking-calendar">
-              <BookingCalendar />
-            </div>
-          </div>
         </div>
       </div>
 
@@ -357,6 +525,91 @@ export default function MyOrders() {
                 className={`${styles.btn} ${styles.btnPrimary}`}
               >
                 Submit Revision
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Payment Verification Modal */}
+      {showPaymentModal && (
+        <div className={styles.modalOverlay} onClick={() => setShowPaymentModal(false)}>
+          <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+            <button
+              className={styles.modalClose}
+              onClick={() => setShowPaymentModal(false)}
+            >
+              ×
+            </button>
+            
+            <div className={styles.modalHeader}>
+              <h2>Verify Payment</h2>
+              <p>Enter payment details for Order #{selectedOrder?.id}</p>
+            </div>
+
+            <div className={styles.paymentForm}>
+              <div className={styles.formGroup}>
+                <label htmlFor="orderId">Order ID</label>
+                <input
+                  type="text"
+                  id="orderId"
+                  value={paymentData.orderId}
+                  onChange={(e) => setPaymentData({...paymentData, orderId: e.target.value})}
+                  className={styles.formInput}
+                  placeholder="Enter order ID"
+                />
+              </div>
+
+              <div className={styles.formGroup}>
+                <label htmlFor="razorpayOrderId">Razorpay Order ID</label>
+                <input
+                  type="text"
+                  id="razorpayOrderId"
+                  value={paymentData.razorpay_order_id}
+                  onChange={(e) => setPaymentData({...paymentData, razorpay_order_id: e.target.value})}
+                  className={styles.formInput}
+                  placeholder="Enter Razorpay order ID"
+                />
+              </div>
+
+              <div className={styles.formGroup}>
+                <label htmlFor="razorpayPaymentId">Razorpay Payment ID</label>
+                <input
+                  type="text"
+                  id="razorpayPaymentId"
+                  value={paymentData.razorpay_payment_id}
+                  onChange={(e) => setPaymentData({...paymentData, razorpay_payment_id: e.target.value})}
+                  className={styles.formInput}
+                  placeholder="Enter Razorpay payment ID"
+                />
+              </div>
+
+              <div className={styles.formGroup}>
+                <label htmlFor="razorpaySignature">Razorpay Signature</label>
+                <input
+                  type="text"
+                  id="razorpaySignature"
+                  value={paymentData.razorpay_signature}
+                  onChange={(e) => setPaymentData({...paymentData, razorpay_signature: e.target.value})}
+                  className={styles.formInput}
+                  placeholder="Enter Razorpay signature"
+                />
+              </div>
+            </div>
+
+            <div className={styles.modalActions}>
+              <button
+                onClick={() => setShowPaymentModal(false)}
+                className={`${styles.btn} ${styles.btnSecondary}`}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handlePaymentVerification}
+                disabled={paymentVerifying}
+                className={`${styles.btn} ${styles.btnPrimary}`}
+              >
+                {paymentVerifying ? 'Verifying...' : 'Verify Payment'}
               </button>
             </div>
           </div>

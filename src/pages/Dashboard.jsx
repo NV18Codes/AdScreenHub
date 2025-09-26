@@ -45,9 +45,8 @@ export default function Dashboard() {
   // Debug: Log user object to see available fields
   console.log('User object:', user);
   console.log('Available user fields:', user ? Object.keys(user) : 'No user data');
-  console.log('🔍 Plans state:', plans);
-  console.log('🔍 Plans type:', typeof plans);
-  console.log('🔍 Plans is array:', Array.isArray(plans));
+  if (import.meta.env.DEV) {
+  }
 
   // Transform API plan data to match frontend format
   const transformPlanData = (apiPlans) => {
@@ -69,20 +68,14 @@ export default function Dashboard() {
     setLoadingPlans(true);
     try {
       const result = await dataAPI.getPlans();
-      console.log('🔍 Plans API result:', result);
-      
       // Handle the actual API response structure
       if (result.success && result.data && result.data.data && Array.isArray(result.data.data)) {
-        console.log('✅ Using API plans data (nested):', result.data.data);
         const transformedPlans = transformPlanData(result.data.data);
         setPlans(transformedPlans);
       } else if (result.success && result.data && Array.isArray(result.data)) {
-        console.log('✅ Using API plans data (direct):', result.data);
         const transformedPlans = transformPlanData(result.data);
         setPlans(transformedPlans);
       } else {
-        console.log('🔍 Full API response structure:', result);
-        console.error('❌ API plans data invalid - unexpected structure:', result);
         setPlans([]);
       }
     } catch (error) {
@@ -97,7 +90,6 @@ export default function Dashboard() {
   const fetchLocationAvailability = async (date) => {
     if (!date) return;
     
-    console.log('🔍 Fetching availability for date:', date);
     setLoadingAvailability(true);
     
     try {
@@ -109,20 +101,16 @@ export default function Dashboard() {
       const apiPromise = dataAPI.getLocationAvailability(date);
       const result = await Promise.race([apiPromise, timeoutPromise]);
       
-      console.log('🔍 Availability API result:', result);
       
       // Handle the actual API response structure
       let locationsData = null;
       if (result.success && result.data && result.data.data && Array.isArray(result.data.data)) {
         locationsData = result.data.data;
-        console.log('✅ Using API location data (nested):', locationsData);
       } else if (result.success && result.data && Array.isArray(result.data)) {
         locationsData = result.data;
-        console.log('✅ Using API location data (direct):', locationsData);
       }
       
       if (locationsData) {
-        console.log('🔍 Setting availability data:', locationsData);
         // Transform array to object with screen IDs as keys
         const transformedData = {};
         locationsData.forEach(location => {
@@ -136,7 +124,6 @@ export default function Dashboard() {
         });
         setAvailabilityData(transformedData);
       } else {
-        console.log('🔍 Full API response structure:', result);
         console.error('❌ Location availability API failed - unexpected structure:', result);
         setAvailabilityData({});
       }
@@ -334,15 +321,10 @@ export default function Dashboard() {
 
   // Test API connectivity
   const testAPIConnectivity = async () => {
-    console.log('🔍 Testing API connectivity...');
     try {
       const result = await dataAPI.getPlans();
-      console.log('🔍 Plans API test result:', result);
-      
       if (result.success) {
-        console.log('✅ Plans API is working');
-      } else {
-        console.warn('⚠️ Plans API returned error:', result.error);
+        // API is working
       }
     } catch (error) {
       console.warn('⚠️ Plans API test failed:', error.message);
@@ -452,8 +434,8 @@ export default function Dashboard() {
     const orders = JSON.parse(localStorage.getItem('adscreenhub_orders') || '[]');
     const total = orders
       .filter(order => order.status !== 'Cancelled Display')
-      .reduce((sum, order) => sum + (order.amount || 0), 0);
-    return total.toLocaleString('en-IN');
+      .reduce((sum, order) => sum + (order.amount || order.price || 0), 0);
+    return (total || 0).toLocaleString('en-IN');
   };
 
   const getActiveOrders = () => {
@@ -501,6 +483,12 @@ export default function Dashboard() {
               <h1>Hi, {displayName}!</h1>
               <p>Book your LED screen advertising campaign</p>
             </div>
+            <button 
+              onClick={() => navigate('/booking')}
+              className={styles.bookNewButton}
+            >
+              🚀 Book New Ad Slot
+            </button>
           </div>
         </div>
 
@@ -579,7 +567,7 @@ export default function Dashboard() {
                 <p>No orders yet. Start your first campaign!</p>
                 <button 
                   className={styles.startCampaignBtn}
-                  onClick={() => navigate('/my-orders')}
+                  onClick={() => navigate('/booking')}
                 >
                   Book Your First Ad
                 </button>
