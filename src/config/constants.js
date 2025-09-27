@@ -1,6 +1,7 @@
 // 🚀 PRODUCTION API CONFIGURATION
-// Update this URL to change the production API endpoint
-export const PRODUCTION_API_URL = 'https://2yuh2s8tyv.us-east-1.awsapprunner.com/api/v1';
+// Production URL is now configured in package.json
+// To change the production URL, update the "productionApiUrl" field in package.json
+export const PRODUCTION_API_URL = import.meta.env.VITE_PRODUCTION_API_URL || 'https://2yuh2s8tyv.us-east-1.awsapprunner.com/api/v1';
 
 // Development API URL (uses Vite proxy)
 // The proxy rewrites /api to /api/v1 automatically

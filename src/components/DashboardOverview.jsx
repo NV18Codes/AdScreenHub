@@ -76,7 +76,7 @@ export default function DashboardOverview() {
             </div>
             <div className={styles.statContent}>
               <h3>Total Spent</h3>
-              <p className={styles.statNumber}>₹{totalSpent.toLocaleString()}</p>
+              <p className={styles.statNumber}>₹{totalSpent.toLocaleString('en-IN')}</p>
             </div>
           </div>
         </div>

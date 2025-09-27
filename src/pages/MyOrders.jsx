@@ -5,23 +5,15 @@ import { Link, useNavigate } from 'react-router-dom';
 import styles from '../styles/MyOrders.module.css';
 
 export default function MyOrders() {
-  const { orders, loading, cancelOrder, reviseOrder, verifyPayment, refreshOrders } = useOrders();
+  const { orders, loading, cancelOrder, reviseOrder, refreshOrders } = useOrders();
   const navigate = useNavigate();
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [showImageModal, setShowImageModal] = useState(false);
   const [showReviseModal, setShowReviseModal] = useState(false);
-  const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [reviseOrderId, setReviseOrderId] = useState(null);
   const [newDesignFile, setNewDesignFile] = useState(null);
   const [newDesignPreview, setNewDesignPreview] = useState(null);
   const [uploadError, setUploadError] = useState('');
-  const [paymentData, setPaymentData] = useState({
-    orderId: '',
-    razorpay_order_id: '',
-    razorpay_payment_id: '',
-    razorpay_signature: ''
-  });
-  const [paymentVerifying, setPaymentVerifying] = useState(false);
   const [refreshError, setRefreshError] = useState('');
   const [refreshing, setRefreshing] = useState(false);
 
@@ -137,50 +129,7 @@ export default function MyOrders() {
     setUploadError('');
   };
 
-  const handlePaymentVerification = async () => {
-    if (!paymentData.orderId || !paymentData.razorpay_order_id || !paymentData.razorpay_payment_id || !paymentData.razorpay_signature) {
-      alert('Please fill in all payment verification fields');
-      return;
-    }
 
-    setPaymentVerifying(true);
-    try {
-      const result = await verifyPayment(
-        paymentData.orderId,
-        paymentData.razorpay_order_id,
-        paymentData.razorpay_payment_id,
-        paymentData.razorpay_signature
-      );
-
-      if (result.success) {
-        alert('Payment verified successfully!');
-        setShowPaymentModal(false);
-        setPaymentData({
-          orderId: '',
-          razorpay_order_id: '',
-          razorpay_payment_id: '',
-          razorpay_signature: ''
-        });
-      } else {
-        alert(`Payment verification failed: ${result.error}`);
-      }
-    } catch (error) {
-      alert(`Payment verification error: ${error.message}`);
-    } finally {
-      setPaymentVerifying(false);
-    }
-  };
-
-  const openPaymentModal = (order) => {
-    setSelectedOrder(order);
-    setPaymentData({
-      orderId: order.id.toString(),
-      razorpay_order_id: order.razorpay_order_id || order.razorpayOrderId || '',
-      razorpay_payment_id: order.razorpay_payment_id || order.razorpayPaymentId || '',
-      razorpay_signature: order.razorpay_signature || order.razorpaySignature || ''
-    });
-    setShowPaymentModal(true);
-  };
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -194,6 +143,12 @@ export default function MyOrders() {
         return styles.statusCancelled;
       case 'Revise Your Design':
         return styles.statusRevision;
+      case 'Payment Completed - Pending Approval':
+        return styles.statusCompleted;
+      case 'Payment Failed':
+        return styles.statusCancelled;
+      case 'Payment Completed - Refund Initiated':
+        return styles.statusRefund;
       default:
         return styles.statusPending;
     }
@@ -381,19 +336,11 @@ export default function MyOrders() {
 
                 <div className={styles.orderActions}>
                   {/* Payment Verification Button - Show for orders with Razorpay order ID but no payment verification */}
-                  {order.razorpay_order_id && !order.paymentVerified && (
-                    <button
-                      onClick={() => openPaymentModal(order)}
-                      className={`${styles.btn} ${styles.btnPrimary}`}
-                    >
-                      Verify Payment
-                    </button>
-                  )}
                   
                   {/* Payment Status - Show if payment is verified */}
                   {order.paymentVerified && (
                     <div className={styles.paymentStatus}>
-                      <span className={styles.paymentVerified}>✅ Payment Verified</span>
+                      <span className={styles.paymentVerified}>Payment Verified</span>
                     </div>
                   )}
                   
@@ -407,8 +354,8 @@ export default function MyOrders() {
                     </button>
                   )}
                   
-                  {/* Cancel Order Button - Only show for pending and revision orders */}
-                  {(order.status === 'Pending Approval' || order.status === 'Revise Your Design') && (
+                  {/* Cancel Order Button - Only show for unpaid pending orders */}
+                  {order.status === 'Pending Approval' && !order.paymentVerified && (
                     <button
                       onClick={() => handleCancelOrder(order.id)}
                       className={`${styles.btn} ${styles.btnDanger}`}
@@ -531,90 +478,6 @@ export default function MyOrders() {
         </div>
       )}
 
-      {/* Payment Verification Modal */}
-      {showPaymentModal && (
-        <div className={styles.modalOverlay} onClick={() => setShowPaymentModal(false)}>
-          <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
-            <button
-              className={styles.modalClose}
-              onClick={() => setShowPaymentModal(false)}
-            >
-              ×
-            </button>
-            
-            <div className={styles.modalHeader}>
-              <h2>Verify Payment</h2>
-              <p>Enter payment details for Order #{selectedOrder?.id}</p>
-            </div>
-
-            <div className={styles.paymentForm}>
-              <div className={styles.formGroup}>
-                <label htmlFor="orderId">Order ID</label>
-                <input
-                  type="text"
-                  id="orderId"
-                  value={paymentData.orderId}
-                  onChange={(e) => setPaymentData({...paymentData, orderId: e.target.value})}
-                  className={styles.formInput}
-                  placeholder="Enter order ID"
-                />
-              </div>
-
-              <div className={styles.formGroup}>
-                <label htmlFor="razorpayOrderId">Razorpay Order ID</label>
-                <input
-                  type="text"
-                  id="razorpayOrderId"
-                  value={paymentData.razorpay_order_id}
-                  onChange={(e) => setPaymentData({...paymentData, razorpay_order_id: e.target.value})}
-                  className={styles.formInput}
-                  placeholder="Enter Razorpay order ID"
-                />
-              </div>
-
-              <div className={styles.formGroup}>
-                <label htmlFor="razorpayPaymentId">Razorpay Payment ID</label>
-                <input
-                  type="text"
-                  id="razorpayPaymentId"
-                  value={paymentData.razorpay_payment_id}
-                  onChange={(e) => setPaymentData({...paymentData, razorpay_payment_id: e.target.value})}
-                  className={styles.formInput}
-                  placeholder="Enter Razorpay payment ID"
-                />
-              </div>
-
-              <div className={styles.formGroup}>
-                <label htmlFor="razorpaySignature">Razorpay Signature</label>
-                <input
-                  type="text"
-                  id="razorpaySignature"
-                  value={paymentData.razorpay_signature}
-                  onChange={(e) => setPaymentData({...paymentData, razorpay_signature: e.target.value})}
-                  className={styles.formInput}
-                  placeholder="Enter Razorpay signature"
-                />
-              </div>
-            </div>
-
-            <div className={styles.modalActions}>
-              <button
-                onClick={() => setShowPaymentModal(false)}
-                className={`${styles.btn} ${styles.btnSecondary}`}
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handlePaymentVerification}
-                disabled={paymentVerifying}
-                className={`${styles.btn} ${styles.btnPrimary}`}
-              >
-                {paymentVerifying ? 'Verifying...' : 'Verify Payment'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

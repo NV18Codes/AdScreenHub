@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import axios from "axios";
 import { API_BASE_URL, authAPI } from "../config/api";
+import LoadingSpinner from "./LoadingSpinner";
 
 const API_BASE = `${API_BASE_URL}/auth`;
 
@@ -681,9 +682,16 @@ export default function AuthFlow() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+                className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed font-medium flex items-center justify-center gap-2"
               >
-                {loading ? "Sending..." : "Send Verification Email"}
+                {loading ? (
+                  <>
+                    <LoadingSpinner size="small" text="" className="inlineSpinner" />
+                    Sending...
+                  </>
+                ) : (
+                  "Send Verification Email"
+                )}
               </button>
             </form>
             
@@ -776,9 +784,16 @@ export default function AuthFlow() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+                className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed font-medium flex items-center justify-center gap-2"
               >
-                {loading ? "Sending OTP..." : "Send OTP"}
+                {loading ? (
+                  <>
+                    <LoadingSpinner size="small" text="" className="inlineSpinner" />
+                    Sending OTP...
+                  </>
+                ) : (
+                  "Send OTP"
+                )}
               </button>
             </form>
           </div>
@@ -812,13 +827,20 @@ export default function AuthFlow() {
               </div>
               
               <div className="space-y-3">
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
-                >
-                  {loading ? "Verifying..." : "Verify OTP"}
-                </button>
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed font-medium flex items-center justify-center gap-2"
+                  >
+                    {loading ? (
+                      <>
+                        <LoadingSpinner size="small" text="" className="inlineSpinner" />
+                        Verifying...
+                      </>
+                    ) : (
+                      "Verify OTP"
+                    )}
+                  </button>
                 
                 {/* 🚀 NEW: Resend OTP Button */}
                 <button
@@ -962,10 +984,10 @@ export default function AuthFlow() {
                   className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed font-medium transition-all duration-200"
                 >
                   {loading ? (
-                    <div className="flex items-center justify-center space-x-2">
-                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                      <span>Creating Account...</span>
-                    </div>
+                    <>
+                      <LoadingSpinner size="small" text="" className="inlineSpinner" />
+                      Creating Account...
+                    </>
                   ) : (
                     "Complete Registration"
                   )}
@@ -1059,9 +1081,16 @@ export default function AuthFlow() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+                className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed font-medium flex items-center justify-center gap-2"
               >
-                {loading ? "Signing In..." : "Sign In"}
+                {loading ? (
+                  <>
+                    <LoadingSpinner size="small" text="" className="inlineSpinner" />
+                    Signing In...
+                  </>
+                ) : (
+                  "Sign In"
+                )}
               </button>
               
               <div className="text-center mt-4">
@@ -1106,9 +1135,16 @@ export default function AuthFlow() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+                className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed font-medium flex items-center justify-center gap-2"
               >
-                {loading ? "Sending..." : "Send Reset OTP"}
+                {loading ? (
+                  <>
+                    <LoadingSpinner size="small" text="" className="inlineSpinner" />
+                    Sending...
+                  </>
+                ) : (
+                  "Send Reset OTP"
+                )}
               </button>
             </form>
             
@@ -1218,9 +1254,16 @@ export default function AuthFlow() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+                className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed font-medium flex items-center justify-center gap-2"
               >
-                {loading ? "Resetting..." : "Reset Password"}
+                {loading ? (
+                  <>
+                    <LoadingSpinner size="small" text="" className="inlineSpinner" />
+                    Resetting...
+                  </>
+                ) : (
+                  "Reset Password"
+                )}
               </button>
             </form>
             

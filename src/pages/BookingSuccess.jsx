@@ -78,9 +78,9 @@ const BookingSuccess = () => {
           </div>
         </div>
         
-        <h1>🎉 Booking Successful!</h1>
+        <h1>Payment Completed</h1>
         <p className={styles.successMessage}>
-          Your ad slot has been successfully booked. You will receive a confirmation email shortly.
+          Your payment has been processed successfully. Your ad is now pending approval and will be reviewed within 24 hours.
         </p>
 
         {order && (
@@ -114,7 +114,7 @@ const BookingSuccess = () => {
               <div className={styles.detailItem}>
                 <span className={styles.label}>Status:</span>
                 <span className={`${styles.value} ${styles.status}`}>
-                  {order.status || 'Confirmed'}
+                  {order.status || 'Payment Completed - Pending Approval'}
                 </span>
               </div>
             </div>
@@ -139,10 +139,25 @@ const BookingSuccess = () => {
         <div className={styles.nextSteps}>
           <h3>What's Next?</h3>
           <ul>
-            <li>📧 Check your email for confirmation details</li>
-            <li>📱 You'll receive SMS updates about your booking</li>
-            <li>📊 Track your ad performance in the dashboard</li>
-            <li>📞 Contact support if you have any questions</li>
+            <li>Check your email for payment confirmation</li>
+            <li>Your ad will be reviewed within 24 hours</li>
+            <li>You'll receive SMS updates about approval status</li>
+            <li>Track your ad status in the dashboard</li>
+            <li>Contact support if you have any questions</li>
+          </ul>
+        </div>
+
+        <div className={styles.refundPolicy}>
+          <h3>Refund Policy</h3>
+          <p>
+            <strong>Full refund available</strong> if your ad is rejected or if you cancel within 24 hours of booking. 
+            Refunds are processed within 5-7 business days to your original payment method.
+          </p>
+          <ul>
+            <li>100% refund for rejected ads</li>
+            <li>100% refund for cancellations within 24 hours</li>
+            <li>50% refund for cancellations within 48 hours</li>
+            <li>No refund after 48 hours or once ad goes live</li>
           </ul>
         </div>
       </div>

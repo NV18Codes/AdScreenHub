@@ -1,9 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import LoadingSpinner from './LoadingSpinner';
 import styles from '../styles/Contact.module.css';
 
 export default function Contact() {
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
 
   const handleGoBack = () => {
     console.log('Contact Back button clicked!');
@@ -16,25 +18,37 @@ export default function Contact() {
       window.location.href = '/';
     }
   };
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     
-    // Get form data
-    const formData = new FormData(e.target);
-    const data = {
-      name: formData.get('name'),
-      email: formData.get('email'),
-      phone: formData.get('phone'),
-      message: formData.get('message')
-    };
+    setLoading(true);
     
-    // Show success message
-    alert(`Thank you ${data.name}! Your message has been sent. We'll get back to you soon at ${data.email}.`);
-    
-    // Reset form
-    e.target.reset();
-    
-    console.log('Contact form submitted:', data);
+    try {
+      // Get form data
+      const formData = new FormData(e.target);
+      const data = {
+        name: formData.get('name'),
+        email: formData.get('email'),
+        phone: formData.get('phone'),
+        message: formData.get('message')
+      };
+      
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Show success message
+      alert(`Thank you ${data.name}! Your message has been sent. We'll get back to you soon at ${data.email}.`);
+      
+      // Reset form
+      e.target.reset();
+      
+      console.log('Contact form submitted:', data);
+    } catch (error) {
+      console.error('Error submitting form:', error);
+      alert('Failed to send message. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -116,9 +130,17 @@ export default function Contact() {
             <div className="text-center">
               <button 
                 type="submit"
-                className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-12 py-4 rounded-full font-semibold text-lg hover:from-blue-700 hover:to-blue-800 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-1"
+                disabled={loading}
+                className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-12 py-4 rounded-full font-semibold text-lg hover:from-blue-700 hover:to-blue-800 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 mx-auto"
               >
-                Send Message
+                {loading ? (
+                  <>
+                    <LoadingSpinner size="small" text="" className="inlineSpinner" />
+                    Sending...
+                  </>
+                ) : (
+                  "Send Message"
+                )}
               </button>
             </div>
           </form>

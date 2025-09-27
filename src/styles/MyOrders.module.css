@@ -1,6 +1,6 @@
 .myOrders {
   min-height: 100vh;
-  background-color: var(--gray-100);
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
   padding: 2rem 0;
   padding-top: 6rem; /* Account for sticky navbar */
 }
@@ -129,14 +129,29 @@
 
 .orderCard {
   background-color: var(--white);
-  border-radius: 1rem;
-  padding: 1.5rem;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  transition: transform 0.3s ease;
+  border-radius: 16px;
+  padding: 2rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  border: 1px solid #f1f5f9;
+}
+
+.orderCard::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #3b82f6, #1d4ed8);
+  border-radius: 16px 16px 0 0;
 }
 
 .orderCard:hover {
-  transform: translateY(-2px);
+  transform: translateY(-4px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
 }
 
 .orderHeader {
@@ -185,28 +200,45 @@
 }
 
 .statusPending {
-  background-color: #fef3c7;
+  background: linear-gradient(135deg, #fef3c7, #fde68a);
   color: #92400e;
+  border: 1px solid #f59e0b;
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.2);
 }
 
 .statusActive {
-  background-color: #d1fae5;
+  background: linear-gradient(135deg, #d1fae5, #a7f3d0);
   color: #065f46;
+  border: 1px solid #10b981;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.2);
 }
 
 .statusCompleted {
-  background-color: #dbeafe;
+  background: linear-gradient(135deg, #dbeafe, #bfdbfe);
   color: #1e40af;
+  border: 1px solid #3b82f6;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
 }
 
 .statusCancelled {
-  background-color: #fee2e2;
+  background: linear-gradient(135deg, #fee2e2, #fecaca);
   color: #991b1b;
+  border: 1px solid #ef4444;
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.2);
 }
 
 .statusRevision {
-  background-color: #fef3c7;
+  background: linear-gradient(135deg, #fef3c7, #fde68a);
   color: #92400e;
+  border: 1px solid #f59e0b;
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.2);
+}
+
+.statusRefund {
+  background: linear-gradient(135deg, #fef3c7, #fde68a);
+  color: #92400e;
+  border: 1px solid #f59e0b;
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.2);
 }
 
 .orderDetails {
@@ -303,46 +335,56 @@
 }
 
 .btn {
-  padding: 0.75rem 1.5rem;
+  padding: 0.875rem 1.75rem;
   border: none;
-  border-radius: 0.5rem;
+  border-radius: 12px;
   font-size: 0.875rem;
   font-weight: 600;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
   cursor: pointer;
   transition: all 0.3s ease;
   text-decoration: none;
 }
 
 .btnPrimary {
-  background-color: var(--primary-color);
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
   color: var(--white);
+  box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
 }
 
 .btnPrimary:hover {
-  background-color: var(--primary-dark);
   transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
 }
 
 .btnSecondary {
   background-color: transparent;
   color: var(--primary-color);
   border: 2px solid var(--primary-color);
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.1);
 }
 
 .btnSecondary:hover {
   background-color: var(--primary-color);
-  color: var(--white);
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(59, 130, 246, 0.2);
 }
 
+
 .btnDanger {
-  background-color: var(--danger);
+  background: linear-gradient(135deg, #ef4444, #dc2626);
   color: var(--white);
+  box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
 }
 
 .btnDanger:hover {
-  background-color: #c53030;
   transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
 }
+
 
 .loading {
   display: flex;

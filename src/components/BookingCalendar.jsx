@@ -3,6 +3,7 @@ import { useOrders } from '../hooks/useOrders';
 import { useAuth } from '../contexts/AuthContext';
 import { isDateDisabled, validateFile, generateOrderId, compressImage, manageStorageQuota } from '../utils/validation';
 import { couponsAPI, dataAPI } from '../config/api';
+import LoadingSpinner from './LoadingSpinner';
 import styles from '../styles/BookingCalendar.module.css';
 
 export default function BookingCalendar() {
@@ -94,7 +95,7 @@ export default function BookingCalendar() {
         setPlans([]);
       }
     } catch (error) {
-      console.error('❌ Plans API error:', error);
+      console.error('Plans API error:', error);
       setPlans([]);
     } finally {
       setLoadingPlans(false);
@@ -143,12 +144,12 @@ export default function BookingCalendar() {
         });
         setAvailabilityData(transformedAvailability);
       } else {
-        console.error('❌ Location availability API failed - unexpected structure:', result);
+        console.error('Location availability API failed - unexpected structure:', result);
         setLocations([]);
         setAvailabilityData({});
       }
     } catch (error) {
-      console.error('❌ Location availability API error:', error);
+      console.error('Location availability API error:', error);
       setLocations([]);
       setAvailabilityData({});
     } finally {
@@ -175,7 +176,7 @@ export default function BookingCalendar() {
 
   const handleDateChange = async (e) => {
     const newDate = e.target.value;
-    console.log('📅 Date selected:', newDate);
+    console.log('Date selected:', newDate);
     setSelectedDate(newDate);
     setSelectedScreen(null);
     setSelectedPlan(null);
@@ -189,17 +190,17 @@ export default function BookingCalendar() {
     
     // Only fetch if authenticated
     if (!isAuthenticated()) {
-      console.log('⚠️ User not authenticated, please login to check availability');
+      console.log('User not authenticated, please login to check availability');
       return;
     }
     
     // Step 2: Fetch location availability for the selected date
-    console.log('🚀 Step 2: Fetching location availability for date:', newDate);
+    console.log('Step 2: Fetching location availability for date:', newDate);
     await fetchLocationAvailability(newDate);
   };
 
   const handleScreenSelect = async (screen) => {
-    console.log('🖥️ Screen selected:', screen.name);
+    console.log('Screen selected:', screen.name);
     setSelectedScreen(screen);
     setShowScreenModal(true);
   };
@@ -464,7 +465,7 @@ export default function BookingCalendar() {
             <h2>Choose Your LED Screen</h2>
             {loadingAvailability || loadingLocations ? (
               <div className={styles.loadingMessage}>
-                <p>Loading screen availability...</p>
+                <LoadingSpinner size="medium" text="Loading screen availability..." />
               </div>
             ) : locations.length === 0 ? (
               <div className={styles.loadingMessage}>
@@ -561,7 +562,7 @@ export default function BookingCalendar() {
               <h3>Select Your Plan</h3>
               {loadingPlans ? (
                 <div className={styles.loadingMessage}>
-                  <p>Loading plans...</p>
+                  <LoadingSpinner size="medium" text="Loading plans..." />
                 </div>
               ) : (
                 <div className={styles.plansGrid}>
@@ -636,25 +637,37 @@ export default function BookingCalendar() {
             </button>
             
             <div className={styles.unavailableContent}>
-              <div className={styles.unavailableIcon}>🚫</div>
+              <div className={styles.unavailableIcon}>Unavailable</div>
               <h2>Already Booked!</h2>
               <p>This screen is already booked for the selected date and plan combination.</p>
               
               <div className={styles.suggestionBox}>
                 <h3>Try these alternatives:</h3>
                 <ul>
-                  <li>📅 Choose a different date</li>
-                  <li>📍 Select another location</li>
-                  <li>📋 Pick a different plan</li>
+                  <li>Choose a different date</li>
+                  <li>Select another location</li>
+                  <li>Pick a different plan</li>
                 </ul>
               </div>
               
-              <button 
-                onClick={() => setShowUnavailableModal(false)}
-                className={styles.modalBtn}
-              >
-                Got it, let me try again
-              </button>
+              <div className={styles.refundInfo}>
+                <p><strong>Note:</strong> If payment was deducted, you'll receive a full refund within 5-7 business days.</p>
+              </div>
+              
+              <div className={styles.actions}>
+                <button 
+                  onClick={() => navigate('/booking')}
+                  className={styles.btnPrimary}
+                >
+                  Book Another Slot
+                </button>
+                <button 
+                  onClick={() => setShowUnavailableModal(false)}
+                  className={styles.btnSecondary}
+                >
+                  Try Again
+                </button>
+              </div>
             </div>
           </div>
         </div>
