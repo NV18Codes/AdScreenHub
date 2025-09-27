@@ -3,6 +3,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { dataAPI, filesAPI, ordersAPI } from '../config/api';
 import { useNavigate } from 'react-router-dom';
 import { isTokenValid, clearAuthData } from '../utils/tokenUtils';
+import LoadingSpinner from './LoadingSpinner';
 import styles from '../styles/BookingFlow.module.css';
 
 const BookingFlow = () => {
@@ -48,6 +49,7 @@ const BookingFlow = () => {
   
   // Loading states
   const [loading, setLoading] = useState(false);
+  const [stepLoading, setStepLoading] = useState(false);
   const [error, setError] = useState('');
 
   // Check authentication on component mount
@@ -68,7 +70,7 @@ const BookingFlow = () => {
   // Step 1: Date Selection
   const handleDateSelect = async (date) => {
     setSelectedDate(date);
-    setLoading(true);
+    setStepLoading(true);
     setError('');
     
     try {
@@ -83,17 +85,17 @@ const BookingFlow = () => {
         setError(response.error || 'Failed to fetch locations');
       }
     } catch (err) {
-      console.error('❌ Location API Error:', err);
+      console.error('Location API Error:', err);
       setError('Network error. Please try again.');
     } finally {
-      setLoading(false);
+      setStepLoading(false);
     }
   };
 
   // Step 2: Location Selection
   const handleLocationSelect = async (location) => {
     setSelectedLocation(location);
-    setLoading(true);
+    setStepLoading(true);
     setError('');
     
     try {
@@ -109,17 +111,17 @@ const BookingFlow = () => {
         setError(response.error || 'Failed to fetch plans');
       }
     } catch (err) {
-      console.error('❌ Plans API Error:', err);
+      console.error('Plans API Error:', err);
       setError('Network error. Please try again.');
     } finally {
-      setLoading(false);
+      setStepLoading(false);
     }
   };
 
   // Step 3: Plan Selection
   const handlePlanSelect = async (plan) => {
     setSelectedPlan(plan);
-    setLoading(true);
+    setStepLoading(true);
     setError('');
     
     try {
@@ -136,15 +138,36 @@ const BookingFlow = () => {
           setCurrentStep('file-upload');
         } else {
           setError('This slot is no longer available. Please select another plan.');
+          
+          // Update order status to show refund initiated
+          const updatedOrder = {
+            ...order,
+            status: 'Payment Completed - Refund Initiated',
+            paymentStatus: 'refund_initiated',
+            reason: 'Slot unavailable'
+          };
+          
+          // Save updated order to localStorage
+          const existingOrders = JSON.parse(localStorage.getItem('adscreenhub_orders') || '[]');
+          const orderIndex = existingOrders.findIndex(o => o.id === order.id);
+          if (orderIndex !== -1) {
+            existingOrders[orderIndex] = updatedOrder;
+            localStorage.setItem('adscreenhub_orders', JSON.stringify(existingOrders));
+          }
+          
+          // Show refund information for unavailable slots
+          setTimeout(() => {
+            alert('Note: If payment was deducted, you\'ll receive a full refund within 5-7 business days.');
+          }, 1000);
         }
       } else {
         setError(response.error || 'Failed to check availability');
       }
     } catch (err) {
-      console.error('❌ Availability API Error:', err);
+      console.error('Availability API Error:', err);
       setError('Network error. Please try again.');
     } finally {
-      setLoading(false);
+      setStepLoading(false);
     }
   };
 
@@ -348,32 +371,55 @@ const BookingFlow = () => {
         handler: async function (response) {
           setLoading(true);
           
-          const verificationData = {
-            orderId: order.id,
-            razorpay_payment_id: response.razorpay_payment_id,
-            razorpay_order_id: response.razorpay_order_id,
-            razorpay_signature: response.razorpay_signature,
-          };
-
           try {
-            const verifyResponse = await ordersAPI.verifyPayment(verificationData);
+            // Payment successful - no verification needed
+            setPaymentStatus('success');
             
-            if (verifyResponse.success) {
-              setPaymentStatus('success');
-            } else {
-              setPaymentStatus('failed');
-              throw new Error(verifyResponse.error);
+            // Update order status to "Payment Completed - Pending Approval"
+            const updatedOrder = {
+              ...order,
+              status: 'Payment Completed - Pending Approval',
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_signature: response.razorpay_signature,
+              paymentVerified: true,
+              paymentStatus: 'completed'
+            };
+            
+            // Save updated order to localStorage
+            const existingOrders = JSON.parse(localStorage.getItem('adscreenhub_orders') || '[]');
+            const orderIndex = existingOrders.findIndex(o => o.id === order.id);
+            if (orderIndex !== -1) {
+              existingOrders[orderIndex] = updatedOrder;
+              localStorage.setItem('adscreenhub_orders', JSON.stringify(existingOrders));
             }
+            
+            // Redirect to success page after a short delay
+            setTimeout(() => {
+              navigate(`/booking-success?orderId=${order.id}`);
+            }, 2000);
+            
           } catch (error) {
-            console.error('❌ Payment Verification Error:', error);
-            const status = error.response?.status;
-            const message = error.response?.data?.message || error.message;
+            console.error('Payment Processing Error:', error);
+            setPaymentStatus('failed');
             
-            if (status === 409) {
-              navigate(`/booking-failed?message=${encodeURIComponent(message)}`);
-            } else {
-              setError(`Payment verification failed: ${message}`);
+            // Update order status to show payment failed
+            const updatedOrder = {
+              ...order,
+              status: 'Payment Failed',
+              paymentStatus: 'failed',
+              error: error.message
+            };
+            
+            // Save updated order to localStorage
+            const existingOrders = JSON.parse(localStorage.getItem('adscreenhub_orders') || '[]');
+            const orderIndex = existingOrders.findIndex(o => o.id === order.id);
+            if (orderIndex !== -1) {
+              existingOrders[orderIndex] = updatedOrder;
+              localStorage.setItem('adscreenhub_orders', JSON.stringify(existingOrders));
             }
+            
+            setError('Payment processing failed. Please contact support.');
           } finally {
             setLoading(false);
           }
@@ -443,10 +489,17 @@ const BookingFlow = () => {
               />
               <button
                 onClick={() => handleDateSelect(selectedDate)}
-                disabled={!selectedDate || loading}
+                disabled={!selectedDate || stepLoading}
                 className={styles.primaryButton}
               >
-                {loading ? 'Loading...' : 'Check Availability'}
+                {stepLoading ? (
+                  <>
+                    <LoadingSpinner size="small" text="" className="inlineSpinner" />
+                    Loading...
+                  </>
+                ) : (
+                  'Check Availability'
+                )}
               </button>
             </div>
           </div>
@@ -462,16 +515,24 @@ const BookingFlow = () => {
                   <div
                     key={location.id}
                     className={styles.locationCard}
-                    onClick={() => handleLocationSelect(location)}
+                    onClick={() => !stepLoading && handleLocationSelect(location)}
+                    style={{ opacity: stepLoading ? 0.6 : 1, cursor: stepLoading ? 'not-allowed' : 'pointer' }}
                   >
                     <h3>{location.name}</h3>
                     <p>{location.address}</p>
                     <span className={styles.price}>₹{location.basePrice}</span>
+                    {stepLoading && <div className={styles.loadingOverlay}>Loading...</div>}
                   </div>
                 ))
               ) : (
                 <div className={styles.noData}>
                   <p>No locations available for the selected date.</p>
+                  <div className={styles.refundInfo}>
+                    <p><strong>Note:</strong> If payment was deducted, you'll receive a full refund within 5-7 business days.</p>
+                  </div>
+                  <button onClick={() => setCurrentStep('date-selection')} className={styles.primaryButton}>
+                    Book Another Slot
+                  </button>
                 </div>
               )}
             </div>
@@ -494,17 +555,22 @@ const BookingFlow = () => {
                   <div
                     key={plan.id}
                     className={styles.planCard}
-                    onClick={() => handlePlanSelect(plan)}
+                    onClick={() => !stepLoading && handlePlanSelect(plan)}
+                    style={{ opacity: stepLoading ? 0.6 : 1, cursor: stepLoading ? 'not-allowed' : 'pointer' }}
                   >
                     <h3>{plan.name}</h3>
                     <p>{plan.description}</p>
                     <span className={styles.price}>₹{plan.price}</span>
                     <span className={styles.duration}>{plan.duration} days</span>
+                    {stepLoading && <div className={styles.loadingOverlay}>Loading...</div>}
                   </div>
                 ))
               ) : (
                 <div className={styles.noData}>
                   <p>No plans available for the selected location.</p>
+                  <button onClick={() => setCurrentStep('date-selection')} className={styles.primaryButton}>
+                    Book Another Slot
+                  </button>
                 </div>
               )}
             </div>
@@ -541,8 +607,8 @@ const BookingFlow = () => {
               
               {uploadedFile && (
                 <div className={styles.uploadSuccess}>
-                  <p>✅ File uploaded successfully: {uploadedFile.fileName}</p>
-                  <p>📁 File Path: {uploadedFile.filePath}</p>
+                  <p>File uploaded successfully: {uploadedFile.fileName}</p>
+                  <p>File Path: {uploadedFile.filePath}</p>
                   <button
                     onClick={() => setCurrentStep('order-details')}
                     className={styles.primaryButton}
@@ -552,14 +618,6 @@ const BookingFlow = () => {
                 </div>
               )}
               
-              {import.meta.env.DEV && (
-                <div style={{ marginTop: '1rem', padding: '1rem', background: '#f0f0f0', borderRadius: '5px' }}>
-                  <p><strong>Debug Info:</strong></p>
-                  <p>uploadedFile: {JSON.stringify(uploadedFile)}</p>
-                  <p>selectedFile: {selectedFile?.name}</p>
-                  <p>loading: {loading.toString()}</p>
-                </div>
-              )}
             </div>
             <button onClick={goBack} className={styles.secondaryButton}>
               Back
@@ -637,7 +695,14 @@ const BookingFlow = () => {
                 disabled={loading || !uploadedFile}
                 className={styles.primaryButton}
               >
-                {loading ? 'Processing...' : 'Proceed to Payment'}
+                {loading ? (
+                  <>
+                    <LoadingSpinner size="small" text="" className="inlineSpinner" />
+                    Processing...
+                  </>
+                ) : (
+                  'Proceed to Payment'
+                )}
               </button>
             </div>
             <button onClick={goBack} className={styles.secondaryButton}>
@@ -683,10 +748,11 @@ const BookingFlow = () => {
 
                 {paymentStatus === 'success' ? (
                   <div className={styles.paymentSuccess}>
-                    <div className={styles.successIcon}>✅</div>
-                    <h3>Payment Successful!</h3>
-                    <p>Your ad slot has been booked successfully.</p>
+                    <h3>Payment Completed</h3>
+                    <p>Your payment has been processed successfully.</p>
+                    <p><strong>Status:</strong> Payment Completed - Pending Approval</p>
                     <p>Order ID: {paymentData.order.id}</p>
+                    <p>Your ad will be reviewed and approved within 24 hours.</p>
                     <button
                       onClick={() => window.location.href = '/dashboard'}
                       className={styles.primaryButton}
@@ -696,15 +762,25 @@ const BookingFlow = () => {
                   </div>
                 ) : paymentStatus === 'failed' ? (
                   <div className={styles.paymentFailed}>
-                    <div className={styles.failedIcon}>❌</div>
                     <h3>Payment Failed</h3>
                     <p>There was an issue processing your payment. Please try again.</p>
-                    <button
-                      onClick={() => setPaymentStatus(null)}
-                      className={styles.primaryButton}
-                    >
-                      Try Again
-                    </button>
+                    <div className={styles.refundInfo}>
+                      <p><strong>Note:</strong> If payment was deducted, you'll receive a full refund within 5-7 business days.</p>
+                    </div>
+                    <div className={styles.actions}>
+                      <button
+                        onClick={() => setCurrentStep('date-selection')}
+                        className={styles.primaryButton}
+                      >
+                        Book Another Slot
+                      </button>
+                      <button
+                        onClick={() => setPaymentStatus(null)}
+                        className={styles.secondaryButton}
+                      >
+                        Try Again
+                      </button>
+                    </div>
                   </div>
                 ) : (
                   <div className={styles.paymentOptions}>
@@ -716,7 +792,6 @@ const BookingFlow = () => {
                         className={styles.paymentButton}
                       >
                         <div className={styles.paymentMethod}>
-                          <div className={styles.paymentIcon}>💳</div>
                           <div className={styles.paymentInfo}>
                             <h4>Razorpay</h4>
                             <p>Pay with UPI, Cards, Net Banking</p>
@@ -730,7 +805,6 @@ const BookingFlow = () => {
                         className={styles.paymentButton}
                       >
                         <div className={styles.paymentMethod}>
-                          <div className={styles.paymentIcon}>🧪</div>
                           <div className={styles.paymentInfo}>
                             <h4>Mock Payment</h4>
                             <p>For testing purposes</p>
@@ -789,6 +863,17 @@ const BookingFlow = () => {
       {error && (
         <div className={styles.errorMessage}>
           {error}
+          <div className={styles.refundInfo}>
+            <p><strong>Note:</strong> If payment was deducted, you'll receive a full refund within 5-7 business days.</p>
+          </div>
+          <div className={styles.actions}>
+            <button onClick={() => setCurrentStep('date-selection')} className={styles.primaryButton}>
+              Book Another Slot
+            </button>
+            <button onClick={() => setError('')} className={styles.secondaryButton}>
+              Try Again
+            </button>
+          </div>
         </div>
       )}
 

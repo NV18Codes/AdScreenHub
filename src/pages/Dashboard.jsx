@@ -4,6 +4,7 @@ import { isDateDisabled, validateFile, generateOrderId, compressImage, manageSto
 import { getUserDisplayName, getUserEmail } from '../utils/userUtils';
 import { useNavigate } from 'react-router-dom';
 import { couponsAPI, dataAPI } from '../config/api';
+import LoadingSpinner from '../components/LoadingSpinner';
 import styles from '../styles/Dashboard.module.css';
 
 export default function Dashboard() {
@@ -31,6 +32,7 @@ export default function Dashboard() {
   const [discountAmount, setDiscountAmount] = useState(0);
   const [couponError, setCouponError] = useState('');
   const [validatingCoupon, setValidatingCoupon] = useState(false);
+  const [confirmingBooking, setConfirmingBooking] = useState(false);
   const user = JSON.parse(localStorage.getItem('user'));
   const displayName = getUserDisplayName(user);
   
@@ -183,7 +185,8 @@ export default function Dashboard() {
       }
       
       if (!availability.available || availability.slots === 0) {
-        alert('This screen has no available inventory for the selected date. Please choose another date or screen.');
+        const errorMessage = 'This screen has no available inventory for the selected date. Please choose another date or screen.';
+        alert(`${errorMessage}\n\nNote: If payment was deducted, you'll receive a full refund within 5-7 business days.`);
         return;
       }
     }
@@ -253,6 +256,8 @@ export default function Dashboard() {
       return;
     }
 
+    setConfirmingBooking(true);
+
     // Create new order - always proceed regardless of coupon validation
     // Use discount if coupon was validated successfully, otherwise use 0
     const finalDiscount = couponError ? 0 : discountAmount;
@@ -274,32 +279,44 @@ export default function Dashboard() {
       location: selectedScreen.location
     };
 
-    const result = await createOrder(orderData);
-    
-    if (result.success) {
-      setNewOrder(result.order);
+    try {
+      const result = await createOrder(orderData);
+      
+      if (result.success) {
+      // Update order status to show payment pending
+      const updatedOrder = {
+        ...result.order,
+        status: 'Payment Pending'
+      };
+      setNewOrder(updatedOrder);
       setShowConfirmation(true);
       setShowUploadModal(false);
-      
-      // Reset form
-      setSelectedDate('');
-      setSelectedScreen(null);
-      setSelectedPlan(null);
-      setDesignFile(null);
-      setDesignPreview(null);
-      setAddress('');
-      setGstApplicable(false);
-      setCompanyName('');
-      setGstNumber('');
-      setTermsAccepted(false);
-      setCouponCode('');
-      setDiscountAmount(0);
-      setCouponError('');
-      
-      // Clear localStorage
-      localStorage.removeItem('adscreenhub_design');
-    } else {
-      alert(result.error || 'Failed to create order. Please try again.');
+        
+        // Reset form
+        setSelectedDate('');
+        setSelectedScreen(null);
+        setSelectedPlan(null);
+        setDesignFile(null);
+        setDesignPreview(null);
+        setAddress('');
+        setGstApplicable(false);
+        setCompanyName('');
+        setGstNumber('');
+        setTermsAccepted(false);
+        setCouponCode('');
+        setDiscountAmount(0);
+        setCouponError('');
+        
+        // Clear localStorage
+        localStorage.removeItem('adscreenhub_design');
+      } else {
+        alert(result.error || 'Failed to create order. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error creating order:', error);
+      alert('Failed to create order. Please try again.');
+    } finally {
+      setConfirmingBooking(false);
     }
   };
 
@@ -487,7 +504,7 @@ export default function Dashboard() {
               onClick={() => navigate('/booking')}
               className={styles.bookNewButton}
             >
-              🚀 Book New Ad Slot
+              Book New Ad Slot
             </button>
           </div>
         </div>
@@ -496,7 +513,7 @@ export default function Dashboard() {
         <div className={styles.dashboardOverview}>
           <div className={styles.overviewGrid}>
             <div className={styles.overviewCard}>
-              <div className={styles.overviewIcon}>📋</div>
+              <div className={styles.overviewIcon}>Orders</div>
               <div className={styles.overviewContent}>
                 <h3>Total Orders</h3>
                 <p className={styles.overviewNumber}>{getTotalOrders()}</p>
@@ -983,10 +1000,17 @@ export default function Dashboard() {
                 </button>
                 <button
                   onClick={handleConfirmBooking}
-                  disabled={!designFile || !address.trim() || (gstApplicable && (!companyName.trim() || !gstNumber.trim())) || !termsAccepted}
-                  className={`${styles.btn} ${styles.btnPrimary}`}
+                  disabled={!designFile || !address.trim() || (gstApplicable && (!companyName.trim() || !gstNumber.trim())) || !termsAccepted || confirmingBooking}
+                  className={`${styles.btn} ${styles.btnPrimary} ${confirmingBooking ? styles.loading : ''}`}
                 >
-                  Confirm Booking
+                  {confirmingBooking ? (
+                    <>
+                      <LoadingSpinner size="small" text="" className="inlineSpinner" />
+                      Confirming...
+                    </>
+                  ) : (
+                    "Confirm Booking"
+                  )}
                 </button>
               </div>
             </div>
@@ -1010,8 +1034,8 @@ export default function Dashboard() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                   </svg>
                 </div>
-                <h2>Booking Confirmed!</h2>
-                <p>Your advertisement has been successfully booked and is pending approval.</p>
+                <h2>Order Created!</h2>
+                <p>Your advertisement order has been created. Please proceed to payment to complete your booking.</p>
               </div>
 
               <div className={styles.orderDetails}>
@@ -1035,7 +1059,7 @@ export default function Dashboard() {
                   </div>
                   <div className={styles.orderItem}>
                     <span>Total Amount:</span>
-                    <span className={styles.orderAmount}>₹{newOrder.totalAmount.toLocaleString()}</span>
+                    <span className={styles.orderAmount}>₹{newOrder.totalAmount.toLocaleString('en-IN')}</span>
                   </div>
                   <div className={styles.orderItem}>
                     <span>Status:</span>

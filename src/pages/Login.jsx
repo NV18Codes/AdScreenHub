@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import axios from "axios";
 import { API_BASE_URL, authAPI } from "../config/api";
+import LoadingSpinner from '../components/LoadingSpinner';
 
 const API_BASE = `${API_BASE_URL}/auth`;
 
@@ -132,9 +133,16 @@ export default function Login() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+              className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed font-medium flex items-center justify-center gap-2"
             >
-              {loading ? "Signing In..." : "Sign In"}
+              {loading ? (
+                <>
+                  <LoadingSpinner size="small" text="" className="inlineSpinner" />
+                  Signing In...
+                </>
+              ) : (
+                "Sign In"
+              )}
             </button>
           </form>
           

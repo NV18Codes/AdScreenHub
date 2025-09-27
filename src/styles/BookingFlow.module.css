@@ -524,6 +524,81 @@
   line-height: 1.4;
 }
 
+/* Loading Overlay */
+.loadingOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+  color: #666;
+  border-radius: 8px;
+  z-index: 10;
+}
+
+.locationCard,
+.planCard {
+  position: relative;
+}
+
+/* Step Navigation Improvements */
+.stepContainer {
+  transition: all 0.3s ease;
+}
+
+.stepContainer.loading {
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+/* Professional Button States */
+.primaryButton:disabled,
+.secondaryButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.primaryButton:disabled:hover,
+.secondaryButton:disabled:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+/* Smooth Transitions */
+.locationCard,
+.planCard,
+.paymentButton {
+  transition: all 0.2s ease;
+}
+
+.locationCard:hover:not(:disabled),
+.planCard:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Professional Loading States */
+.loadingSpinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid #f3f3f3;
+  border-top: 2px solid #2563eb;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
 /* Mobile Responsiveness */
 @media (max-width: 768px) {
   .bookingFlow {
