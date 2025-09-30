@@ -1,589 +1,836 @@
 import React, { useState, useEffect } from 'react';
+import { useOrders } from '../hooks/useOrders';
 import { useAuth } from '../contexts/AuthContext';
-import { dataAPI, filesAPI, ordersAPI } from '../config/api';
-import { useNavigate } from 'react-router-dom';
-import { isTokenValid, clearAuthData } from '../utils/tokenUtils';
+import { isDateDisabled, validateFile, generateOrderId, compressImage, manageStorageQuota } from '../utils/validation';
+import { couponsAPI, dataAPI, filesAPI, ordersAPI } from '../config/api';
+import { RAZORPAY_KEY, RAZORPAY_CONFIG, convertToPaise } from '../config/razorpay';
 import LoadingSpinner from './LoadingSpinner';
+import TermsContent from './TermsContent';
 import styles from '../styles/BookingFlow.module.css';
 
-const BookingFlow = () => {
-  const { user } = useAuth();
-  const navigate = useNavigate();
-  
-  // Step management
-  const [currentStep, setCurrentStep] = useState('date-selection');
-  
-  // Data states
+export default function BookingFlow() {
+  const { createOrder, hasAvailableInventory, getAvailableInventory, getBookedScreensForDate } = useOrders();
+  const { isAuthenticated } = useAuth();
   const [selectedDate, setSelectedDate] = useState('');
-  const [locations, setLocations] = useState([]);
-  const [plans, setPlans] = useState([]);
-  const [selectedLocation, setSelectedLocation] = useState(null);
+  const [selectedScreen, setSelectedScreen] = useState(null);
   const [selectedPlan, setSelectedPlan] = useState(null);
-  const [isAvailable, setIsAvailable] = useState(null);
+  const [showScreenModal, setShowScreenModal] = useState(false);
+  const [designFile, setDesignFile] = useState(null);
+  const [designPreview, setDesignPreview] = useState(null);
+  const [uploadError, setUploadError] = useState('');
+  const [showUploadModal, setShowUploadModal] = useState(false);
+  const [showConfirmation, setShowConfirmation] = useState(false);
+  const [newOrder, setNewOrder] = useState(null);
+  const [showWarningModal, setShowWarningModal] = useState(false);
   
-  // File upload states
-  const [selectedFile, setSelectedFile] = useState(null);
-  const [uploadProgress, setUploadProgress] = useState(0);
-  const [uploadedFile, setUploadedFile] = useState(null);
-
-  // Debug: Log uploadedFile state changes
-  useEffect(() => {
-    if (import.meta.env.DEV) {
-    }
-  }, [uploadedFile]);
+  // New form fields
+  const [address, setAddress] = useState('');
+  const [gstApplicable, setGstApplicable] = useState(false);
+  const [companyName, setCompanyName] = useState('');
+  const [gstNumber, setGstNumber] = useState('');
+  const [termsAccepted, setTermsAccepted] = useState(false);
+  const [couponCode, setCouponCode] = useState('');
+  const [discountAmount, setDiscountAmount] = useState(0);
+  const [couponError, setCouponError] = useState('');
+  const [validatingCoupon, setValidatingCoupon] = useState(false);
   
-  // Order states
-  const [orderData, setOrderData] = useState({
-    deliveryAddress: {
-      street: '',
-      city: '',
-      state: '',
-      zip: ''
-    },
-    gstInfo: ''
-  });
-
-  // Payment states
-  const [paymentData, setPaymentData] = useState(null);
-  const [paymentStatus, setPaymentStatus] = useState(null); // 'pending', 'success', 'failed'
-  
-  // Loading states
+  // Dynamic data state
+  const [plans, setPlans] = useState([]);
+  const [locations, setLocations] = useState([]);
+  const [loadingPlans, setLoadingPlans] = useState(false);
+  const [loadingLocations, setLoadingLocations] = useState(false);
+  const [loadingAvailability, setLoadingAvailability] = useState(false);
+  const [availabilityData, setAvailabilityData] = useState({});
+  const [slotAvailabilityStatus, setSlotAvailabilityStatus] = useState({});
+  const [showUnavailableModal, setShowUnavailableModal] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [stepLoading, setStepLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showImportantNotice, setShowImportantNotice] = useState(false);
+  const [fileUploaded, setFileUploaded] = useState(false);
+  const [showTermsModal, setShowTermsModal] = useState(false);
 
-  // Check authentication on component mount
+  // Fetch plans when selectedScreen changes
   useEffect(() => {
-    if (!user) {
-      navigate('/login');
+    if (selectedScreen && selectedScreen.id) {
+      fetchPlans();
+    }
+  }, [selectedScreen]);
+
+  // Transform API plan data to match frontend format
+  const transformPlanData = (apiPlans) => {
+    if (!Array.isArray(apiPlans)) return [];
+    
+    return apiPlans.map(plan => ({
+      id: plan.id || '',
+      name: (plan.name || '').toUpperCase(),
+      price: plan.price || 0,
+      duration: `${plan.duration_days || 0} day${(plan.duration_days || 0) > 1 ? 's' : ''}`,
+      description: plan.description || '',
+      adSlots: 1, // Default to 1 slot per plan
+      features: [
+        `${plan.duration_days || 0} day display duration`,
+        `High-quality LED display`,
+        `Professional ad placement`,
+        `24/7 visibility`,
+        `Real-time monitoring`
+      ]
+    }));
+  };
+
+  // Transform location data from API
+  const transformLocationData = (apiLocations) => {
+    if (!Array.isArray(apiLocations)) return [];
+    
+    const screenDetails = {
+      1: { size: "20ft x 10ft", pixels: "1920px x 1080px", location: "MG Road, Bangalore" },
+      2: { size: "15ft x 8ft", pixels: "1440px x 720px", location: "Koramangala, Bangalore" },
+      3: { size: "25ft x 12ft", pixels: "2560px x 1280px", location: "Indiranagar, Bangalore" }
+    };
+    
+    return apiLocations.map(location => ({
+      id: location.id || '',
+      name: location.name || 'Unknown Location',
+      description: location.description || '',
+      location: screenDetails[location.id]?.location || location.name || 'Unknown Location',
+      size: screenDetails[location.id]?.size || "1440px x 720px",
+      pixels: screenDetails[location.id]?.pixels || "1440px x 720px",
+      orientation: "Landscape",
+      image: "/Banner.png", // Use Banner.png for all screens
+      totalInventory: location.total_slots || 0,
+      available_slots: location.available_slots || 0
+    }));
+  };
+
+  // Fetch plans data
+  const fetchPlans = async () => {
+    if (!selectedScreen || !selectedScreen.id) {
+      console.log('No selected screen, cannot fetch plans');
+      setPlans([]);
       return;
     }
 
-    if (!isTokenValid()) {
-      clearAuthData();
-      navigate('/login');
-      return;
-    }
-
-  }, [user, navigate]);
-
-  // Step 1: Date Selection
-  const handleDateSelect = async (date) => {
-    setSelectedDate(date);
-    setStepLoading(true);
-    setError('');
+    setLoadingPlans(true);
+    setError(''); // Clear previous errors
     
     try {
-      const response = await dataAPI.getLocationAvailability(date);
+      // Use the location-specific plans API
+      const result = await dataAPI.getPlansByLocation(selectedScreen.id);
+      console.log('Plans API Response:', result); // Debug log
       
-      if (response.success) {
-        // Handle nested data structure: response.data.data
-        const locationsData = response.data.data || response.data;
-        setLocations(locationsData);
-        setCurrentStep('location-selection');
-      } else {
-        setError(response.error || 'Failed to fetch locations');
+      // Handle different possible response structures
+      let plansData = null;
+      
+      if (result.success && result.data) {
+        // Check if data is directly an array
+        if (Array.isArray(result.data)) {
+          plansData = result.data;
+        }
+        // Check if data has a nested array (like data.plans or data.data)
+        else if (result.data.data && Array.isArray(result.data.data)) {
+          plansData = result.data.data;
+        }
+        // Check if data is an object with plans property
+        else if (result.data.plans && Array.isArray(result.data.plans)) {
+          plansData = result.data.plans;
+        }
+        // Check if data has an array property
+        else if (Array.isArray(result.data)) {
+          plansData = result.data;
+        }
       }
-    } catch (err) {
-      console.error('Location API Error:', err);
+      
+      if (plansData && Array.isArray(plansData) && plansData.length > 0) {
+        const transformedPlans = transformPlanData(plansData);
+        console.log('Transformed Plans:', transformedPlans); // Debug log
+        setPlans(transformedPlans);
+        setError(''); // Clear any previous errors
+      } else {
+        // No plans available - show backend message
+        const errorMessage = result.message || result.error || 'No plans available for this location';
+        setError(errorMessage);
+        setPlans([]);
+        console.log('No plans available:', errorMessage);
+      }
+    } catch (error) {
+      console.error('Plans API error:', error);
       setError('Network error. Please try again.');
+      setPlans([]);
     } finally {
-      setStepLoading(false);
+      setLoadingPlans(false);
     }
   };
 
-  // Step 2: Location Selection
-  const handleLocationSelect = async (location) => {
-    setSelectedLocation(location);
-    setStepLoading(true);
-    setError('');
+  // Fetch location availability for selected date
+  const fetchLocationAvailability = async (date) => {
+    setLoadingAvailability(true);
+    setLoadingLocations(true);
+    setError(''); // Clear previous errors
     
     try {
-      const response = await dataAPI.getPlansByLocation(location.id);
-      if (import.meta.env.DEV) {
-      }
+      const result = await dataAPI.getLocationAvailability(date);
+      console.log('Location Availability Response:', result); // Debug log
       
-      if (response.success) {
-        const plansData = response.data.data || response.data;
-        setPlans(plansData);
-        setCurrentStep('plan-selection');
+      if (result.success && result.data) {
+        const locationsData = result.data.data || result.data;
+        if (Array.isArray(locationsData) && locationsData.length > 0) {
+          const transformedLocations = transformLocationData(locationsData);
+          setLocations(transformedLocations);
+          setAvailabilityData({});
+          setError(''); // Clear any previous errors
       } else {
-        setError(response.error || 'Failed to fetch plans');
-      }
-    } catch (err) {
-      console.error('Plans API Error:', err);
-      setError('Network error. Please try again.');
-    } finally {
-      setStepLoading(false);
-    }
-  };
-
-  // Step 3: Plan Selection
-  const handlePlanSelect = async (plan) => {
-    setSelectedPlan(plan);
-    setStepLoading(true);
-    setError('');
-    
-    try {
-      const response = await dataAPI.checkAvailability(selectedLocation.id, plan.id, selectedDate);
-      if (import.meta.env.DEV) {
-      }
-      
-      if (response.success) {
-        const availabilityData = response.data.data || response.data;
-        // Handle both 'available' and 'isAvailable' field names
-        const isAvailable = availabilityData.available || availabilityData.isAvailable;
-        setIsAvailable(isAvailable);
-        if (isAvailable) {
-          setCurrentStep('file-upload');
-        } else {
-          setError('This slot is no longer available. Please select another plan.');
-          
-          // Update order status to show refund initiated
-          const updatedOrder = {
-            ...order,
-            status: 'Payment Completed - Refund Initiated',
-            paymentStatus: 'refund_initiated',
-            reason: 'Slot unavailable'
-          };
-          
-          // Save updated order to localStorage
-          const existingOrders = JSON.parse(localStorage.getItem('adscreenhub_orders') || '[]');
-          const orderIndex = existingOrders.findIndex(o => o.id === order.id);
-          if (orderIndex !== -1) {
-            existingOrders[orderIndex] = updatedOrder;
-            localStorage.setItem('adscreenhub_orders', JSON.stringify(existingOrders));
-          }
-          
-          // Show refund information for unavailable slots
-          setTimeout(() => {
-            alert('Note: If payment was deducted, you\'ll receive a full refund within 5-7 business days.');
-          }, 1000);
+          // No locations available - show backend message
+          setLocations([]);
+          setAvailabilityData({});
+          const errorMessage = result.message || 'No available inventory for this location and date';
+          setError(errorMessage);
+          console.log('No locations available:', errorMessage);
         }
       } else {
-        setError(response.error || 'Failed to check availability');
+        // API returned success: false or no data
+        const errorMessage = result.error || result.message || 'No available inventory for this location and date';
+        setError(errorMessage);
+        setLocations([]);
+        setAvailabilityData({});
+        console.log('Location availability failed:', errorMessage);
       }
-    } catch (err) {
-      console.error('Availability API Error:', err);
+    } catch (error) {
+      console.error('Location availability API error:', error);
       setError('Network error. Please try again.');
+      setLocations([]);
+      setAvailabilityData({});
     } finally {
-      setStepLoading(false);
+      setLoadingAvailability(false);
+      setLoadingLocations(false);
     }
   };
 
-  // Step 4: File Upload
+  // Handle date selection
+  const handleDateSelect = async (date) => {
+    setSelectedDate(date);
+    setSelectedScreen(null);
+    setSelectedPlan(null);
+    
+    if (!date) {
+      setLocations([]);
+      setAvailabilityData({});
+      return;
+    }
+    
+    if (!isAuthenticated()) {
+      console.log('User not authenticated, please login to check availability');
+      return;
+    }
+    
+    await fetchLocationAvailability(date);
+    
+    // Auto-scroll to step 2 after date selection
+    setTimeout(() => {
+      const step2Element = document.querySelector('[data-step="2"]');
+      if (step2Element) {
+        step2Element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }, 500);
+  };
+
+  // Handle screen selection
+  const handleScreenSelect = (screen) => {
+    setSelectedScreen(screen);
+    setShowScreenModal(false);
+    
+    // Auto-scroll to step 3 after screen selection
+    setTimeout(() => {
+      const step3Element = document.querySelector('[data-step="3"]');
+      if (step3Element) {
+        step3Element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }, 500);
+  };
+
+  // Handle plan selection
+  const handlePlanSelect = (plan) => {
+    setSelectedPlan(plan);
+    
+    // Auto-scroll to step 4 after plan selection
+    setTimeout(() => {
+      const step4Element = document.querySelector('[data-step="4"]');
+      if (step4Element) {
+        step4Element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }, 300);
+  };
+
+  // Handle file selection
   const handleFileSelect = (event) => {
     const file = event.target.files[0];
     if (file) {
-      setSelectedFile(file);
+      // Show Important Notice popup before allowing file selection
+      setShowImportantNotice(true);
+      
+      // Store the file temporarily
+      setDesignFile(file);
+      setUploadError('');
+      
+      // Create preview
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setDesignPreview(e.target.result);
+      };
+      reader.readAsDataURL(file);
     }
   };
 
+  // Handle accepting the important notice
+  const handleAcceptNotice = () => {
+    setShowImportantNotice(false);
+    // File is already set, user can now proceed
+  };
+
+  // Handle canceling the important notice
+  const handleCancelNotice = () => {
+    setShowImportantNotice(false);
+    // Clear the selected file
+    setDesignFile(null);
+    setDesignPreview(null);
+    // Reset file input
+    const fileInput = document.getElementById('file-upload');
+    if (fileInput) {
+      fileInput.value = '';
+    }
+  };
+
+  // Handle file upload
   const uploadFile = async () => {
-    if (!selectedFile) {
-      setError('Please select a file to upload');
+    if (!designFile) {
+      setUploadError('Please select a file to upload');
       return;
     }
 
     setLoading(true);
-    setError('');
-    setUploadProgress(0);
+    setUploadError('');
 
     try {
+      console.log('Attempting to get signed upload URL for:', designFile.name, designFile.type);
+      
       // Try to get signed URL from API
       const signedUrlResponse = await filesAPI.getSignedUploadUrl(
-        selectedFile.name,
-        selectedFile.type
+        designFile.name,
+        designFile.type
       );
 
-      console.log('📁 Signed URL Response:', signedUrlResponse);
+      console.log('Signed URL Response:', signedUrlResponse);
 
       if (signedUrlResponse.success) {
-        // Handle nested data structure: response.data.data
         const uploadData = signedUrlResponse.data.data || signedUrlResponse.data;
-        console.log('📁 Upload Data:', uploadData);
-        console.log('📁 Upload Data keys:', Object.keys(uploadData));
+        console.log('Upload Data:', uploadData);
         
+        if (uploadData && uploadData.signedUrl) {
         const { signedUrl, path: filePath, fileName } = uploadData;
-        
-        // Use selectedFile.name as fileName if not provided by API
-        const finalFileName = fileName || selectedFile.name;
 
         // Upload file to S3
+          console.log('Uploading to S3:', signedUrl);
         const uploadResponse = await fetch(signedUrl, {
           method: 'PUT',
-          body: selectedFile,
+            body: designFile,
           headers: {
-            'Content-Type': selectedFile.type,
+              'Content-Type': designFile.type,
           },
         });
 
-        if (!uploadResponse.ok) {
-          throw new Error('File upload failed');
-        }
-
-        setUploadedFile({ filePath, fileName: finalFileName });
-        setUploadProgress(100);
-        
-        if (import.meta.env.DEV) {
-        }
-        
-        setCurrentStep('order-details');
-      } else {
-        throw new Error(signedUrlResponse.error);
-      }
-    } catch (err) {
-      console.error('❌ File Upload Error:', err);
-      // Show specific error messages based on the error type
-      if (err.message.includes('Could not create signed upload URL')) {
-        setError('File upload service is temporarily unavailable. Please try again later.');
-      } else if (err.message.includes('500')) {
-        setError('Server error occurred during file upload. Please try again.');
-      } else if (err.message.includes('401')) {
-        setError('Authentication required for file upload. Please log in again.');
-      } else if (err.message.includes('404')) {
-        setError('File upload endpoint not found. Please contact support.');
-      } else {
-        setError(err.message || 'Upload failed. Please try again.');
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Step 5: Order Details & Payment
-  const handleOrderDetailsChange = (field, value) => {
-    if (field.includes('.')) {
-      const [parent, child] = field.split('.');
-      setOrderData(prev => ({
-        ...prev,
-        [parent]: {
-          ...prev[parent],
-          [child]: value
-        }
-      }));
-    } else {
-      setOrderData(prev => ({
-        ...prev,
-        [field]: value
-      }));
-    }
-  };
-
-  const initiatePayment = async () => {
-    if (import.meta.env.DEV) {
-    }
-
-    setLoading(true);
-    setError('');
-
-    try {
-      // Validate required fields
-      if (!uploadedFile || !uploadedFile.filePath) {
-        throw new Error('Creative file is required. Please upload your creative first.');
-      }
-
-      const orderPayload = {
-        planId: selectedPlan.id.toString(),
-        locationId: selectedLocation.id.toString(),
-        startDate: selectedDate,
-        price: selectedPlan.price || 0, // Add required price field
-        creativeFilePath: uploadedFile.filePath,
-        creativeFileName: uploadedFile.fileName,
-        deliveryAddress: orderData.deliveryAddress,
-        gstInfo: orderData.gstInfo
-      };
-
-      if (import.meta.env.DEV) {
-        console.log('💳 Order Payload:', orderPayload);
-      }
-
-      const response = await ordersAPI.initiateOrder(orderPayload);
-      
-      if (response.success) {
-        // Handle nested data structure: response.data.data
-        const orderData = response.data.data || response.data;
-        if (import.meta.env.DEV) {
-          console.log('💳 Order Data:', orderData);
-        }
-        
-        const { razorpayOrder, order } = orderData;
-        
-        // Store payment data and go to payment step
-        setPaymentData({ razorpayOrder, order });
-        setCurrentStep('payment');
-      } else {
-        throw new Error(response.error);
-      }
-    } catch (err) {
-      console.error('❌ Order Initiation Error:', err);
-      setError(err.message || 'Order initiation failed');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleRazorpayPayment = async () => {
-    if (!paymentData) return;
-    
-    setLoading(true);
-    setError('');
-    
-    try {
-      await initializeRazorpayPayment(paymentData.razorpayOrder, paymentData.order);
-    } catch (err) {
-      console.error('❌ Razorpay Payment Error:', err);
-      setError(err.message || 'Payment initialization failed');
-      setLoading(false);
-    }
-  };
-
-  const handleMockPayment = async () => {
-    setLoading(true);
-    setError('');
-    
-    try {
-      // Simulate payment processing
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // Simulate successful payment
-      setPaymentStatus('success');
-      setLoading(false);
-    } catch (err) {
-      console.error('❌ Mock Payment Error:', err);
-      setPaymentStatus('failed');
-      setLoading(false);
-    }
-  };
-
-  const initializeRazorpayPayment = async (razorpayOrder, order) => {
-    try {
-      // Initialize Razorpay
-      const options = {
-        key: import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_test_1234567890', // Fallback for demo
-        amount: razorpayOrder.amount,
-        currency: razorpayOrder.currency,
-        name: "AdScreenHub",
-        description: "Ad Slot Booking",
-        image: "/logo.png",
-        order_id: razorpayOrder.id,
-        
-        handler: async function (response) {
-          setLoading(true);
-          
-          try {
-            // Payment successful - no verification needed
-            setPaymentStatus('success');
-            
-            // Update order status to "Payment Completed - Pending Approval"
-            const updatedOrder = {
-              ...order,
-              status: 'Payment Completed - Pending Approval',
-              razorpay_payment_id: response.razorpay_payment_id,
-              razorpay_order_id: response.razorpay_order_id,
-              razorpay_signature: response.razorpay_signature,
-              paymentVerified: true,
-              paymentStatus: 'completed'
-            };
-            
-            // Save updated order to localStorage
-            const existingOrders = JSON.parse(localStorage.getItem('adscreenhub_orders') || '[]');
-            const orderIndex = existingOrders.findIndex(o => o.id === order.id);
-            if (orderIndex !== -1) {
-              existingOrders[orderIndex] = updatedOrder;
-              localStorage.setItem('adscreenhub_orders', JSON.stringify(existingOrders));
-            }
-            
-            // Redirect to success page after a short delay
-            setTimeout(() => {
-              navigate(`/booking-success?orderId=${order.id}`);
-            }, 2000);
-            
-          } catch (error) {
-            console.error('Payment Processing Error:', error);
-            setPaymentStatus('failed');
-            
-            // Update order status to show payment failed
-            const updatedOrder = {
-              ...order,
-              status: 'Payment Failed',
-              paymentStatus: 'failed',
-              error: error.message
-            };
-            
-            // Save updated order to localStorage
-            const existingOrders = JSON.parse(localStorage.getItem('adscreenhub_orders') || '[]');
-            const orderIndex = existingOrders.findIndex(o => o.id === order.id);
-            if (orderIndex !== -1) {
-              existingOrders[orderIndex] = updatedOrder;
-              localStorage.setItem('adscreenhub_orders', JSON.stringify(existingOrders));
-            }
-            
-            setError('Payment processing failed. Please contact support.');
-          } finally {
-            setLoading(false);
+          if (uploadResponse.ok) {
+            console.log('File uploaded successfully');
+            setFileUploaded(true); // Mark as uploaded
+            setShowUploadModal(false);
+            setShowConfirmation(true);
+          } else {
+            throw new Error(`S3 upload failed: ${uploadResponse.status} ${uploadResponse.statusText}`);
           }
-        },
+        } else {
+          throw new Error('Invalid upload data received from API');
+        }
+      } else {
+        throw new Error(signedUrlResponse.error || 'Failed to get upload URL');
+      }
+    } catch (error) {
+      console.error('File Upload Error:', error);
+      
+      // If it's a network error or API not available, allow user to proceed
+      if (error.message.includes('Network error') || error.message.includes('Failed to get upload URL')) {
+        console.log('File upload API not available, proceeding without upload');
+        setUploadError('File upload service temporarily unavailable. You can proceed with booking and upload the file later.');
         
-        prefill: {
-          name: user.fullName,
-          email: user.email,
-          contact: user.phoneNumber,
-        },
-        
-        notes: {
-          address: "AdScreenHub Booking",
-        },
-        
-        theme: {
-          color: "#3399cc",
-        },
+        // Auto-proceed to confirmation after a delay
+        setTimeout(() => {
+          setShowUploadModal(false);
+          setShowConfirmation(true);
+        }, 2000);
+      } else {
+        setUploadError(`Upload failed: ${error.message}. Please try again.`);
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Handle order confirmation
+  const handleConfirmOrder = async () => {
+    if (!selectedDate || !selectedScreen || !selectedPlan || !designFile) {
+      alert('Please complete all steps before confirming');
+      return;
+    }
+
+    try {
+      console.log('🔍 Selected Plan:', selectedPlan);
+      console.log('🔍 Plan Price:', selectedPlan.price);
+      console.log('🔍 Discount Amount:', discountAmount);
+      console.log('🔍 Final Amount:', selectedPlan.price - (discountAmount || 0));
+      
+      const orderData = {
+        planId: selectedPlan.id,
+        locationId: selectedScreen.id,
+        screenId: selectedScreen.id, // Keep for backward compatibility
+        startDate: selectedDate,
+        displayDate: selectedDate, // Keep for backward compatibility
+        creativeFilePath: designFile.name, // This should be the actual file path from upload
+        creativeFileName: designFile.name,
+        designFile: designFile.name, // Keep for backward compatibility
+        totalAmount: selectedPlan.price - (discountAmount || 0),
+        price: selectedPlan.price - (discountAmount || 0), // Keep for backward compatibility
+        address: address,
+        city: '', // You might want to extract from address or add a city field
+        state: '', // You might want to add a state field
+        zip: '', // You might want to add a zip field
+        gstApplicable: gstApplicable,
+        companyName: companyName,
+        gstNumber: gstNumber,
+        gstInfo: gstNumber, // API expects gstInfo
+        termsAccepted: termsAccepted,
+        couponCode: couponCode,
+        discountAmount: discountAmount,
+        screenName: selectedScreen.name,
+        location: selectedScreen.location
       };
 
-      const paymentObject = new window.Razorpay(options);
+      console.log('🚀 Creating order with data:', orderData);
+      console.log('🚀 Order data price:', orderData.price);
+      console.log('🚀 Order data totalAmount:', orderData.totalAmount);
+      const result = await createOrder(orderData);
+      console.log('📋 Order creation result:', result);
       
-      paymentObject.on('payment.failed', function (response) {
-        setError(`Payment failed: ${response.error.description}`);
-        setLoading(false);
-      });
-
-      paymentObject.open();
-      
-    } catch (err) {
-      setError(err.message || 'Payment initiation failed');
+      if (result.success) {
+        console.log('✅ Order created successfully:', result.order);
+        console.log('🔍 API Response:', result.apiResponse);
+        console.log('🔍 Order object:', result.order);
+        
+        setNewOrder(result.order);
+        
+        // Check if we have razorpay_order_id from API response
+        // The API returns: response.data.data.order.razorpay_order_id
+        const razorpayOrderId = result.apiResponse?.data?.order?.razorpay_order_id || 
+                                result.apiResponse?.data?.razorpayOrder?.id ||
+                                result.apiResponse?.razorpay_order_id || 
+                                result.order?.razorpay_order_id || 
+                                result.order?.razorpayOrderId;
+        
+        console.log('🔍 Extracted Razorpay Order ID:', razorpayOrderId);
+        console.log('🔍 result.apiResponse?.data?.order?.razorpay_order_id:', result.apiResponse?.data?.order?.razorpay_order_id);
+        console.log('🔍 result.apiResponse?.data?.razorpayOrder?.id:', result.apiResponse?.data?.razorpayOrder?.id);
+        
+        if (razorpayOrderId) {
+          console.log('💳 Razorpay Order ID found:', razorpayOrderId);
+          console.log('💳 Opening Razorpay payment modal...');
+          // Show Razorpay payment modal
+          handlePayment(result.order, razorpayOrderId);
+      } else {
+          console.warn('⚠️ No Razorpay Order ID found');
+          console.warn('⚠️ This means the API did not return razorpay_order_id');
+          console.warn('⚠️ Check your backend /orders/initiate endpoint');
+          alert('Payment gateway not available. Please contact support.');
+        }
+      } else {
+        console.error('❌ Order creation failed:', result.error);
+        // Show error message but don't block the user completely
+        alert(result.error || 'Failed to create order. Please try again.');
+      }
+    } catch (error) {
+      console.error('Order creation error:', error);
+      alert('Failed to create order. Please try again.');
     }
   };
 
-  const goBack = () => {
-    switch (currentStep) {
-      case 'location-selection':
-        setCurrentStep('date-selection');
-        break;
-      case 'plan-selection':
-        setCurrentStep('location-selection');
-        break;
-      case 'file-upload':
-        setCurrentStep('plan-selection');
-        break;
-      case 'order-details':
-        setCurrentStep('file-upload');
-        break;
-      default:
-        break;
+  // Handle Razorpay payment
+  const handlePayment = (order, razorpayOrderId) => {
+    console.log('💳 Initiating Razorpay payment for order:', order);
+    
+    // Load Razorpay script if not already loaded
+    if (!window.Razorpay) {
+      const script = document.createElement('script');
+      script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+      script.async = true;
+      script.onload = () => {
+        console.log('✅ Razorpay script loaded');
+        openRazorpay(order, razorpayOrderId);
+      };
+      script.onerror = () => {
+        console.error('❌ Failed to load Razorpay script');
+        alert('Failed to load payment gateway. Please try again.');
+      };
+      document.body.appendChild(script);
+    } else {
+      openRazorpay(order, razorpayOrderId);
     }
   };
 
-  const renderStep = () => {
-    switch (currentStep) {
-      case 'date-selection':
+  const openRazorpay = (order, razorpayOrderId) => {
+    console.log('🎯 openRazorpay called with order:', order);
+    console.log('🎯 razorpayOrderId:', razorpayOrderId);
+    
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    
+    const amount = convertToPaise(order.totalAmount || order.amount || order.total_cost || 0);
+    
+    console.log('💰 Payment amount:', order.totalAmount || order.amount || order.total_cost, 'INR');
+    console.log('💰 Payment amount in paise:', amount);
+    console.log('🔑 Razorpay key:', RAZORPAY_KEY);
+    
+    const options = {
+      key: RAZORPAY_KEY,
+      amount: amount,
+      currency: RAZORPAY_CONFIG.currency,
+      name: RAZORPAY_CONFIG.name,
+      description: `Booking for ${order.screenName || order.locationName || 'LED Screen'}`,
+      order_id: razorpayOrderId,
+      prefill: {
+        name: user.fullName || user.name || '',
+        email: user.email || '',
+        contact: user.phoneNumber || user.phone || ''
+      },
+      theme: RAZORPAY_CONFIG.theme,
+        handler: async function (response) {
+        console.log('✅ Payment successful:', response);
+        console.log('💳 Payment details:', {
+          razorpay_payment_id: response.razorpay_payment_id,
+          razorpay_order_id: response.razorpay_order_id,
+          razorpay_signature: response.razorpay_signature
+        });
+        
+        // Call verify payment API
+        try {
+          const verifyResponse = await ordersAPI.verifyPayment({
+            orderId: order.id.toString(),
+            razorpay_order_id: response.razorpay_order_id,
+            razorpay_payment_id: response.razorpay_payment_id,
+            razorpay_signature: response.razorpay_signature
+          });
+          
+          console.log('🔍 Payment verification response:', verifyResponse);
+          
+          if (verifyResponse.success) {
+            console.log('✅ Payment verified successfully');
+            // Redirect to success page
+            window.location.href = `/booking-success?orderId=${order.id}&payment_id=${response.razorpay_payment_id}&verified=true`;
+          } else {
+            console.error('❌ Payment verification failed:', verifyResponse.error);
+            alert('Payment verification failed. Please contact support.');
+            window.location.href = `/booking-failed?orderId=${order.id}&reason=verification_failed`;
+          }
+        } catch (error) {
+          console.error('❌ Payment verification error:', error);
+          alert('Payment verification failed. Please contact support.');
+          window.location.href = `/booking-failed?orderId=${order.id}&reason=verification_error`;
+        }
+      },
+      modal: {
+        ondismiss: function() {
+          console.log('⚠️ Payment modal closed by user');
+          // Redirect to failed page if user closes modal
+          window.location.href = `/booking-failed?orderId=${order.id}&reason=payment_cancelled`;
+        }
+      }
+    };
+
+    console.log('💳 Opening Razorpay with options:', options);
+    
+    try {
+      const razorpay = new window.Razorpay(options);
+      razorpay.open();
+    } catch (error) {
+      console.error('❌ Error opening Razorpay:', error);
+      alert('Failed to open payment gateway. Please try again.');
+    }
+  };
+
+  // Validate coupon
+  const validateCoupon = async () => {
+    if (!couponCode.trim()) {
+      setCouponError('Please enter a coupon code');
+      return;
+    }
+
+    setValidatingCoupon(true);
+    setCouponError('');
+
+    try {
+      const result = await couponsAPI.validateCoupon(couponCode);
+      
+      if (result.success) {
+        const discount = result.data.discount || 0;
+        setDiscountAmount(discount);
+        setCouponError('');
+      } else {
+        setCouponError(result.error || 'Invalid coupon code');
+        setDiscountAmount(0);
+      }
+    } catch (error) {
+      console.error('Coupon validation error:', error);
+      setCouponError('Failed to validate coupon. Please try again.');
+      setDiscountAmount(0);
+    } finally {
+      setValidatingCoupon(false);
+    }
+  };
+
+  // Calculate total amount
+  const calculateTotal = () => {
+    if (!selectedPlan || !selectedPlan.price) return 0;
+    const baseAmount = selectedPlan.price;
+    const discount = discountAmount;
+    return Math.max(0, baseAmount - discount);
+  };
+
         return (
-          <div className={styles.stepContainer}>
-            <h2>Select Date</h2>
-            <div className={styles.datePicker}>
+    <div className={styles.bookingFlow}>
+      <div className={styles.container}>
+        <div className={styles.header}>
+          <h1>Book Your Ad Slot</h1>
+          <p>Choose your date, location, and plan to get started</p>
+        </div>
+
+
+        {/* Step 1: Date Selection */}
+        <div className={styles.step} data-step="1">
+          <h2>Step 1: Select Date</h2>
+          <div className={styles.dateSelection}>
               <input
                 type="date"
                 value={selectedDate}
-                onChange={(e) => setSelectedDate(e.target.value)}
+              onChange={(e) => handleDateSelect(e.target.value)}
                 min={new Date().toISOString().split('T')[0]}
                 className={styles.dateInput}
               />
+          </div>
+        </div>
+
+        {/* Step 2: Location Selection */}
+        {selectedDate && (
+          <div className={styles.step} data-step="2">
+            <h2>Step 2: Choose Location</h2>
+            {loadingAvailability || loadingLocations ? (
+              <div className={styles.loadingMessage}>
+                <LoadingSpinner size="medium" text="Loading screen availability..." />
+              </div>
+            ) : error ? (
+              <div className={styles.errorMessage}>
+                <div className={styles.errorIcon}>⚠️</div>
+                <div className={styles.errorContent}>
+                  <h3>No Available Inventory</h3>
+                  <p>{error}</p>
               <button
-                onClick={() => handleDateSelect(selectedDate)}
-                disabled={!selectedDate || stepLoading}
-                className={styles.primaryButton}
+                    onClick={() => setError('')} 
+                    className={styles.retryButton}
               >
-                {stepLoading ? (
-                  <>
-                    <LoadingSpinner size="small" text="" className="inlineSpinner" />
-                    Loading...
-                  </>
-                ) : (
-                  'Check Availability'
-                )}
+                    Try Different Date
               </button>
             </div>
           </div>
-        );
-
-      case 'location-selection':
-        return (
-          <div className={styles.stepContainer}>
-            <h2>Select Location</h2>
-            <div className={styles.locationGrid}>
-              {Array.isArray(locations) && locations.length > 0 ? (
-                locations.map((location) => (
+            ) : locations.length === 0 ? (
+              <div className={styles.loadingMessage}>
+                <p>No screens available for this date. Please try another date.</p>
+              </div>
+            ) : (
+              <div className={styles.screensGrid}>
+                {locations.map((location) => (
                   <div
                     key={location.id}
-                    className={styles.locationCard}
-                    onClick={() => !stepLoading && handleLocationSelect(location)}
-                    style={{ opacity: stepLoading ? 0.6 : 1, cursor: stepLoading ? 'not-allowed' : 'pointer' }}
+                    className={styles.screenCard}
+                    onClick={() => handleScreenSelect(location)}
                   >
+                    <img src={location.image} alt={location.name} className={styles.screenImage} />
+                    <div className={styles.screenInfo}>
                     <h3>{location.name}</h3>
-                    <p>{location.address}</p>
-                    <span className={styles.price}>₹{location.basePrice}</span>
-                    {stepLoading && <div className={styles.loadingOverlay}>Loading...</div>}
+                      <p>{location.location}</p>
+                      <p>{location.size}</p>
+                      <p>Available: {location.available_slots} slots</p>
                   </div>
-                ))
-              ) : (
-                <div className={styles.noData}>
-                  <p>No locations available for the selected date.</p>
-                  <div className={styles.refundInfo}>
-                    <p><strong>Note:</strong> If payment was deducted, you'll receive a full refund within 5-7 business days.</p>
                   </div>
-                  <button onClick={() => setCurrentStep('date-selection')} className={styles.primaryButton}>
-                    Book Another Slot
-                  </button>
+                ))}
                 </div>
               )}
             </div>
-            <button onClick={goBack} className={styles.secondaryButton}>
-              Back
+        )}
+
+        {/* Step 3: Plan Selection */}
+        {selectedScreen && (
+          <div className={styles.step} data-step="3">
+            <h2>Step 3: Select Plan</h2>
+            {loadingPlans ? (
+              <div className={styles.loadingMessage}>
+                <LoadingSpinner size="medium" text="Loading plans..." />
+              </div>
+            ) : error ? (
+              <div className={styles.errorMessage}>
+                <div className={styles.errorIcon}>⚠️</div>
+                <div className={styles.errorContent}>
+                  <h3>No Plans Available</h3>
+                  <p>{error}</p>
+                  <button 
+                    onClick={() => setError('')} 
+                    className={styles.retryButton}
+                  >
+                    Try Different Location
             </button>
           </div>
-        );
-
-      case 'plan-selection':
-        return (
-          <div className={styles.stepContainer}>
-            <h2>Select Plan</h2>
-            <p className={styles.stepDescription}>
-              Choose a plan for your advertisement at <strong>{selectedLocation?.name}</strong>
-            </p>
-            <div className={styles.planGrid}>
-              {Array.isArray(plans) && plans.length > 0 ? (
-                plans.map((plan) => (
+              </div>
+            ) : plans.length === 0 ? (
+              <div className={styles.loadingMessage}>
+                <p>No plans available for the selected location.</p>
+                <button onClick={() => setCurrentStep('date-selection')} className={styles.primaryButton}>
+                  Book Another Slot
+                </button>
+              </div>
+            ) : (
+              <div className={styles.plansGrid}>
+                {plans.map((plan) => (
                   <div
                     key={plan.id}
-                    className={styles.planCard}
-                    onClick={() => !stepLoading && handlePlanSelect(plan)}
-                    style={{ opacity: stepLoading ? 0.6 : 1, cursor: stepLoading ? 'not-allowed' : 'pointer' }}
+                    className={`${styles.planCard} ${selectedPlan?.id === plan.id ? styles.selected : ''}`}
+                    onClick={() => handlePlanSelect(plan)}
                   >
+                    <div className={styles.planHeader}>
                     <h3>{plan.name}</h3>
-                    <p>{plan.description}</p>
-                    <span className={styles.price}>₹{plan.price}</span>
-                    <span className={styles.duration}>{plan.duration} days</span>
-                    {stepLoading && <div className={styles.loadingOverlay}>Loading...</div>}
+                      <div className={styles.planPrice}>₹{(plan.price || 0).toLocaleString('en-IN')}</div>
                   </div>
-                ))
-              ) : (
-                <div className={styles.noData}>
-                  <p>No plans available for the selected location.</p>
-                  <button onClick={() => setCurrentStep('date-selection')} className={styles.primaryButton}>
-                    Book Another Slot
-                  </button>
+                    <div className={styles.planDuration}>{plan.duration}</div>
+                    {plan.description && (
+                      <div className={styles.planDescription}>{plan.description}</div>
+                    )}
+                    <ul className={styles.planFeatures}>
+                      {plan.features && Array.isArray(plan.features) && plan.features.map((feature, index) => (
+                        <li key={index}>{feature}</li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
                 </div>
               )}
             </div>
-            <button onClick={goBack} className={styles.secondaryButton}>
-              Back
+        )}
+
+        {/* Important Notice Modal */}
+        {showImportantNotice && (
+          <div className={styles.noticeOverlay}>
+            <div className={styles.noticeModal}>
+              <div className={styles.noticeHeader}>
+                <h2>⚠️ IMPORTANT NOTICE</h2>
+                <button 
+                  onClick={handleCancelNotice} 
+                  className={styles.closeNoticeButton}
+                >
+                  ×
             </button>
           </div>
-        );
+              <div className={styles.noticeContent}>
+                <div className={styles.scrollableContent}>
+                  <p className={styles.introText}>
+                    Please ensure your advertisement creative strictly adheres to the design and content guidelines before uploading.
+                  </p>
+                  
+                  <div className={styles.section}>
+                    <h4>Content & Legal Compliance</h4>
+                    <ul className={styles.circleList}>
+                      <li>Your creative must comply with all applicable laws in force in India, the Advertising Standards Council of India (ASCI) Code, and local municipal (BBMP) bye-laws.</li>
+                      <li>Prohibited content includes:
+                        <ul className={styles.squareList}>
+                          <li>False or misleading claims</li>
+                          <li>Fraudulent financial schemes or get-rich-quick scams</li>
+                          <li>Hate speech, defamation, or politically sensitive content</li>
+                          <li>Illegal services, counterfeit products, or copyrighted material without permission</li>
+                          <li>Alcohol Advertising</li>
+                          <li>Tobacco & Vaping Products</li>
+                          <li>Gambling, Betting & Lottery Ads</li>
+                          <li>Political Ads</li>
+                          <li>Adult Content</li>
+                          <li>Language, Religious & Culturally Sensitive Ads</li>
+                        </ul>
+                      </li>
+                      <li>For Bengaluru digital screens, in strict compliance with the Bruhat Bengaluru Mahanagara Palike Outdoor Signage and Public Messaging Bye-Laws, 2018, the text/logo (units) in a digital screen advertisement shall adhere to the ratio of 60:40 between the Kannada language and English language of the visible content.</li>
+                    </ul>
+                  </div>
 
-      case 'file-upload':
-        return (
-          <div className={styles.stepContainer}>
-            <h2>Upload Your Creative</h2>
+                  <div className={styles.section}>
+                    <h4>Technical Specifications</h4>
+                    <ul className={styles.circleList}>
+                      <li>Creatives must strictly match the size, dimensions, aspect ratio, and resolution required for the chosen display location.</li>
+                      <li>Poor quality or non-compliant creatives will be rejected.</li>
+                    </ul>
+                  </div>
+
+                  <div className={styles.section}>
+                    <h4>Approval & Timelines</h4>
+                    <ul className={styles.circleList}>
+                      <li>All ads require AdScreenHub.com's approval before going live.</li>
+                      <li>If your creative is rejected, you must alter the creative to follow guidelines and resubmit at least 12 hours prior to the scheduled display start date.</li>
+                      <li>Failure to resubmit on time will result in forfeiture of the ad slot without refund, credit, or compensation.</li>
+                      <li>Any creative that remains incorrect or non-compliant upon resubmission will be rejected, and AdScreenHub.com shall bear no liability or entitlement to any refund, credit, or compensation.</li>
+                    </ul>
+                  </div>
+
+                  <div className={styles.section}>
+                    <h4>Intellectual Property</h4>
+                    <ul className={styles.circleList}>
+                      <li>You must own or have legal permission to use all images, text, logos, music, and other elements in your creative.</li>
+                      <li>Do not submit material that infringes trademarks, copyrights, or other intellectual property rights of any third party.</li>
+                      <li>AdScreenHub.com reserves the right to remove any infringing content without notice and is not responsible for any claims arising from your infringement.</li>
+                    </ul>
+                  </div>
+
+                  <div className={styles.section}>
+                    <h4>Advertiser Liability</h4>
+                    <ul className={styles.circleList}>
+                      <li>You are solely responsible for ensuring your creative is accurate, lawful, and compliant.</li>
+                      <li>Any breach of the Terms & Conditions, specifications, guidelines or laws may result in rejection, account termination, and/or legal action.</li>
+                      <li>AdScreenHub.com is not liable for any losses, delays, or damages resulting from your submission of non-compliant creatives.</li>
+                    </ul>
+                  </div>
+
+                  <div className={styles.agreementText}>
+                    <p><strong>By proceeding with your upload, you agree to have read the detailed Terms & Conditions and confirm that your creative meets these requirements in full.</strong></p>
+                  </div>
+                </div>
+                <div className={styles.noticeActions}>
+                  <button 
+                    onClick={handleCancelNotice} 
+                    className={styles.cancelNoticeButton}
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    onClick={handleAcceptNotice} 
+                    className={styles.understandButton}
+                  >
+                    I Understand & Agree
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Step 4: File Upload */}
+        {selectedPlan && (
+          <div className={styles.step} data-step="4">
+            <h2>Step 4: Upload Design</h2>
+            
+
             <div className={styles.uploadArea}>
               <input
                 type="file"
@@ -593,294 +840,256 @@ const BookingFlow = () => {
                 className={styles.fileInput}
               />
               <label htmlFor="file-upload" className={styles.uploadLabel}>
-                {selectedFile ? selectedFile.name : 'Choose File'}
+                {designFile ? designFile.name : 'Choose File'}
               </label>
-              {selectedFile && (
-                <button
-                  onClick={uploadFile}
-                  disabled={loading}
-                  className={styles.primaryButton}
-                >
-                  {loading ? `Uploading... ${uploadProgress}%` : 'Upload File'}
-                </button>
-              )}
-              
-              {uploadedFile && (
-                <div className={styles.uploadSuccess}>
-                  <p>File uploaded successfully: {uploadedFile.fileName}</p>
-                  <p>File Path: {uploadedFile.filePath}</p>
-                  <button
-                    onClick={() => setCurrentStep('order-details')}
-                    className={styles.primaryButton}
-                  >
-                    Continue to Order Details
-                  </button>
+              {designFile && (
+                <div className={styles.filePreview}>
+                  <img src={designPreview} alt="Preview" className={styles.previewImage} />
                 </div>
               )}
-              
+              {designFile && (
+                <button
+                  onClick={uploadFile}
+                  disabled={loading || fileUploaded}
+                  className={`${styles.uploadButton} ${fileUploaded ? styles.uploaded : ''}`}
+                >
+                  {loading ? (
+                    <>
+                      <LoadingSpinner size="small" text="" className="inlineSpinner" />
+                      Uploading...
+                    </>
+                  ) : fileUploaded ? (
+                    '✅ Successfully Uploaded'
+                  ) : (
+                    'Upload File'
+                  )}
+                  </button>
+              )}
+                </div>
+            {uploadError && (
+              <div className={styles.errorMessage}>{uploadError}</div>
+              )}
             </div>
-            <button onClick={goBack} className={styles.secondaryButton}>
-              Back
-            </button>
-          </div>
-        );
+        )}
 
-      case 'order-details':
-        
-        return (
-          <div className={styles.stepContainer}>
-            <h2>Order Details</h2>
+        {/* Step 5: Order Details */}
+        {designFile && (
+          <div className={styles.step} data-step="5">
+            <h2>Step 5: Order Details</h2>
             <div className={styles.orderForm}>
               <div className={styles.formGroup}>
                 <label>Delivery Address</label>
-                <input
-                  type="text"
-                  placeholder="Street Address"
-                  value={orderData.deliveryAddress.street}
-                  onChange={(e) => handleOrderDetailsChange('deliveryAddress.street', e.target.value)}
-                />
-                <input
-                  type="text"
-                  placeholder="City"
-                  value={orderData.deliveryAddress.city}
-                  onChange={(e) => handleOrderDetailsChange('deliveryAddress.city', e.target.value)}
-                />
-                <input
-                  type="text"
-                  placeholder="State"
-                  value={orderData.deliveryAddress.state}
-                  onChange={(e) => handleOrderDetailsChange('deliveryAddress.state', e.target.value)}
-                />
-                <input
-                  type="text"
-                  placeholder="ZIP Code"
-                  value={orderData.deliveryAddress.zip}
-                  onChange={(e) => handleOrderDetailsChange('deliveryAddress.zip', e.target.value)}
+                <textarea
+                  value={address}
+                  onChange={(e) => setAddress(e.target.value)}
+                  placeholder="Enter your delivery address"
+                  className={styles.textarea}
                 />
               </div>
-              
+
               <div className={styles.formGroup}>
-                <label>GST Information (Optional)</label>
+                <label className={styles.checkboxLabel}>
+                <input
+                    type="checkbox"
+                    checked={gstApplicable}
+                    onChange={(e) => setGstApplicable(e.target.checked)}
+                  />
+                  GST Applicable
+                </label>
+              </div>
+
+              {gstApplicable && (
+                <>
+                  <div className={styles.formGroup}>
+                    <label>Company Name</label>
                 <input
                   type="text"
-                  placeholder="GST Number"
-                  value={orderData.gstInfo}
-                  onChange={(e) => handleOrderDetailsChange('gstInfo', e.target.value)}
+                      value={companyName}
+                      onChange={(e) => setCompanyName(e.target.value)}
+                      placeholder="Enter company name"
+                      className={styles.input}
+                    />
+                  </div>
+                  <div className={styles.formGroup}>
+                    <label>GST Number</label>
+                <input
+                  type="text"
+                      value={gstNumber}
+                      onChange={(e) => setGstNumber(e.target.value)}
+                      placeholder="Enter GST number"
+                      className={styles.input}
                 />
               </div>
-              
-              <div className={styles.orderSummary}>
-                <h3>Order Summary</h3>
-                <p><strong>Location:</strong> {selectedLocation?.name}</p>
-                <p><strong>Plan:</strong> {selectedPlan?.name}</p>
-                <p><strong>Date:</strong> {selectedDate}</p>
-                <p><strong>Duration:</strong> {selectedPlan?.duration} days</p>
-                <p><strong>Total:</strong> ₹{selectedPlan?.price}</p>
-              </div>
-              
-              {!uploadedFile && (
-                <div className={styles.warningMessage}>
-                  <p>⚠️ Please upload your creative file first before proceeding to payment.</p>
-                  <button
-                    onClick={() => setCurrentStep('file-upload')}
-                    className={styles.secondaryButton}
-                  >
-                    Go to File Upload
-                  </button>
-                </div>
+                </>
               )}
               
-              <button
-                onClick={initiatePayment}
-                disabled={loading || !uploadedFile}
-                className={styles.primaryButton}
-              >
-                {loading ? (
-                  <>
-                    <LoadingSpinner size="small" text="" className="inlineSpinner" />
-                    Processing...
-                  </>
-                ) : (
-                  'Proceed to Payment'
+              <div className={styles.formGroup}>
+                <label>Coupon Code (Optional)</label>
+                <div className={styles.couponInput}>
+                <input
+                  type="text"
+                    value={couponCode}
+                    onChange={(e) => setCouponCode(e.target.value)}
+                    placeholder="Enter coupon code"
+                    className={styles.input}
+                  />
+                  <button
+                    onClick={validateCoupon}
+                    disabled={validatingCoupon}
+                    className={styles.couponButton}
+                  >
+                    {validatingCoupon ? (
+                      <LoadingSpinner size="small" text="" className="inlineSpinner" />
+                    ) : (
+                      'Apply'
+                    )}
+                  </button>
+                </div>
+                {couponError && (
+                  <div className={styles.errorMessage}>{couponError}</div>
                 )}
-              </button>
-            </div>
-            <button onClick={goBack} className={styles.secondaryButton}>
-              Back
-            </button>
-          </div>
-        );
+              </div>
 
-      case 'payment':
-        return (
-          <div className={styles.stepContainer}>
-            <h2>Payment</h2>
-            
-            {paymentData && (
-              <div className={styles.paymentContainer}>
+              <div className={styles.formGroup}>
+                <label className={styles.checkboxLabel}>
+                  <input
+                    type="checkbox"
+                    checked={termsAccepted}
+                    onChange={(e) => setTermsAccepted(e.target.checked)}
+                  />
+                  <span>
+                    I agree to the{' '}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setShowTermsModal(true);
+                      }}
+                      className={styles.termsLink}
+                    >
+                      terms and conditions
+                    </button>
+                  </span>
+                </label>
+              </div>
+          </div>
+          </div>
+        )}
+
+        {/* Step 6: Order Summary & Confirmation */}
+        {selectedPlan && designFile && (
+          <div className={styles.step} data-step="6">
+            <h2>Step 6: Order Summary</h2>
                 <div className={styles.orderSummary}>
-                  <h3>Order Summary</h3>
+              <div className={styles.summaryItem}>
+                <span>Date:</span>
+                <span>{selectedDate}</span>
+              </div>
                   <div className={styles.summaryItem}>
                     <span>Location:</span>
-                    <span>{selectedLocation?.name}</span>
+                <span>{selectedScreen?.name}</span>
                   </div>
                   <div className={styles.summaryItem}>
                     <span>Plan:</span>
                     <span>{selectedPlan?.name}</span>
                   </div>
                   <div className={styles.summaryItem}>
-                    <span>Date:</span>
-                    <span>{selectedDate}</span>
+                <span>Base Price:</span>
+                <span>₹{(selectedPlan?.price || 0).toLocaleString('en-IN')}</span>
                   </div>
+              {discountAmount > 0 && (
                   <div className={styles.summaryItem}>
-                    <span>Duration:</span>
-                    <span>{selectedPlan?.duration} days</span>
+                  <span>Discount:</span>
+                  <span>-₹{discountAmount.toLocaleString('en-IN')}</span>
                   </div>
-                  <div className={styles.summaryItem}>
-                    <span>Creative:</span>
-                    <span>{uploadedFile?.fileName}</span>
-                  </div>
-                  <div className={styles.summaryItemTotal}>
-                    <span>Total Amount:</span>
-                    <span>₹{paymentData.razorpayOrder.amount / 100}</span>
+              )}
+              <div className={`${styles.summaryItem} ${styles.total}`}>
+                <span>Total:</span>
+                <span>₹{calculateTotal().toLocaleString('en-IN')}</span>
                   </div>
                 </div>
 
-                {paymentStatus === 'success' ? (
-                  <div className={styles.paymentSuccess}>
-                    <h3>Payment Completed</h3>
-                    <p>Your payment has been processed successfully.</p>
-                    <p><strong>Status:</strong> Payment Completed - Pending Approval</p>
-                    <p>Order ID: {paymentData.order.id}</p>
-                    <p>Your ad will be reviewed and approved within 24 hours.</p>
                     <button
-                      onClick={() => window.location.href = '/dashboard'}
-                      className={styles.primaryButton}
+              onClick={handleConfirmOrder}
+              disabled={!address.trim() || (gstApplicable && (!companyName.trim() || !gstNumber.trim())) || !termsAccepted}
+              className={styles.confirmButton}
                     >
-                      Go to Dashboard
+              Confirm Order
                     </button>
                   </div>
-                ) : paymentStatus === 'failed' ? (
-                  <div className={styles.paymentFailed}>
-                    <h3>Payment Failed</h3>
-                    <p>There was an issue processing your payment. Please try again.</p>
-                    <div className={styles.refundInfo}>
-                      <p><strong>Note:</strong> If payment was deducted, you'll receive a full refund within 5-7 business days.</p>
-                    </div>
-                    <div className={styles.actions}>
-                      <button
-                        onClick={() => setCurrentStep('date-selection')}
-                        className={styles.primaryButton}
-                      >
-                        Book Another Slot
-                      </button>
-                      <button
-                        onClick={() => setPaymentStatus(null)}
-                        className={styles.secondaryButton}
-                      >
-                        Try Again
-                      </button>
-                    </div>
+        )}
+
+        {/* Unavailable Modal */}
+        {showUnavailableModal && (
+          <div className={styles.modalOverlay}>
+            <div className={styles.modal}>
+              <div className={styles.modalHeader}>
+                <h2>Slot Unavailable</h2>
+                <button onClick={() => setShowUnavailableModal(false)} className={styles.closeButton}>×</button>
+              </div>
+              <div className={styles.modalContent}>
+                <div className={styles.unavailableContent}>
+                  <div className={styles.unavailableIcon}>Unavailable</div>
+                  <h2>Already Booked!</h2>
+                  <p>This screen is already booked for the selected date and plan combination.</p>
+                  <div className={styles.suggestionBox}>
+                    <h3>Try these alternatives:</h3>
+                    <ul>
+                      <li>Choose a different date</li>
+                      <li>Select another location</li>
+                      <li>Pick a different plan</li>
+                    </ul>
                   </div>
-                ) : (
-                  <div className={styles.paymentOptions}>
-                    <h3>Choose Payment Method</h3>
-                    <div className={styles.paymentMethods}>
+                  <div className={styles.actions}>
+                    <button
+                      onClick={() => setCurrentStep('date-selection')}
+                      className={styles.primaryButton}
+                    >
+                      Book Another Slot
+                    </button>
                       <button
-                        onClick={() => handleRazorpayPayment()}
-                        disabled={loading}
-                        className={styles.paymentButton}
-                      >
-                        <div className={styles.paymentMethod}>
-                          <div className={styles.paymentInfo}>
-                            <h4>Razorpay</h4>
-                            <p>Pay with UPI, Cards, Net Banking</p>
+                      onClick={() => setShowUnavailableModal(false)}
+                      className={styles.secondaryButton}
+                    >
+                      Try Again
+                      </button>
                           </div>
                         </div>
-                      </button>
-                      
-                      <button
-                        onClick={() => handleMockPayment()}
-                        disabled={loading}
-                        className={styles.paymentButton}
-                      >
-                        <div className={styles.paymentMethod}>
-                          <div className={styles.paymentInfo}>
-                            <h4>Mock Payment</h4>
-                            <p>For testing purposes</p>
-                          </div>
-                        </div>
-                      </button>
                     </div>
                   </div>
-                )}
               </div>
             )}
-            
-            <button onClick={goBack} className={styles.secondaryButton}>
-              Back
-            </button>
-          </div>
-        );
 
-      default:
-        return null;
-    }
-  };
-
-  return (
-    <div className={styles.bookingFlow}>
-      <div className={styles.header}>
-        <h1>Book Your Ad Slot</h1>
-        <div className={styles.progressBar}>
-          <div className={`${styles.progressStep} ${currentStep === 'date-selection' ? styles.active : ''}`}>
-            <span>1</span>
-            <label>Date</label>
+        {/* Terms and Conditions Modal */}
+        {showTermsModal && (
+          <div className={styles.noticeOverlay}>
+            <div className={styles.noticeModal}>
+              <div className={styles.noticeHeader}>
+                <h2>Terms and Conditions</h2>
+                <button 
+                  onClick={() => setShowTermsModal(false)} 
+                  className={styles.closeNoticeButton}
+                >
+                  ×
+                </button>
+              </div>
+              <div className={styles.noticeContent}>
+                <div className={styles.scrollableContent}>
+                  <TermsContent />
+                </div>
+                <div className={styles.noticeActions}>
+                  <button 
+                    onClick={() => setShowTermsModal(false)} 
+                    className={styles.understandButton}
+                  >
+                    Back to Booking
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
-          <div className={`${styles.progressStep} ${currentStep === 'location-selection' ? styles.active : ''}`}>
-            <span>2</span>
-            <label>Location</label>
+        )}
           </div>
-          <div className={`${styles.progressStep} ${currentStep === 'plan-selection' ? styles.active : ''}`}>
-            <span>3</span>
-            <label>Plan</label>
-          </div>
-          <div className={`${styles.progressStep} ${currentStep === 'file-upload' ? styles.active : ''}`}>
-            <span>4</span>
-            <label>Upload</label>
-          </div>
-          <div className={`${styles.progressStep} ${currentStep === 'order-details' ? styles.active : ''}`}>
-            <span>5</span>
-            <label>Details</label>
-          </div>
-          <div className={`${styles.progressStep} ${currentStep === 'payment' ? styles.active : ''}`}>
-            <span>6</span>
-            <label>Payment</label>
-          </div>
-        </div>
-      </div>
-
-      {error && (
-        <div className={styles.errorMessage}>
-          {error}
-          <div className={styles.refundInfo}>
-            <p><strong>Note:</strong> If payment was deducted, you'll receive a full refund within 5-7 business days.</p>
-          </div>
-          <div className={styles.actions}>
-            <button onClick={() => setCurrentStep('date-selection')} className={styles.primaryButton}>
-              Book Another Slot
-            </button>
-            <button onClick={() => setError('')} className={styles.secondaryButton}>
-              Try Again
-            </button>
-          </div>
-        </div>
-      )}
-
-
-      {renderStep()}
     </div>
   );
-};
-
-export default BookingFlow;
+}

@@ -21,6 +21,7 @@ export default function Dashboard() {
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [newOrder, setNewOrder] = useState(null);
   const [showWarningModal, setShowWarningModal] = useState(false);
+  const [error, setError] = useState('');
   
   // New form fields
   const [address, setAddress] = useState('');
@@ -173,23 +174,7 @@ export default function Dashboard() {
   };
 
   const handleScreenSelect = async (screen) => {
-    // Check if screen has available inventory for selected date
-    if (selectedDate) {
-      let availability;
-      if (availabilityData[screen.id]) {
-        // We have API data for this screen
-        availability = availabilityData[screen.id];
-      } else {
-        // No API data - assume available
-        availability = { available: true, slots: screen.totalInventory || 3 };
-      }
-      
-      if (!availability.available || availability.slots === 0) {
-        const errorMessage = 'This screen has no available inventory for the selected date. Please choose another date or screen.';
-        alert(`${errorMessage}\n\nNote: If payment was deducted, you'll receive a full refund within 5-7 business days.`);
-        return;
-      }
-    }
+    // Allow selection regardless of inventory - let the API handle availability
     setSelectedScreen(screen);
     setShowScreenModal(true);
   };
@@ -263,18 +248,26 @@ export default function Dashboard() {
     const finalDiscount = couponError ? 0 : discountAmount;
     
     const orderData = {
-      screenId: selectedScreen.id,
       planId: selectedPlan.id,
-      displayDate: selectedDate,
-      designFile: designFile.name,
+      locationId: selectedScreen.id,
+      screenId: selectedScreen.id, // Keep for backward compatibility
+      startDate: selectedDate,
+      displayDate: selectedDate, // Keep for backward compatibility
+      creativeFilePath: designFile.name, // This should be the actual file path from upload
+      creativeFileName: designFile.name,
+      designFile: designFile.name, // Keep for backward compatibility
       supportingDoc: null,
       totalAmount: selectedPlan.price - finalDiscount,
       thumbnail: designPreview,
       address: address,
+      city: '', // You might want to extract from address or add a city field
+      state: '', // You might want to add a state field
+      zip: '', // You might want to add a zip field
       gstApplicable: gstApplicable,
       companyName: companyName,
       gstNumber: gstNumber,
-      couponCode: couponCode, // Always include the coupon code entered by user
+      gstInfo: gstNumber, // API expects gstInfo
+      couponCode: couponCode,
       screenName: selectedScreen.name,
       location: selectedScreen.location
     };
@@ -508,6 +501,22 @@ export default function Dashboard() {
             </button>
           </div>
         </div>
+
+        {error && (
+          <div className={styles.errorMessage}>
+            <div className={styles.errorIcon}>⚠️</div>
+            <div className={styles.errorContent}>
+              <h3>No Available Inventory</h3>
+              <p>{error}</p>
+              <button 
+                onClick={() => setError('')} 
+                className={styles.retryButton}
+              >
+                Try Different Date
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Dashboard Overview */}
         <div className={styles.dashboardOverview}>

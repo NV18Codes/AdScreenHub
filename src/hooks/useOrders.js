@@ -17,7 +17,7 @@ const processOrdersData = (data) => {
     // Alternative nested structure: response.data.orders
     ordersArray = data.orders;
   } else {
-    console.warn('Unexpected API response structure:', data);
+
     return [];
   }
   
@@ -77,62 +77,21 @@ export const useOrders = (userId) => {
         let ordersData = [];
         let apiSuccess = false;
         
-        // Try main endpoint first
+        // Use main endpoint only (the one that works: /orders)
         try {
           const response = await ordersAPI.getOrders();
-          console.log('🔍 Orders API Response:', response);
           
           if (response.success && response.data) {
             ordersData = processOrdersData(response.data);
             if (ordersData.length > 0) {
               apiSuccess = true;
+              setOrders(ordersData);
+              localStorage.setItem('adscreenhub_orders', JSON.stringify(ordersData));
+              return;
             }
           }
         } catch (apiError) {
-          console.warn('Main orders API failed, trying alternatives:', apiError);
-        }
-        
-        // Try alternative endpoints if main one failed
-        if (!apiSuccess) {
-          try {
-            const response = await ordersAPI.getAllOrders();
-            console.log('🔍 All Orders API Response:', response);
-            
-            if (response.success && response.data) {
-              ordersData = processOrdersData(response.data);
-              if (ordersData.length > 0) {
-                apiSuccess = true;
-              }
-            }
-          } catch (apiError) {
-            console.warn('All orders API failed, trying user orders:', apiError);
-          }
-        }
-        
-        // Try user-specific endpoint if others failed
-        if (!apiSuccess) {
-          try {
-            const response = await ordersAPI.getUserOrders();
-            console.log('🔍 User Orders API Response:', response);
-            
-            if (response.success && response.data) {
-              ordersData = processOrdersData(response.data);
-              if (ordersData.length > 0) {
-                apiSuccess = true;
-              }
-            }
-          } catch (apiError) {
-            console.warn('User orders API failed:', apiError);
-          }
-        }
-        
-        if (apiSuccess) {
-          console.log('🔍 Processed Orders Data:', ordersData);
-          setOrders(ordersData);
-          localStorage.setItem('adscreenhub_orders', JSON.stringify(ordersData));
-          return;
-        } else {
-          console.warn('All orders API endpoints failed, falling back to localStorage');
+
         }
         
         // Fallback to localStorage
@@ -146,7 +105,7 @@ export const useOrders = (userId) => {
           setOrders([]);
         }
       } catch (error) {
-        console.error('Error loading orders:', error);
+
         setOrders([]);
       } finally {
         setLoading(false);
@@ -177,51 +136,164 @@ export const useOrders = (userId) => {
     return getAvailableInventory(screenId, date) > 0;
   };
 
-  // Create new order - For now, accept booking and save locally
+  // Create new order - Call API to initiate order
   const createOrder = async (orderData) => {
-    // Check if inventory is available
-    if (!hasAvailableInventory(orderData.screenId, orderData.displayDate)) {
-      return { success: false, error: 'No available inventory for this location and date' };
-    }
-
-    // For now, accept all bookings and save locally
-    // Later we'll add API calls for real-time functionality
-    const newOrder = {
-      id: generateOrderId(),
-      userId,
-      orderDate: new Date().toISOString().split('T')[0],
-      status: 'Pending Approval',
-      screenName: orderData.screenName || 'Unknown Screen',
-      location: orderData.location || 'Unknown Location',
-      adminProofImage: null, // Will be set by admin when ad goes live
-      ...orderData,
-      createdAt: new Date().toISOString(),
-      // Remove API sync flags for now since we're accepting locally
-      apiSyncPending: false
-    };
-
-    const updatedOrders = [...orders, newOrder];
-    setOrders(updatedOrders);
-    
     try {
-      // Check storage quota before saving
-      if (!manageStorageQuota()) {
-        throw new Error('Storage quota exceeded');
-      }
-      
-      localStorage.setItem('adscreenhub_orders', JSON.stringify(updatedOrders));
-    } catch (error) {
-      if (error.name === 'QuotaExceededError' || error.message === 'Storage quota exceeded') {
-        // Clean up and try again
-        manageStorageQuota();
-        localStorage.setItem('adscreenhub_orders', JSON.stringify(updatedOrders));
-      } else {
-        console.error('Error saving order locally:', error);
-        return { success: false, error: 'Failed to save order. Please try again.' };
-      }
-    }
+      // Prepare the API payload according to your exact API requirements
+      const apiPayload = {
+        planId: (orderData.planId || orderData.plan?.id || '').toString(),
+        locationId: (orderData.locationId || orderData.screenId || '').toString(),
+        startDate: orderData.startDate || orderData.displayDate || '',
+        price: orderData.totalAmount || orderData.price || 0,
+        creativeFilePath: orderData.creativeFilePath || orderData.designFile || '',
+        creativeFileName: orderData.creativeFileName || orderData.designFile || '',
+        deliveryAddress: {
+          street: orderData.address || orderData.deliveryAddress?.street || '',
+          city: orderData.city || orderData.deliveryAddress?.city || '',
+          state: orderData.state || orderData.deliveryAddress?.state || '',
+          zip: orderData.zip || orderData.deliveryAddress?.zip || ''
+        },
+        gstInfo: orderData.gstInfo || orderData.gstNumber || ''
+      };
 
-    return { success: true, order: newOrder };
+
+
+
+
+
+      // Call the API to initiate the order
+      const response = await ordersAPI.initiateOrder(apiPayload);
+      
+      if (response.success && response.data) {
+
+        
+        // Extract order data from nested structure
+        const orderData_from_api = response.data.data?.order || response.data.order || response.data;
+        const razorpayOrderData = response.data.data?.razorpayOrder || response.data.razorpayOrder;
+        
+
+
+        
+        // Create local order object with API response
+        // IMPORTANT: Use the API's order ID, not a generated one
+        const apiOrderId = orderData_from_api.id || orderData_from_api.orderId || response.data.id;
+        const newOrder = {
+          id: apiOrderId || generateOrderId(),
+          userId: userId,
+          orderDate: new Date().toISOString().split('T')[0],
+          status: 'Payment Pending',
+          screenName: orderData.screenName || 'Unknown Screen',
+          location: orderData.location || 'Unknown Location',
+          adminProofImage: null,
+          ...orderData,
+          // API response data - EXTRACT FROM CORRECT LOCATION
+          razorpayOrderId: orderData_from_api.razorpay_order_id || razorpayOrderData?.id,
+          razorpay_order_id: orderData_from_api.razorpay_order_id || razorpayOrderData?.id,
+          totalAmount: orderData_from_api.total_cost || orderData_from_api.final_amount || orderData.totalAmount,
+          amount: orderData_from_api.total_cost || orderData_from_api.final_amount || orderData.totalAmount,
+          price: orderData_from_api.total_cost || orderData_from_api.final_amount || orderData.totalAmount,
+          createdAt: new Date().toISOString(),
+          apiSyncPending: false,
+          // Store full API response for reference
+          apiResponse: response.data
+        };
+        
+
+
+
+        // Update local state
+        const updatedOrders = [...orders, newOrder];
+        setOrders(updatedOrders);
+        
+        try {
+          // Check storage quota before saving
+          if (!manageStorageQuota()) {
+            throw new Error('Storage quota exceeded');
+          }
+          
+          localStorage.setItem('adscreenhub_orders', JSON.stringify(updatedOrders));
+        } catch (error) {
+          if (error.name === 'QuotaExceededError' || error.message === 'Storage quota exceeded') {
+            // Clean up and try again
+            manageStorageQuota();
+            localStorage.setItem('adscreenhub_orders', JSON.stringify(updatedOrders));
+          } else {
+
+            return { success: false, error: 'Failed to save order. Please try again.' };
+          }
+        }
+
+        return { success: true, order: newOrder, apiResponse: response.data };
+      } else {
+
+        
+        // Create a local order as fallback when API fails
+
+        const fallbackOrder = {
+          id: generateOrderId(),
+          userId: userId,
+          orderDate: new Date().toISOString().split('T')[0],
+          status: 'Payment Pending',
+          screenName: orderData.screenName || 'Unknown Screen',
+          location: orderData.location || 'Unknown Location',
+          adminProofImage: null,
+          ...orderData,
+          // Use original data for fallback
+          totalAmount: orderData.totalAmount || orderData.price || 0,
+          amount: orderData.totalAmount || orderData.price || 0,
+          price: orderData.totalAmount || orderData.price || 0,
+          createdAt: new Date().toISOString(),
+          apiSyncPending: true, // Mark for later sync
+          apiError: response.error || 'API call failed'
+        };
+
+        // Update local state
+        const updatedOrders = [...orders, fallbackOrder];
+        setOrders(updatedOrders);
+        
+        try {
+          localStorage.setItem('adscreenhub_orders', JSON.stringify(updatedOrders));
+        } catch (error) {
+
+        }
+
+        return { success: true, order: fallbackOrder, apiResponse: null, isFallback: true };
+      }
+    } catch (error) {
+
+      
+      // Create a local order as fallback when there's an error
+
+      const fallbackOrder = {
+        id: generateOrderId(),
+        userId: userId,
+        orderDate: new Date().toISOString().split('T')[0],
+        status: 'Payment Pending',
+        screenName: orderData.screenName || 'Unknown Screen',
+        location: orderData.location || 'Unknown Location',
+        adminProofImage: null,
+        ...orderData,
+        // Use original data for fallback
+        totalAmount: orderData.totalAmount || orderData.price || 0,
+        amount: orderData.totalAmount || orderData.price || 0,
+        price: orderData.totalAmount || orderData.price || 0,
+        createdAt: new Date().toISOString(),
+        apiSyncPending: true, // Mark for later sync
+        apiError: error.message || 'Network error'
+      };
+
+      // Update local state
+      const updatedOrders = [...orders, fallbackOrder];
+      setOrders(updatedOrders);
+      
+      try {
+        localStorage.setItem('adscreenhub_orders', JSON.stringify(updatedOrders));
+      } catch (storageError) {
+
+      }
+
+      return { success: true, order: fallbackOrder, apiResponse: null, isFallback: true };
+    }
   };
 
   // Update order status
@@ -303,29 +375,42 @@ export const useOrders = (userId) => {
   const verifyPayment = async (orderId, razorpayOrderId, razorpayPaymentId, razorpaySignature) => {
     try {
       const verificationData = {
-        orderId,
+        orderId: orderId.toString(),
         razorpay_order_id: razorpayOrderId,
         razorpay_payment_id: razorpayPaymentId,
         razorpay_signature: razorpaySignature
       };
 
+
+
       const response = await ordersAPI.verifyPayment(verificationData);
+
       
       if (response.success) {
+
+        
         // Update order status to confirmed
         const updatedOrders = orders.map(order => 
           order.id === orderId 
-            ? { ...order, status: 'Confirmed', paymentVerified: true, paymentId: razorpayPaymentId }
+            ? { 
+                ...order, 
+                status: 'Payment Completed - Pending Approval', 
+                paymentVerified: true, 
+                paymentId: razorpayPaymentId,
+                razorpayPaymentId: razorpayPaymentId,
+                razorpay_payment_id: razorpayPaymentId
+              }
             : order
         );
         setOrders(updatedOrders);
         localStorage.setItem('adscreenhub_orders', JSON.stringify(updatedOrders));
         return { success: true, data: response.data };
       } else {
+
         return { success: false, error: response.error || 'Payment verification failed' };
       }
     } catch (error) {
-      console.error('Payment verification error:', error);
+
       return { success: false, error: error.message || 'Payment verification failed' };
     }
   };
@@ -367,7 +452,7 @@ export const useOrders = (userId) => {
           localStorage.setItem('adscreenhub_orders', JSON.stringify(updatedOrders));
         }
       } catch (error) {
-        console.error(`Failed to sync order ${order.id}:`, error);
+
         // Keep trying next time
       }
     }
@@ -383,7 +468,7 @@ export const useOrders = (userId) => {
       // Try main endpoint first
       try {
         const response = await ordersAPI.getOrders();
-        console.log('🔍 Refresh Orders API Response:', response);
+
         
         if (response.success && response.data) {
           ordersData = processOrdersData(response.data);
@@ -392,14 +477,14 @@ export const useOrders = (userId) => {
           }
         }
       } catch (apiError) {
-        console.warn('Main orders API failed during refresh, trying alternatives:', apiError);
+
       }
       
       // Try alternative endpoints if main one failed
       if (!apiSuccess) {
         try {
           const response = await ordersAPI.getAllOrders();
-          console.log('🔍 Refresh All Orders API Response:', response);
+
           
           if (response.success && response.data) {
             ordersData = processOrdersData(response.data);
@@ -408,7 +493,7 @@ export const useOrders = (userId) => {
             }
           }
         } catch (apiError) {
-          console.warn('All orders API failed during refresh, trying user orders:', apiError);
+
         }
       }
       
@@ -416,7 +501,7 @@ export const useOrders = (userId) => {
       if (!apiSuccess) {
         try {
           const response = await ordersAPI.getUserOrders();
-          console.log('🔍 Refresh User Orders API Response:', response);
+
           
           if (response.success && response.data) {
             ordersData = processOrdersData(response.data);
@@ -425,7 +510,7 @@ export const useOrders = (userId) => {
             }
           }
         } catch (apiError) {
-          console.warn('User orders API failed during refresh:', apiError);
+
         }
       }
       
@@ -437,7 +522,7 @@ export const useOrders = (userId) => {
         return { success: false, error: 'All orders API endpoints failed' };
       }
     } catch (error) {
-      console.error('Error refreshing orders:', error);
+
       return { success: false, error: error.message };
     } finally {
       setLoading(false);

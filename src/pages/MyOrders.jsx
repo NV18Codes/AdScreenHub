@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useOrders } from '../hooks/useOrders';
 import { formatDate, formatCurrency, validateFile, compressImage, manageStorageQuota } from '../utils/validation';
 import { Link, useNavigate } from 'react-router-dom';
+import { RAZORPAY_KEY, RAZORPAY_CONFIG, convertToPaise } from '../config/razorpay';
 import styles from '../styles/MyOrders.module.css';
 
 export default function MyOrders() {
@@ -130,6 +131,75 @@ export default function MyOrders() {
   };
 
 
+
+  // Handle payment for pending orders
+  const handleCompletePayment = (order) => {
+    console.log('💳 Opening payment for order:', order);
+    
+    const razorpayOrderId = order.razorpay_order_id || order.razorpayOrderId;
+    
+    if (!razorpayOrderId) {
+      alert('No payment ID found for this order. Please contact support.');
+      return;
+    }
+    
+    // Load Razorpay script if not already loaded
+    if (!window.Razorpay) {
+      const script = document.createElement('script');
+      script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+      script.async = true;
+      script.onload = () => {
+        console.log('✅ Razorpay script loaded');
+        openRazorpayForOrder(order, razorpayOrderId);
+      };
+      script.onerror = () => {
+        console.error('❌ Failed to load Razorpay script');
+        alert('Failed to load payment gateway. Please try again.');
+      };
+      document.body.appendChild(script);
+    } else {
+      openRazorpayForOrder(order, razorpayOrderId);
+    }
+  };
+
+  const openRazorpayForOrder = (order, razorpayOrderId) => {
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    
+    const options = {
+      key: RAZORPAY_KEY,
+      amount: convertToPaise(order.totalAmount || order.amount || order.final_amount || order.total_cost || 0),
+      currency: RAZORPAY_CONFIG.currency,
+      name: RAZORPAY_CONFIG.name,
+      description: `Payment for Order #${order.id}`,
+      order_id: razorpayOrderId,
+      prefill: {
+        name: user.fullName || user.name || '',
+        email: user.email || '',
+        contact: user.phoneNumber || user.phone || ''
+      },
+      theme: RAZORPAY_CONFIG.theme,
+      handler: async function (response) {
+        console.log('✅ Payment successful:', response);
+        window.location.href = `/booking-success?orderId=${order.id}&payment_id=${response.razorpay_payment_id}`;
+      },
+      modal: {
+        ondismiss: function() {
+          console.log('⚠️ Payment modal closed by user');
+          alert('Payment cancelled. You can retry payment from My Orders page.');
+        }
+      }
+    };
+
+    console.log('💳 Opening Razorpay with options:', options);
+    
+    try {
+      const razorpay = new window.Razorpay(options);
+      razorpay.open();
+    } catch (error) {
+      console.error('❌ Error opening Razorpay:', error);
+      alert('Failed to open payment gateway. Please try again.');
+    }
+  };
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -335,12 +405,24 @@ export default function MyOrders() {
                 </div>
 
                 <div className={styles.orderActions}>
-                  {/* Payment Verification Button - Show for orders with Razorpay order ID but no payment verification */}
+                  {/* Complete Payment Button - Show for pending payment orders with razorpay_order_id */}
+                  {(order.status === 'Pending Payment' && (order.razorpay_order_id || order.razorpayOrderId)) && (
+                    <button
+                      onClick={() => handleCompletePayment(order)}
+                      className={`${styles.btn} ${styles.btnPrimary}`}
+                      style={{ 
+                        background: 'linear-gradient(135deg, #10b981, #059669)',
+                        boxShadow: '0 4px 15px rgba(16, 185, 129, 0.3)'
+                      }}
+                    >
+                      💳 Complete Payment
+                    </button>
+                  )}
                   
                   {/* Payment Status - Show if payment is verified */}
                   {order.paymentVerified && (
                     <div className={styles.paymentStatus}>
-                      <span className={styles.paymentVerified}>Payment Verified</span>
+                      <span className={styles.paymentVerified}>✅ Payment Verified</span>
                     </div>
                   )}
                   
@@ -354,8 +436,11 @@ export default function MyOrders() {
                     </button>
                   )}
                   
-                  {/* Cancel Order Button - Only show for unpaid pending orders */}
-                  {order.status === 'Pending Approval' && !order.paymentVerified && (
+                  {/* Cancel Order Button - Only show for unpaid pending orders (no razorpay_payment_id) */}
+                  {(order.status === 'Pending Approval' || order.status === 'Pending Payment') && 
+                   !order.paymentVerified && 
+                   !order.razorpay_payment_id && 
+                   !order.razorpayPaymentId && (
                     <button
                       onClick={() => handleCancelOrder(order.id)}
                       className={`${styles.btn} ${styles.btnDanger}`}

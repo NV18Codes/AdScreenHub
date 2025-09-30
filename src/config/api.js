@@ -50,7 +50,9 @@ const makeRequest = async (endpoint, body = null, method = 'POST', customHeaders
     const token = localStorage.getItem('token');
     
 
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+    const fullUrl = `${API_BASE_URL}${endpoint}`;
+    
+    const response = await fetch(fullUrl, {
       method,
       headers: {
         'Content-Type': 'application/json',
@@ -62,24 +64,27 @@ const makeRequest = async (endpoint, body = null, method = 'POST', customHeaders
     });
 
     clearTimeout(timeoutId);
-
+    
     let data;
     try {
       data = await response.json();
-    } catch {
+    } catch (jsonError) {
       data = {};
     }
 
     if (response.ok) {
       return { success: true, data };
     } else {
+      // Handle 401 Unauthorized - token expired or invalid
+      if (response.status === 401) {
+        // Optionally redirect to login or refresh token here
+      }
+      
+      const errorMessage = data.message || data.error || response.statusText || `Request failed with status ${response.status}`;
       return {
         success: false,
-        error:
-          data.message ||
-          data.error ||
-          response.statusText ||
-          `Request failed with status ${response.status}`
+        error: errorMessage,
+        statusCode: response.status
       };
     }
   } catch (error) {
