@@ -287,11 +287,11 @@ export default function MyOrders() {
                   </button>
                 </div>
                 
-                {safeOrders.map((order) => (
+                {safeOrders.map((order, index) => (
               <div key={order.id} className={styles.orderCard}>
                 <div className={styles.orderHeader}>
                   <div className={styles.orderInfo}>
-                    <h3>Order #{order.id}</h3>
+                    <h3>Order #{safeOrders.length - index}</h3>
                     <p className={styles.orderUid}>
                       <strong>Order UID:</strong> {order.orderUid || order.id}
                     </p>
@@ -469,7 +469,7 @@ export default function MyOrders() {
               ×
             </button>
             <div className={styles.modalHeader}>
-              <h2>Order #{selectedOrder.id}</h2>
+              <h2>Order #{safeOrders.length - safeOrders.findIndex(o => o.id === selectedOrder.id)}</h2>
               <p>Your Advertisement</p>
             </div>
             <div className={styles.modalImage}>
@@ -506,7 +506,7 @@ export default function MyOrders() {
             
             <div className={styles.modalHeader}>
               <h2>Revise Your Design</h2>
-              <p>Upload a new design for Order #{reviseOrderId}</p>
+              <p>Upload a new design for Order #{safeOrders.length - safeOrders.findIndex(o => o.id === reviseOrderId)}</p>
             </div>
 
             <div className={styles.uploadSection}>
