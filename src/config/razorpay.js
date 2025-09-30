@@ -14,8 +14,8 @@ export const RAZORPAY_KEY_TEST = 'rzp_test_RBC4ETSsTi1taj';
 // Production key (replace with your actual production key from Razorpay dashboard)
 export const RAZORPAY_KEY_PROD = 'rzp_live_your_key_here';
 
-// Automatically select the correct key based on environment
-export const RAZORPAY_KEY = import.meta.env.DEV ? RAZORPAY_KEY_TEST : RAZORPAY_KEY_PROD;
+// Use test key for both dev and production until you get production key
+export const RAZORPAY_KEY = RAZORPAY_KEY_TEST;
 
 // Razorpay configuration options
 export const RAZORPAY_CONFIG = {
