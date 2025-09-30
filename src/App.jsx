@@ -22,7 +22,6 @@ import BookingSuccess from './pages/BookingSuccess';
 import BookingFailed from './pages/BookingFailed';
 import ScrollToTop from './components/ScrollToTop';
 import ScrollToTopButton from './components/ScrollToTopButton';
-import ApiConnectivityTest from './components/ApiConnectivityTest';
 import { AuthRouteGuard, ProtectedRoute } from './components/AuthGuard';
 
 // Path normalizer to fix double slashes
@@ -85,9 +84,6 @@ function App() {
           {/* Booking Result Pages */}
           <Route path="/booking-success" element={<Layout><BookingSuccess /></Layout>} />
           <Route path="/booking-failed" element={<Layout><BookingFailed /></Layout>} />
-
-          {/* API Testing - Development Only */}
-          <Route path="/api-test" element={<Layout><ApiConnectivityTest /></Layout>} />
 
           {/* Catch all */}
           <Route path="*" element={<Navigate to="/" replace />} />

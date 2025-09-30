@@ -38,7 +38,6 @@ export const AuthProvider = ({ children }) => {
         
         setUser(parsedUser);
       } catch (error) {
-        console.error('❌ Error parsing user data:', error);
         localStorage.removeItem('token');
         localStorage.removeItem('user');
       }
@@ -54,12 +53,17 @@ export const AuthProvider = ({ children }) => {
     localStorage.setItem('token', token);
   };
 
+  const updateUser = (updatedUserData) => {
+    const newUserData = { ...user, ...updatedUserData };
+    setUser(newUserData);
+    localStorage.setItem('user', JSON.stringify(newUserData));
+  };
+
   const logout = async () => {
     try {
       // Call signout API
       await authAPI.signout();
     } catch (error) {
-      console.error('❌ Signout API error:', error);
       // Continue with logout even if API fails
     }
     
@@ -71,8 +75,6 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('phoneToken');
     localStorage.removeItem('authToken');
     localStorage.removeItem('pendingEmail');
-    
-    console.log('🚪 User logged out successfully');
   };
 
   const isAuthenticated = () => {
@@ -96,7 +98,6 @@ export const AuthProvider = ({ children }) => {
       
       return !!user;
     } catch (error) {
-      console.error('Token validation error:', error);
       logout();
       return false;
     }
@@ -107,6 +108,7 @@ export const AuthProvider = ({ children }) => {
       user,
       login,
       logout,
+      updateUser,
       isAuthenticated,
       loading
     }}>
