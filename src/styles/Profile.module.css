@@ -34,25 +34,32 @@
 }
 
 .profileLayout {
-  display: flex;
-  flex-direction: column;
-  gap: 2rem;
-  max-width: 800px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+  max-width: 950px;
   margin: 0 auto;
+}
+
+.fullWidthSection {
+  grid-column: 1 / -1;
+  max-width: 500px;
+  margin: 0 auto;
+  width: 100%;
 }
 
 /* Account Information Section */
 .accountSection {
   background: white;
-  border-radius: 16px;
-  padding: 2.5rem;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  border-radius: 12px;
+  padding: 1.75rem;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
   border: 1px solid #f1f5f9;
   transition: all 0.3s ease;
 }
 
 .accountSection:hover {
-  box-shadow: 0 6px 30px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
   transform: translateY(-2px);
 }
 
@@ -60,21 +67,21 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 2rem;
-  padding-bottom: 1rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 0.75rem;
   border-bottom: 1px solid #e2e8f0;
 }
 
 .sectionHeader h2 {
   color: #1e293b;
-  font-size: 1.5rem;
+  font-size: 1.25rem;
   font-weight: 600;
   margin: 0;
 }
 
 .sectionHint {
   color: #64748b;
-  font-size: 0.875rem;
+  font-size: 0.8rem;
   margin: 0.25rem 0 0 0;
   font-weight: 400;
 }
@@ -109,12 +116,13 @@
   background: linear-gradient(135deg, #3b82f6, #1d4ed8);
   color: white;
   border: none;
-  padding: 0.75rem 1.5rem;
-  border-radius: 8px;
+  padding: 0.6rem 1.25rem;
+  border-radius: 6px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
   box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
+  font-size: 0.875rem;
 }
 
 .editButton:hover {
@@ -163,7 +171,7 @@
 .accountFields {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 1.25rem;
 }
 
 .field {
@@ -175,21 +183,21 @@
 .field label {
   font-weight: 600;
   color: #374151;
-  font-size: 0.875rem;
+  font-size: 0.8rem;
 }
 
 .fieldValue {
   color: #1f2937;
-  font-size: 1rem;
-  padding: 0.75rem 0;
+  font-size: 0.95rem;
+  padding: 0.65rem 0;
   border-bottom: 1px solid #f3f4f6;
 }
 
 .input {
-  padding: 0.75rem 1rem;
+  padding: 0.65rem 0.875rem;
   border: 2px solid #e5e7eb;
   border-radius: 8px;
-  font-size: 1rem;
+  font-size: 0.95rem;
   transition: all 0.3s ease;
   background: white;
 }
@@ -200,43 +208,36 @@
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
-/* Right Column - Now full width */
-.rightColumn {
-  display: flex;
-  flex-direction: column;
-  gap: 2rem;
-  max-width: 800px;
-  margin: 0 auto;
-  width: 100%;
-}
 
 /* Change Password Section */
 .passwordSection {
   background: white;
-  border-radius: 16px;
-  padding: 2.5rem;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  border-radius: 12px;
+  padding: 1.75rem;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
   border: 1px solid #f1f5f9;
   transition: all 0.3s ease;
 }
 
 .passwordSection:hover {
-  box-shadow: 0 6px 30px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
   transform: translateY(-2px);
 }
 
 .passwordSection h2 {
   color: #1e293b;
-  font-size: 1.5rem;
+  font-size: 1.25rem;
   font-weight: 600;
-  margin: 0 0 1.5rem 0;
+  margin: 0 0 1.25rem 0;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid #e2e8f0;
 }
 
 .passwordFields {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
-  margin-bottom: 1.5rem;
+  gap: 1.25rem;
+  margin-bottom: 1.25rem;
 }
 
 .passwordInput {
@@ -305,28 +306,30 @@
 .dangerZone {
   background: white;
   border: 2px solid #fecaca;
-  border-radius: 16px;
-  padding: 2.5rem;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  border-radius: 12px;
+  padding: 1.75rem;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
   transition: all 0.3s ease;
 }
 
 .dangerZone:hover {
-  box-shadow: 0 6px 30px rgba(239, 68, 68, 0.15);
+  box-shadow: 0 4px 20px rgba(239, 68, 68, 0.12);
   transform: translateY(-2px);
 }
 
 .dangerZone h2 {
   color: #dc2626;
-  font-size: 1.5rem;
+  font-size: 1.25rem;
   font-weight: 600;
-  margin: 0 0 1rem 0;
+  margin: 0 0 0.75rem 0;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid #fecaca;
 }
 
 .dangerZone p {
   color: #6b7280;
-  font-size: 0.875rem;
-  margin-bottom: 1.5rem;
+  font-size: 0.85rem;
+  margin-bottom: 1.25rem;
   line-height: 1.5;
 }
 
@@ -533,10 +536,14 @@
 }
 
 /* Responsive Design */
-@media (max-width: 768px) {
+@media (max-width: 968px) {
   .profileLayout {
     grid-template-columns: 1fr;
     gap: 1.5rem;
+  }
+  
+  .fullWidthSection {
+    max-width: 100%;
   }
   
   .accountSection,
@@ -544,23 +551,23 @@
   .dangerZone {
     padding: 1.5rem;
   }
-  
+
   .sectionHeader {
     flex-direction: column;
     align-items: flex-start;
     gap: 1rem;
   }
-  
+
   .editActions {
     width: 100%;
     justify-content: flex-end;
   }
-  
+
   .modal {
     margin: 1rem;
     padding: 1.5rem;
   }
-  
+
   .modalActions {
     flex-direction: column;
   }

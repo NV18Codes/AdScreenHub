@@ -746,10 +746,8 @@ export default function Profile() {
             </div>
           </div>
 
-          {/* Right Column */}
-          <div className={styles.rightColumn}>
-            {/* Change Password Section */}
-            <div className={styles.passwordSection}>
+          {/* Change Password Section */}
+          <div className={styles.passwordSection}>
               <h2>Change Password</h2>
 
               <div className={styles.passwordFields}>
@@ -832,8 +830,8 @@ export default function Profile() {
               </button>
             </div>
 
-            {/* Danger Zone Section */}
-            <div className={styles.dangerZone}>
+          {/* Danger Zone Section - Full Width */}
+          <div className={`${styles.dangerZone} ${styles.fullWidthSection}`}>
               <h2>Danger Zone</h2>
               <p>Deleting your account is permanent and cannot be undone. All your data will be removed.</p>
               <button
@@ -842,7 +840,6 @@ export default function Profile() {
               >
                 Delete My Account
               </button>
-            </div>
           </div>
         </div>
 
