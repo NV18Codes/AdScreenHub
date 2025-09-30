@@ -8,6 +8,7 @@ export const getUserDisplayName = (user) => {
   // Check for different possible name fields in order of preference
   const possibleNames = [
     user.fullName,
+    user.full_name,
     user.name,
     user.firstName,
     user.displayName,

@@ -34,19 +34,26 @@
 }
 
 .profileLayout {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
+  display: flex;
+  flex-direction: column;
   gap: 2rem;
-  align-items: start;
+  max-width: 800px;
+  margin: 0 auto;
 }
 
 /* Account Information Section */
 .accountSection {
   background: white;
   border-radius: 16px;
-  padding: 2rem;
+  padding: 2.5rem;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
   border: 1px solid #f1f5f9;
+  transition: all 0.3s ease;
+}
+
+.accountSection:hover {
+  box-shadow: 0 6px 30px rgba(0, 0, 0, 0.12);
+  transform: translateY(-2px);
 }
 
 .sectionHeader {
@@ -63,6 +70,39 @@
   font-size: 1.5rem;
   font-weight: 600;
   margin: 0;
+}
+
+.sectionHint {
+  color: #64748b;
+  font-size: 0.875rem;
+  margin: 0.25rem 0 0 0;
+  font-weight: 400;
+}
+
+.otpBadge {
+  display: inline-block;
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  color: white;
+  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  margin-left: 0.5rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.optionalBadge {
+  display: inline-block;
+  background: linear-gradient(135deg, #94a3b8, #64748b);
+  color: white;
+  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  margin-left: 0.5rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .editButton {
@@ -160,20 +200,29 @@
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
-/* Right Column */
+/* Right Column - Now full width */
 .rightColumn {
   display: flex;
   flex-direction: column;
   gap: 2rem;
+  max-width: 800px;
+  margin: 0 auto;
+  width: 100%;
 }
 
 /* Change Password Section */
 .passwordSection {
   background: white;
   border-radius: 16px;
-  padding: 2rem;
+  padding: 2.5rem;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
   border: 1px solid #f1f5f9;
+  transition: all 0.3s ease;
+}
+
+.passwordSection:hover {
+  box-shadow: 0 6px 30px rgba(0, 0, 0, 0.12);
+  transform: translateY(-2px);
 }
 
 .passwordSection h2 {
@@ -257,8 +306,14 @@
   background: white;
   border: 2px solid #fecaca;
   border-radius: 16px;
-  padding: 2rem;
+  padding: 2.5rem;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+}
+
+.dangerZone:hover {
+  box-shadow: 0 6px 30px rgba(239, 68, 68, 0.15);
+  transform: translateY(-2px);
 }
 
 .dangerZone h2 {
@@ -407,6 +462,52 @@
 .verifyButton:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+}
+
+.otpActions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.sendOtpButton {
+  flex: 1;
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
+}
+
+.sendOtpButton:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+}
+
+.sendOtpButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.cancelSmallButton {
+  background: transparent;
+  color: #64748b;
+  border: 2px solid #e2e8f0;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.cancelSmallButton:hover {
+  background: #f8fafc;
+  border-color: #cbd5e1;
 }
 
 .loadingContainer {
