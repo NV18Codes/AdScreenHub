@@ -506,10 +506,13 @@ export default function Profile() {
         )}
         
         <div className={styles.profileLayout}>
-          {/* Account Information Section */}
+          {/* Basic Information - No OTP Required */}
           <div className={styles.accountSection}>
             <div className={styles.sectionHeader}>
-              <h2>Account Information</h2>
+              <div>
+                <h2>Basic Information</h2>
+                <p className={styles.sectionHint}>✓ Updates instantly without verification</p>
+              </div>
               {!isEditing ? (
                 <button
                   onClick={() => setIsEditing(true)}
@@ -523,8 +526,6 @@ export default function Profile() {
                     onClick={() => {
                       setIsEditing(false);
                       setFormData(originalFormData);
-                      setShowPhoneOTP(false);
-                      setShowEmailOTP(false);
                     }}
                     className={styles.cancelButton}
                   >
@@ -534,7 +535,7 @@ export default function Profile() {
                     onClick={handleSaveProfile}
                     className={styles.saveButton}
                   >
-                    Save
+                    Save Changes
                   </button>
                 </div>
               )}
@@ -550,6 +551,7 @@ export default function Profile() {
                     value={formData.fullName}
                     onChange={handleInputChange}
                     className={styles.input}
+                    placeholder="Enter your full name"
                   />
                 ) : (
                   <span className={styles.fieldValue}>{formData.fullName}</span>
@@ -557,81 +559,7 @@ export default function Profile() {
               </div>
 
               <div className={styles.field}>
-                <label>Email Address</label>
-                {isEditing ? (
-                  <input
-                    type="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleInputChange}
-                    className={styles.input}
-                  />
-                ) : (
-                  <span className={styles.fieldValue}>{formData.email}</span>
-                )}
-              </div>
-              
-              {showEmailOTP && (
-                <div className={styles.otpSection}>
-                  <label>Enter OTP sent to {newEmail}</label>
-                  <div className={styles.otpInputGroup}>
-                    <input
-                      type="text"
-                      value={emailOTP}
-                      onChange={(e) => setEmailOTP(e.target.value)}
-                      className={styles.input}
-                      placeholder="Enter 6-digit OTP"
-                      maxLength={6}
-                    />
-                    <button
-                      onClick={handleVerifyEmailOTP}
-                      className={styles.verifyButton}
-                    >
-                      Verify
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              <div className={styles.field}>
-                <label>Phone Number</label>
-                {isEditing ? (
-                  <input
-                    type="tel"
-                    name="phoneNumber"
-                    value={formData.phoneNumber}
-                    onChange={handleInputChange}
-                    className={styles.input}
-                  />
-                ) : (
-                  <span className={styles.fieldValue}>{formData.phoneNumber}</span>
-                )}
-              </div>
-              
-              {showPhoneOTP && (
-                <div className={styles.otpSection}>
-                  <label>Enter OTP sent to {newPhone}</label>
-                  <div className={styles.otpInputGroup}>
-                    <input
-                      type="text"
-                      value={phoneOTP}
-                      onChange={(e) => setPhoneOTP(e.target.value)}
-                      className={styles.input}
-                      placeholder="Enter 6-digit OTP"
-                      maxLength={6}
-                    />
-                    <button
-                      onClick={handleVerifyPhoneOTP}
-                      className={styles.verifyButton}
-                    >
-                      Verify
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              <div className={styles.field}>
-                <label>GST Number</label>
+                <label>GST Number <span className={styles.optionalBadge}>Optional</span></label>
                 {isEditing ? (
                   <input
                     type="text"
@@ -639,12 +567,182 @@ export default function Profile() {
                     value={formData.gstNumber}
                     onChange={handleInputChange}
                     className={styles.input}
-                    placeholder="Enter GST number"
+                    placeholder="Enter GST number (if applicable)"
                   />
                 ) : (
                   <span className={styles.fieldValue}>{formData.gstNumber || 'Not provided'}</span>
                 )}
               </div>
+            </div>
+          </div>
+
+          {/* Email Update - OTP Required */}
+          <div className={styles.accountSection}>
+            <div className={styles.sectionHeader}>
+              <div>
+                <h2>Email Address</h2>
+                <p className={styles.sectionHint}>🔒 Requires OTP verification</p>
+              </div>
+              {!showEmailOTP && (
+                <button
+                  onClick={() => setShowEmailOTP(true)}
+                  className={styles.editButton}
+                >
+                  Update Email
+                </button>
+              )}
+            </div>
+
+            <div className={styles.accountFields}>
+              {!showEmailOTP ? (
+                <div className={styles.field}>
+                  <label>Current Email</label>
+                  <span className={styles.fieldValue}>{formData.email}</span>
+                </div>
+              ) : (
+                <>
+                  <div className={styles.field}>
+                    <label>New Email Address</label>
+                    <input
+                      type="email"
+                      name="email"
+                      value={formData.email}
+                      onChange={handleInputChange}
+                      className={styles.input}
+                      placeholder="Enter new email address"
+                    />
+                  </div>
+                  
+                  <div className={styles.otpActions}>
+                    <button
+                      onClick={handleSaveProfile}
+                      className={styles.sendOtpButton}
+                      disabled={formData.email === originalFormData.email}
+                    >
+                      Send OTP
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowEmailOTP(false);
+                        setFormData(originalFormData);
+                        setEmailOTP('');
+                        setNewEmail('');
+                      }}
+                      className={styles.cancelSmallButton}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+
+                  {newEmail && (
+                    <div className={styles.otpSection}>
+                      <label>Enter OTP sent to {newEmail}</label>
+                      <div className={styles.otpInputGroup}>
+                        <input
+                          type="text"
+                          value={emailOTP}
+                          onChange={(e) => setEmailOTP(e.target.value)}
+                          className={styles.input}
+                          placeholder="6-digit OTP"
+                          maxLength={6}
+                        />
+                        <button
+                          onClick={handleVerifyEmailOTP}
+                          className={styles.verifyButton}
+                          disabled={emailOTP.length !== 6}
+                        >
+                          Verify
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* Phone Update - OTP Required */}
+          <div className={styles.accountSection}>
+            <div className={styles.sectionHeader}>
+              <div>
+                <h2>Phone Number</h2>
+                <p className={styles.sectionHint}>🔒 Requires OTP verification</p>
+              </div>
+              {!showPhoneOTP && (
+                <button
+                  onClick={() => setShowPhoneOTP(true)}
+                  className={styles.editButton}
+                >
+                  Update Phone
+                </button>
+              )}
+            </div>
+
+            <div className={styles.accountFields}>
+              {!showPhoneOTP ? (
+                <div className={styles.field}>
+                  <label>Current Phone</label>
+                  <span className={styles.fieldValue}>{formData.phoneNumber}</span>
+                </div>
+              ) : (
+                <>
+                  <div className={styles.field}>
+                    <label>New Phone Number</label>
+                    <input
+                      type="tel"
+                      name="phoneNumber"
+                      value={formData.phoneNumber}
+                      onChange={handleInputChange}
+                      className={styles.input}
+                      placeholder="Enter new phone number"
+                    />
+                  </div>
+                  
+                  <div className={styles.otpActions}>
+                    <button
+                      onClick={handleSaveProfile}
+                      className={styles.sendOtpButton}
+                      disabled={formData.phoneNumber === originalFormData.phoneNumber}
+                    >
+                      Send OTP
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowPhoneOTP(false);
+                        setFormData(originalFormData);
+                        setPhoneOTP('');
+                        setNewPhone('');
+                      }}
+                      className={styles.cancelSmallButton}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+
+                  {newPhone && (
+                    <div className={styles.otpSection}>
+                      <label>Enter OTP sent to {newPhone}</label>
+                      <div className={styles.otpInputGroup}>
+                        <input
+                          type="text"
+                          value={phoneOTP}
+                          onChange={(e) => setPhoneOTP(e.target.value)}
+                          className={styles.input}
+                          placeholder="6-digit OTP"
+                          maxLength={6}
+                        />
+                        <button
+                          onClick={handleVerifyPhoneOTP}
+                          className={styles.verifyButton}
+                          disabled={phoneOTP.length !== 6}
+                        >
+                          Verify
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
             </div>
           </div>
 
