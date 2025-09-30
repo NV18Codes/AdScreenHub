@@ -289,165 +289,87 @@ export default function MyOrders() {
                 
                 {safeOrders.map((order, index) => (
               <div key={order.id} className={styles.orderCard}>
-                <div className={styles.orderHeader}>
-                  <div className={styles.orderInfo}>
-                    <h3>Order #{safeOrders.length - index}</h3>
-                    <p className={styles.orderUid}>
-                      <strong>Order UID:</strong> {order.orderUid || order.id}
-                    </p>
-                    <p className={styles.orderDate}>
-                      Ordered on {formatDate(order.createdAt || order.orderDate)}
-                    </p>
-                    <p className={styles.displayDate}>
-                      Display Date: {formatDate(order.startDate || order.displayDate)}
-                    </p>
-                    <p className={styles.orderLocation}>
-                      <strong>Location:</strong> {order.locationName || order.location}
-                    </p>
-                    <p className={styles.orderPlan}>
-                      <strong>Plan:</strong> {order.planName || 'Standard Plan'}
-                    </p>
-                    <p className={styles.planDescription}>
-                      <strong>Description:</strong> {order.planDescription || 'N/A'}
-                    </p>
-                    <p className={styles.planDuration}>
-                      <strong>Duration:</strong> {order.planDuration || 1} day(s)
-                    </p>
-                    {order.razorpay_order_id && (
-                      <p className={styles.razorpayOrderId}>
-                        <strong>Razorpay Order ID:</strong> {order.razorpay_order_id}
-                      </p>
-                    )}
-                    {order.paymentId && (
-                      <p className={styles.paymentId}>
-                        <strong>Payment ID:</strong> {order.paymentId}
-                      </p>
-                    )}
-                  </div>
-                  <div className={`${styles.orderStatus} ${getStatusColor(order.status)}`}>
-                    {order.status}
-                  </div>
-                </div>
-
-                <div className={styles.orderDetails}>
-                  <div className={styles.orderAmount}>
-                    <strong>Total Amount:</strong> {formatCurrency(order.totalAmount || order.amount || order.price || 0)}
-                  </div>
-                  
-                  {/* Creative File - Show for all orders */}
-                  {order.creativeFilePath && (
-                    <div className={styles.orderThumbnail}>
-                      <h4>Your Creative</h4>
-                      <div className={styles.creativeInfo}>
-                        <p><strong>File:</strong> {order.creativeFileName || 'Creative File'}</p>
-                        <p><strong>Path:</strong> {order.creativeFilePath}</p>
-                        {order.thumbnail && (
-                          <img
-                            src={order.thumbnail}
-                            alt="Creative Preview"
-                            onClick={() => {
-                              setSelectedOrder(order);
-                              setShowImageModal(true);
-                            }}
-                            className={styles.thumbnailImage}
-                          />
-                        )}
-                        <small>Click to view full size</small>
+                <div className={styles.cardContent}>
+                  <div className={styles.orderLeft}>
+                    <div className={styles.orderHeader}>
+                      <div>
+                        <h3>Order #{safeOrders.length - index}</h3>
+                        <p className={styles.orderUid}>{order.orderUid || order.order_uid || `ORD-${order.id}`}</p>
+                      </div>
+                      <div className={`${styles.orderStatus} ${getStatusColor(order.status)}`}>
+                        {order.status}
                       </div>
                     </div>
-                  )}
 
-                  {/* Admin Proof Image - Show for completed and in-display orders */}
-                  {order.adminProofImage && (order.status === 'In Display' || order.status === 'Completed Display') && (
-                    <div className={styles.adminProof}>
-                      <h4>Proof of Display</h4>
-                      <img
-                        src={order.adminProofImage}
-                        alt="Ad Displayed on LED Screen"
-                        onClick={() => {
-                          setSelectedOrder(order);
-                          setShowImageModal(true);
-                        }}
-                        className={styles.proofImage}
-                      />
-                      <small>Click to view proof of display</small>
+                    <div className={styles.orderInfo}>
+                      <div className={styles.infoRow}>
+                        <span className={styles.infoLabel}>Location:</span>
+                        <span className={styles.infoValue}>{order.locations?.name || order.locationName || order.location || 'N/A'}</span>
+                      </div>
+                      <div className={styles.infoRow}>
+                        <span className={styles.infoLabel}>Plan:</span>
+                        <span className={styles.infoValue}>{order.plans?.name || order.planName || 'N/A'}</span>
+                      </div>
+                      <div className={styles.infoRow}>
+                        <span className={styles.infoLabel}>Display Date:</span>
+                        <span className={styles.infoValue}>{formatDate(order.start_date || order.startDate || order.displayDate)}</span>
+                      </div>
+                      <div className={styles.infoRow}>
+                        <span className={styles.infoLabel}>Duration:</span>
+                        <span className={styles.infoValue}>{order.plans?.duration_days || order.planDuration || 1} day(s)</span>
+                      </div>
+                      <div className={styles.infoRow}>
+                        <span className={styles.infoLabel}>Total Amount:</span>
+                        <span className={styles.infoValue}><strong>{formatCurrency(order.total_cost || order.final_amount || order.totalAmount || order.amount || 0)}</strong></span>
+                      </div>
+                      <div className={styles.infoRow}>
+                        <span className={styles.infoLabel}>Ordered:</span>
+                        <span className={styles.infoValue}>{formatDate(order.created_at || order.createdAt || order.orderDate)}</span>
+                      </div>
                     </div>
-                  )}
-                  
-                  {/* Delivery Address - Show for all orders */}
-                  {order.deliveryAddress && (
-                    <div className={styles.orderAddress}>
-                      <h4>Delivery Address</h4>
-                      <p>
-                        {order.deliveryAddress.street && `${order.deliveryAddress.street}, `}
-                        {order.deliveryAddress.city && `${order.deliveryAddress.city}, `}
-                        {order.deliveryAddress.state && `${order.deliveryAddress.state} `}
-                        {order.deliveryAddress.zip && order.deliveryAddress.zip}
-                      </p>
-                    </div>
-                  )}
-                  
-                  {/* GST Information - Show if available */}
-                  {order.gstInfo && (
-                    <div className={styles.orderGst}>
-                      <h4>GST Information</h4>
-                      <p>{order.gstInfo}</p>
-                    </div>
-                  )}
-                  
-                  {/* Coupon Code - Show if used */}
-                  {order.couponCode && (
-                    <div className={styles.orderCoupon}>
-                      <h4>Coupon Used</h4>
-                      <p className={styles.couponCode}>{order.couponCode}</p>
-                    </div>
-                  )}
-                </div>
 
-                <div className={styles.orderActions}>
-                  {/* Complete Payment Button - Show for pending payment orders with razorpay_order_id */}
-                  {(order.status === 'Pending Payment' && (order.razorpay_order_id || order.razorpayOrderId)) && (
-                    <button
-                      onClick={() => handleCompletePayment(order)}
-                      className={`${styles.btn} ${styles.btnPrimary}`}
-                      style={{ 
-                        background: 'linear-gradient(135deg, #10b981, #059669)',
-                        boxShadow: '0 4px 15px rgba(16, 185, 129, 0.3)'
-                      }}
-                    >
-                      💳 Complete Payment
-                    </button>
-                  )}
-                  
-                  {/* Payment Status - Show if payment is verified */}
-                  {order.paymentVerified && (
-                    <div className={styles.paymentStatus}>
-                      <span className={styles.paymentVerified}>✅ Payment Verified</span>
+                    <div className={styles.orderActions}>
+                      {/* Complete Payment Button */}
+                      {(order.status === 'Pending Payment' && (order.razorpay_order_id || order.razorpayOrderId)) && (
+                        <button
+                          onClick={() => handleCompletePayment(order)}
+                          className={`${styles.btn} ${styles.btnPrimary}`}
+                        >
+                          Complete Payment
+                        </button>
+                      )}
+                      
+                      {/* Revise Design Button */}
+                      {canReviseOrder(order) && (
+                        <button
+                          onClick={() => handleReviseOrder(order.id)}
+                          className={`${styles.btn} ${styles.btnSecondary}`}
+                        >
+                          Upload New Design
+                        </button>
+                      )}
                     </div>
-                  )}
-                  
-                  {/* Revise Design Button - Only show if status is "Revise Your Design" and timing allows */}
-                  {canReviseOrder(order) && (
-                    <button
-                      onClick={() => handleReviseOrder(order.id)}
-                      className={`${styles.btn} ${styles.btnSecondary}`}
-                    >
-                      Upload New Design
-                    </button>
-                  )}
-                  
-                  {/* Cancel Order Button - Only show for unpaid pending orders (no razorpay_payment_id) */}
-                  {(order.status === 'Pending Approval' || order.status === 'Pending Payment') && 
-                   !order.paymentVerified && 
-                   !order.razorpay_payment_id && 
-                   !order.razorpayPaymentId && (
-                    <button
-                      onClick={() => handleCancelOrder(order.id)}
-                      className={`${styles.btn} ${styles.btnDanger}`}
-                    >
-                      Cancel Order
-                    </button>
-                  )}
+                  </div>
+
+                  {/* Right Side - Creative Preview (if available) */}
+                  <div className={styles.orderRight}>
+                    {order.creatives && order.creatives.length > 0 && order.creatives[0].publicUrl ? (
+                      <div className={styles.creativePreview}>
+                        <img 
+                          src={order.creatives[0].publicUrl} 
+                          alt="Creative Preview"
+                          className={styles.previewImage}
+                        />
+                        <p className={styles.fileName}>{order.creatives[0].file_name}</p>
+                      </div>
+                    ) : (
+                      <div className={styles.creativePreviewPlaceholder}>
+                        <div className={styles.placeholderIcon}>🎨</div>
+                        <p>Creative File</p>
+                        <small>{order.creatives?.[0]?.file_name || 'Pending Upload'}</small>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
                 ))}

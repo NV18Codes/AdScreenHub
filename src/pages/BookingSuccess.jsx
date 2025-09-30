@@ -16,7 +16,6 @@ const BookingSuccess = () => {
     if (orderId) {
       fetchOrderDetails();
     } else {
-      console.warn('⚠️ No order ID in URL, checking localStorage for recent order');
       // Try to get the most recent order from localStorage
       const localOrders = JSON.parse(localStorage.getItem('adscreenhub_orders') || '[]');
       if (localOrders.length > 0) {
@@ -24,8 +23,26 @@ const BookingSuccess = () => {
         const mostRecentOrder = localOrders.sort((a, b) => 
           new Date(b.createdAt || b.created_at || 0) - new Date(a.createdAt || a.created_at || 0)
         )[0];
-        console.log('✅ Found recent order in localStorage:', mostRecentOrder);
-        setOrder(mostRecentOrder);
+        
+        // Transform to match expected format
+        const transformedOrder = {
+          id: mostRecentOrder.id,
+          orderId: mostRecentOrder.id,
+          orderUid: mostRecentOrder.orderUid || mostRecentOrder.order_uid,
+          location: {
+            name: mostRecentOrder.locations?.name || mostRecentOrder.location?.name || mostRecentOrder.screenName || 'N/A'
+          },
+          plan: {
+            name: mostRecentOrder.plans?.name || mostRecentOrder.plan?.name || 'N/A',
+            duration: mostRecentOrder.plans?.duration_days || mostRecentOrder.plan?.duration_days || 'N/A'
+          },
+          startDate: mostRecentOrder.start_date || mostRecentOrder.startDate || mostRecentOrder.displayDate,
+          totalAmount: mostRecentOrder.total_cost || mostRecentOrder.final_amount || mostRecentOrder.totalAmount || mostRecentOrder.amount,
+          status: mostRecentOrder.status,
+          createdAt: mostRecentOrder.created_at || mostRecentOrder.createdAt
+        };
+        
+        setOrder(transformedOrder);
         setLoading(false);
       } else {
         setError('No order ID provided');
@@ -37,13 +54,10 @@ const BookingSuccess = () => {
   const fetchOrderDetails = async () => {
     try {
       const response = await ordersAPI.getOrders();
-      console.log('📋 Fetching order details, response:', response);
       
       if (response.success) {
         // Handle different response structures
         let ordersData = [];
-        
-        console.log('📋 Raw response.data:', response.data);
         
         // Try different possible structures
         if (Array.isArray(response.data)) {
@@ -56,30 +70,35 @@ const BookingSuccess = () => {
           ordersData = response.data.orders;
         }
         
-        console.log('📋 Extracted orders data:', ordersData);
-        console.log('📋 Looking for order ID:', orderId, typeof orderId);
-        
-        if (ordersData.length > 0) {
-          console.log('📋 First order ID:', ordersData[0].id, typeof ordersData[0].id);
-          console.log('📋 All order IDs:', ordersData.map(o => o.id));
-        }
-        
         const foundOrder = ordersData.find(o => o.id.toString() === orderId.toString());
         
         if (foundOrder) {
-          console.log('✅ Order found:', foundOrder);
-          setOrder(foundOrder);
+          // Transform backend order data to frontend format
+          const transformedOrder = {
+            id: foundOrder.id,
+            orderId: foundOrder.id,
+            orderUid: foundOrder.order_uid,
+            location: {
+              name: foundOrder.locations?.name || foundOrder.location?.name || 'N/A'
+            },
+            plan: {
+              name: foundOrder.plans?.name || foundOrder.plan?.name || 'N/A',
+              duration: foundOrder.plans?.duration_days || foundOrder.plan?.duration_days || 'N/A'
+            },
+            startDate: foundOrder.start_date || foundOrder.startDate,
+            totalAmount: foundOrder.total_cost || foundOrder.final_amount || foundOrder.totalAmount,
+            status: foundOrder.status,
+            createdAt: foundOrder.created_at || foundOrder.createdAt
+          };
+          
+          setOrder(transformedOrder);
           setError('');
         } else {
-          console.warn('⚠️ Order not found in list');
-          console.log('📋 Available order IDs:', ordersData.map(o => o.id));
-          
           // Check localStorage as fallback
           const localOrders = JSON.parse(localStorage.getItem('adscreenhub_orders') || '[]');
           const localOrder = localOrders.find(o => o.id.toString() === orderId.toString());
           
           if (localOrder) {
-            console.log('✅ Order found in localStorage:', localOrder);
             setOrder(localOrder);
             setError('');
           } else {
@@ -87,11 +106,9 @@ const BookingSuccess = () => {
           }
         }
       } else {
-        console.error('❌ API error:', response.error);
         setError(response.error || 'Failed to fetch order details');
       }
     } catch (err) {
-      console.error('❌ Network error:', err);
       setError('Network error. Please try again.');
     } finally {
       setLoading(false);
@@ -166,7 +183,7 @@ const BookingSuccess = () => {
               </div>
               <div className={styles.detailItem}>
                 <span className={styles.label}>Total Amount:</span>
-                <span className={styles.value}>₹{order.totalAmount || order.plan?.price || 'N/A'}</span>
+                <span className={styles.value}>₹{order.totalAmount?.toLocaleString('en-IN') || 'N/A'}</span>
               </div>
               <div className={styles.detailItem}>
                 <span className={styles.label}>Status:</span>
