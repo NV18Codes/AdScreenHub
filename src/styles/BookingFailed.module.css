@@ -3,20 +3,21 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
   padding: 2rem;
 }
 
 .errorCard {
   background: white;
-  border-radius: 20px;
-  padding: 3rem;
+  border-radius: 16px;
+  padding: 2.5rem;
   max-width: 600px;
   width: 100%;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
   text-align: center;
   position: relative;
   overflow: hidden;
+  border: 1px solid #f1f5f9;
 }
 
 .errorCard::before {
@@ -25,8 +26,8 @@
   top: 0;
   left: 0;
   right: 0;
-  height: 5px;
-  background: linear-gradient(90deg, #e74c3c, #c0392b);
+  height: 3px;
+  background: linear-gradient(90deg, #ef4444, #dc2626);
 }
 
 .errorIcon {
@@ -35,17 +36,16 @@
 
 .errorSymbol {
   display: inline-block;
-  width: 80px;
-  height: 80px;
+  width: 70px;
+  height: 70px;
   border-radius: 50%;
-  background: #e74c3c;
+  background: #ef4444;
   position: relative;
-  animation: errorPulse 2s ease-in-out infinite;
 }
 
 @keyframes errorPulse {
   0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.05); }
+  50% { transform: scale(1.02); }
 }
 
 .errorCircle {
@@ -80,25 +80,22 @@
 }
 
 .errorCard h1 {
-  font-size: 2.5rem;
+  font-size: 2rem;
   font-weight: 700;
-  color: #333;
+  color: #1e293b;
   margin-bottom: 1rem;
-  background: linear-gradient(135deg, #e74c3c, #c0392b);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
 }
 
 .errorMessage {
-  font-size: 1.2rem;
-  color: #666;
+  font-size: 1.05rem;
+  color: #475569;
   margin-bottom: 2rem;
-  line-height: 1.6;
-  background: #f8d7da;
-  padding: 1rem;
-  border-radius: 10px;
-  border: 1px solid #f5c6cb;
+  line-height: 1.7;
+  background: #f8fafc;
+  padding: 1.5rem;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  text-align: left;
 }
 
 .reasons {
@@ -141,37 +138,39 @@
 }
 
 .primaryButton {
-  background: linear-gradient(135deg, #e74c3c, #c0392b);
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
   color: white;
   border: none;
-  padding: 1rem 2rem;
-  border-radius: 10px;
-  font-size: 1.1rem;
+  padding: 0.875rem 2rem;
+  border-radius: 8px;
+  font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 15px rgba(231, 76, 60, 0.3);
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
 }
 
 .primaryButton:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(231, 76, 60, 0.4);
+  box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
 }
 
 .secondaryButton {
-  background: #6c757d;
-  color: white;
-  border: none;
-  padding: 1rem 2rem;
-  border-radius: 10px;
-  font-size: 1.1rem;
+  background: transparent;
+  color: #64748b;
+  border: 2px solid #e2e8f0;
+  padding: 0.875rem 2rem;
+  border-radius: 8px;
+  font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
 }
 
 .secondaryButton:hover {
-  background: #5a6268;
+  background: #f8fafc;
+  border-color: #cbd5e1;
+  color: #475569;
   transform: translateY(-2px);
 }
 

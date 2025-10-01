@@ -97,6 +97,9 @@ export default function Navbar() {
               
               <div className={styles.authSection}>
                 <span className={styles.userName}>Hi, {displayName}</span>
+                <Link to="/booking" className={`${styles.btn} ${styles.btnBookNow}`} onClick={closeMenu}>
+                  Book Now
+                </Link>
                 <button 
                   onClick={async () => {
                     try {
@@ -104,13 +107,12 @@ export default function Navbar() {
                       closeMenu();
                       window.location.href = '/';
                     } catch (error) {
-                      console.error('Logout error:', error);
                       // Force redirect even if logout fails
                       closeMenu();
                       window.location.href = '/';
                     }
                   }} 
-                  className={`${styles.btn} ${styles.btnPrimary}`}
+                  className={`${styles.btn} ${styles.btnSecondary}`}
                 >
                   Logout
                 </button>

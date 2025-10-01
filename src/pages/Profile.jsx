@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { API_BASE_URL } from '../config/api';
+import Toast from '../components/Toast';
 import styles from '../styles/Profile.module.css';
 
 export default function Profile() {
@@ -50,6 +51,8 @@ export default function Profile() {
   });
   const [passwordError, setPasswordError] = useState('');
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
+  const [isSendingOTP, setIsSendingOTP] = useState(false);
+  const [isVerifyingOTP, setIsVerifyingOTP] = useState(false);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -165,9 +168,12 @@ export default function Profile() {
   }, []);
 
   const handleSaveProfile = async () => {
+    if (isSendingOTP) return; // Prevent repeat clicks
+    
     try {
       setErrorMessage('');
       setSuccessMessage('');
+      setIsSendingOTP(true);
       const token = localStorage.getItem('token');
       
       const emailChanged = formData.email !== originalFormData.email;
@@ -271,12 +277,17 @@ export default function Profile() {
       }
     } catch (error) {
       setErrorMessage(error.message || 'Failed to update profile');
+    } finally {
+      setIsSendingOTP(false);
     }
   };
 
   const handleVerifyPhoneOTP = async () => {
+    if (isVerifyingOTP) return; // Prevent repeat clicks
+    
     try {
       setErrorMessage('');
+      setIsVerifyingOTP(true);
       const token = localStorage.getItem('token');
       
       // Step 1: Verify phone OTP
@@ -330,12 +341,17 @@ export default function Profile() {
       }
     } catch (error) {
       setErrorMessage(error.message || 'Failed to verify OTP');
+    } finally {
+      setIsVerifyingOTP(false);
     }
   };
 
   const handleVerifyEmailOTP = async () => {
+    if (isVerifyingOTP) return; // Prevent repeat clicks
+    
     try {
       setErrorMessage('');
+      setIsVerifyingOTP(true);
       const token = localStorage.getItem('token');
       
       // Step 1: Verify email OTP
@@ -389,6 +405,8 @@ export default function Profile() {
       }
     } catch (error) {
       setErrorMessage(error.message || 'Failed to verify OTP');
+    } finally {
+      setIsVerifyingOTP(false);
     }
   };
 
@@ -490,19 +508,44 @@ export default function Profile() {
     );
   }
 
+  // Check if any operation is in progress
+  const isAnyActionInProgress = isSendingOTP || isVerifyingOTP || isUpdatingPassword || isDeleting;
+
   return (
     <div className={styles.profile}>
       <div className={styles.container}>
-        {successMessage && (
-          <div className={styles.successBanner}>
-            ✅ {successMessage}
+        {/* Loading Overlay - Blocks all actions */}
+        {isAnyActionInProgress && (
+          <div className={styles.loadingOverlay}>
+            <div className={styles.spinner}></div>
           </div>
         )}
         
+        {successMessage && (
+          <Toast 
+            message={successMessage} 
+            type="success" 
+            onClose={() => setSuccessMessage('')}
+            duration={5000}
+          />
+        )}
+        
         {errorMessage && (
-          <div className={styles.errorBanner}>
-            ❌ {errorMessage}
-          </div>
+          <Toast 
+            message={errorMessage} 
+            type="error" 
+            onClose={() => setErrorMessage('')}
+            duration={5000}
+          />
+        )}
+        
+        {passwordError && (
+          <Toast 
+            message={passwordError} 
+            type="error" 
+            onClose={() => setPasswordError('')}
+            duration={5000}
+          />
         )}
         
         <div className={styles.profileLayout}>
@@ -534,8 +577,9 @@ export default function Profile() {
                   <button
                     onClick={handleSaveProfile}
                     className={styles.saveButton}
+                    disabled={isSendingOTP}
                   >
-                    Save Changes
+                    {isSendingOTP ? 'Saving...' : 'Save Changes'}
                   </button>
                 </div>
               )}
@@ -617,9 +661,9 @@ export default function Profile() {
                     <button
                       onClick={handleSaveProfile}
                       className={styles.sendOtpButton}
-                      disabled={formData.email === originalFormData.email}
+                      disabled={formData.email === originalFormData.email || isSendingOTP}
                     >
-                      Send OTP
+                      {isSendingOTP ? 'Sending...' : 'Send OTP'}
                     </button>
                     <button
                       onClick={() => {
@@ -649,9 +693,9 @@ export default function Profile() {
                         <button
                           onClick={handleVerifyEmailOTP}
                           className={styles.verifyButton}
-                          disabled={emailOTP.length !== 6}
+                          disabled={emailOTP.length !== 6 || isVerifyingOTP}
                         >
-                          Verify
+                          {isVerifyingOTP ? 'Verifying...' : 'Verify'}
                         </button>
                       </div>
                     </div>
@@ -702,9 +746,9 @@ export default function Profile() {
                     <button
                       onClick={handleSaveProfile}
                       className={styles.sendOtpButton}
-                      disabled={formData.phoneNumber === originalFormData.phoneNumber}
+                      disabled={formData.phoneNumber === originalFormData.phoneNumber || isSendingOTP}
                     >
-                      Send OTP
+                      {isSendingOTP ? 'Sending...' : 'Send OTP'}
                     </button>
                     <button
                       onClick={() => {
@@ -734,9 +778,9 @@ export default function Profile() {
                         <button
                           onClick={handleVerifyPhoneOTP}
                           className={styles.verifyButton}
-                          disabled={phoneOTP.length !== 6}
+                          disabled={phoneOTP.length !== 6 || isVerifyingOTP}
                         >
-                          Verify
+                          {isVerifyingOTP ? 'Verifying...' : 'Verify'}
                         </button>
                       </div>
                     </div>

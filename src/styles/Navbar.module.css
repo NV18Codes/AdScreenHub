@@ -146,6 +146,19 @@
   color: var(--white);
 }
 
+.btnBookNow {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: var(--white);
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+  font-weight: 700;
+}
+
+.btnBookNow:hover {
+  background: linear-gradient(135deg, #059669, #047857);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
+}
+
 .userMenu {
   position: relative;
   cursor: pointer;
