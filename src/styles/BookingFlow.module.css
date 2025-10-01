@@ -44,6 +44,18 @@
   box-shadow: 0 6px 30px rgba(0, 0, 0, 0.12);
 }
 
+.incompleteStep {
+  border: 2px solid #ef4444 !important;
+  box-shadow: 0 4px 20px rgba(239, 68, 68, 0.2) !important;
+  animation: shake 0.5s ease-in-out;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-10px); }
+  75% { transform: translateX(10px); }
+}
+
 .step h2 {
   font-size: 1.75rem;
   font-weight: 700;
@@ -239,19 +251,17 @@
 
 /* Upload Area */
 .uploadArea {
-  border: 2px dashed #d1d5db;
+  border: 2px dashed #cbd5e1;
   border-radius: 12px;
-  padding: 3rem 2rem;
+  padding: 2.5rem 2rem;
   text-align: center;
   transition: all 0.3s ease;
   background: #fafafa;
-  margin-bottom: 2rem;
 }
 
 .uploadArea:hover {
   border-color: #3b82f6;
   background: #f8fafc;
-  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.05);
 }
 
 .fileInput {
@@ -259,6 +269,109 @@
 }
 
 .uploadLabel {
+  cursor: pointer;
+  display: block;
+  padding: 2rem;
+  transition: all 0.3s ease;
+}
+
+.uploadLabel:hover {
+  transform: scale(1.02);
+}
+
+.uploadIcon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  opacity: 0.5;
+}
+
+.uploadText {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0 0 0.5rem 0;
+}
+
+.uploadLabel small {
+  color: #64748b;
+  font-size: 0.875rem;
+}
+
+.fileSelected {
+  margin-top: 1.5rem;
+  padding: 1.5rem;
+  background: #eff6ff;
+  border: 2px solid #3b82f6;
+  border-radius: 12px;
+}
+
+.selectedFileName {
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 1rem;
+  font-size: 1rem;
+}
+
+.uploadActions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+}
+
+.uploadedSection {
+  text-align: center;
+  padding: 2rem;
+  background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+  border: 2px solid #10b981;
+  border-radius: 12px;
+}
+
+.uploadSuccess {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.successIcon {
+  font-size: 2rem;
+}
+
+.successText {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #065f46;
+  margin: 0;
+}
+
+.fileName {
+  font-size: 0.875rem;
+  color: #64748b;
+  margin-top: 0.75rem;
+  font-weight: 500;
+}
+
+.changeFileButton {
+  background: transparent;
+  color: #3b82f6;
+  border: 2px solid #3b82f6;
+  padding: 0.75rem 2rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-top: 1.5rem;
+  font-size: 0.95rem;
+}
+
+.changeFileButton:hover {
+  background: #3b82f6;
+  color: white;
+  transform: translateY(-2px);
+}
+
+.oldUploadLabel {
   display: inline-block;
   background: linear-gradient(135deg, #3b82f6, #1d4ed8);
   color: white;
@@ -389,6 +502,30 @@
 
 .termsLink:hover {
   color: #1d4ed8;
+}
+
+.required {
+  color: #ef4444;
+  margin-left: 0.25rem;
+  font-weight: 700;
+}
+
+.slotInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.875rem;
+  margin-top: 0.5rem;
+}
+
+.slotInfo span {
+  display: block;
+  color: #64748b;
+}
+
+.availableSlots {
+  font-weight: 600;
+  color: #10b981 !important;
 }
 
 .checkboxLabel input[type="checkbox"] {

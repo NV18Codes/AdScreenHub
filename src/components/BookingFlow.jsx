@@ -48,6 +48,8 @@ export default function BookingFlow() {
   const [showImportantNotice, setShowImportantNotice] = useState(false);
   const [fileUploaded, setFileUploaded] = useState(false);
   const [showTermsModal, setShowTermsModal] = useState(false);
+  const [incompleteStep, setIncompleteStep] = useState(null);
+  const [confirmingOrder, setConfirmingOrder] = useState(false);
 
   // Fetch plans when selectedScreen changes
   useEffect(() => {
@@ -82,9 +84,9 @@ export default function BookingFlow() {
     if (!Array.isArray(apiLocations)) return [];
     
     const screenDetails = {
-      1: { size: "20ft x 10ft", pixels: "1920px x 1080px", location: "MG Road, Bangalore" },
-      2: { size: "15ft x 8ft", pixels: "1440px x 720px", location: "Koramangala, Bangalore" },
-      3: { size: "25ft x 12ft", pixels: "2560px x 1280px", location: "Indiranagar, Bangalore" }
+      1: { size: "20ft x 10ft", pixels: "1920px x 1080px", location: "MG Road" },
+      2: { size: "15ft x 8ft", pixels: "1440px x 720px", location: "Koramangala" },
+      3: { size: "25ft x 12ft", pixels: "2560px x 1280px", location: "Indiranagar" }
     };
     
     return apiLocations.map(location => ({
@@ -104,7 +106,6 @@ export default function BookingFlow() {
   // Fetch plans data
   const fetchPlans = async () => {
     if (!selectedScreen || !selectedScreen.id) {
-      console.log('No selected screen, cannot fetch plans');
       setPlans([]);
       return;
     }
@@ -115,7 +116,6 @@ export default function BookingFlow() {
     try {
       // Use the location-specific plans API
       const result = await dataAPI.getPlansByLocation(selectedScreen.id);
-      console.log('Plans API Response:', result); // Debug log
       
       // Handle different possible response structures
       let plansData = null;
@@ -141,18 +141,15 @@ export default function BookingFlow() {
       
       if (plansData && Array.isArray(plansData) && plansData.length > 0) {
         const transformedPlans = transformPlanData(plansData);
-        console.log('Transformed Plans:', transformedPlans); // Debug log
         setPlans(transformedPlans);
         setError(''); // Clear any previous errors
       } else {
-        // No plans available - show backend message
+        // No plans available - use backend error message
         const errorMessage = result.message || result.error || 'No plans available for this location';
         setError(errorMessage);
         setPlans([]);
-        console.log('No plans available:', errorMessage);
       }
     } catch (error) {
-      console.error('Plans API error:', error);
       setError('Network error. Please try again.');
       setPlans([]);
     } finally {
@@ -168,33 +165,44 @@ export default function BookingFlow() {
     
     try {
       const result = await dataAPI.getLocationAvailability(date);
-      console.log('Location Availability Response:', result); // Debug log
       
       if (result.success && result.data) {
         const locationsData = result.data.data || result.data;
         if (Array.isArray(locationsData) && locationsData.length > 0) {
           const transformedLocations = transformLocationData(locationsData);
-          setLocations(transformedLocations);
+          
+          // Check if ANY location has available slots
+          const hasAnyAvailableSlots = transformedLocations.some(loc => loc.available_slots > 0);
+          
+          if (!hasAnyAvailableSlots) {
+            // No locations have available slots - stop immediately
+            setLocations([]);
+            setAvailabilityData({});
+            const errorMessage = result.message || 'No available inventory for the selected date. Please choose another date.';
+            setError(errorMessage);
+            return;
+          }
+          
+          // Filter and show only locations with available slots
+          const availableLocations = transformedLocations.filter(loc => loc.available_slots > 0);
+          setLocations(availableLocations);
           setAvailabilityData({});
-          setError(''); // Clear any previous errors
+          setError('');
       } else {
-          // No locations available - show backend message
+          // No locations in response - show backend message
           setLocations([]);
           setAvailabilityData({});
           const errorMessage = result.message || 'No available inventory for this location and date';
           setError(errorMessage);
-          console.log('No locations available:', errorMessage);
         }
       } else {
-        // API returned success: false or no data
+        // API returned success: false or no data - use backend error message
         const errorMessage = result.error || result.message || 'No available inventory for this location and date';
         setError(errorMessage);
         setLocations([]);
         setAvailabilityData({});
-        console.log('Location availability failed:', errorMessage);
       }
     } catch (error) {
-      console.error('Location availability API error:', error);
       setError('Network error. Please try again.');
       setLocations([]);
       setAvailabilityData({});
@@ -234,8 +242,11 @@ export default function BookingFlow() {
 
   // Handle screen selection
   const handleScreenSelect = (screen) => {
+    // Just select the screen - don't block here
+    // Availability will be checked when plan is selected
     setSelectedScreen(screen);
     setShowScreenModal(false);
+    setError(''); // Clear any previous errors
     
     // Auto-scroll to step 3 after screen selection
     setTimeout(() => {
@@ -246,17 +257,74 @@ export default function BookingFlow() {
     }, 500);
   };
 
-  // Handle plan selection
-  const handlePlanSelect = (plan) => {
-    setSelectedPlan(plan);
+  // Handle plan selection - check availability for the full duration
+  const handlePlanSelect = async (plan) => {
+    setError(''); // Clear any previous errors
     
-    // Auto-scroll to step 4 after plan selection
-    setTimeout(() => {
-      const step4Element = document.querySelector('[data-step="4"]');
-      if (step4Element) {
-        step4Element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    // CRITICAL: Check availability for this location + plan + date combination
+    // This checks if ALL days in the plan duration are available
+    if (selectedScreen && selectedDate) {
+      setLoadingPlans(true);
+      
+      try {
+        console.log(`🔍 Checking availability: Location ${selectedScreen.id}, Plan ${plan.id}, Date ${selectedDate}`);
+        
+        const availabilityCheck = await dataAPI.checkAvailability(
+          selectedScreen.id,
+          plan.id,
+          selectedDate
+        );
+        
+        // Response is double-nested: availabilityCheck.data.data.isAvailable
+        const actualData = availabilityCheck.data?.data || availabilityCheck.data;
+        const isAvailable = actualData?.isAvailable;
+        const backendMessage = availabilityCheck.data?.message || availabilityCheck.message;
+        
+        console.log('🔍 Checking availability result:');
+        console.log('  - isAvailable:', isAvailable);
+        console.log('  - Backend message:', backendMessage);
+        
+        // Check if slot is NOT available
+        if (!availabilityCheck.success || isAvailable === false) {
+          // STOP - Slot is NOT available
+          const errorMessage = backendMessage || 
+                               'This plan is not available for the selected location and date range. Please choose another plan or date.';
+          setError(errorMessage);
+          setLoadingPlans(false);
+          console.log('❌ BLOCKED - Plan NOT available:', errorMessage);
+          return; // Don't select the plan if not available
+        }
+        
+        // Availability check passed (isAvailable === true)
+        console.log('✅ Plan IS available, proceeding...');
+        setSelectedPlan(plan);
+        setError('');
+        setLoadingPlans(false);
+        
+        // Auto-scroll to step 4 after plan selection
+        setTimeout(() => {
+          const step4Element = document.querySelector('[data-step="4"]');
+          if (step4Element) {
+            step4Element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
+        }, 300);
+        
+      } catch (error) {
+        console.error('❌ Availability check error:', error);
+        setError('Network error while checking availability. Please try again.');
+        setLoadingPlans(false);
       }
-    }, 300);
+    } else {
+      // Missing screen or date - shouldn't happen but handle it
+      console.warn('⚠️ Missing screen or date, selecting plan without availability check');
+      setSelectedPlan(plan);
+      setTimeout(() => {
+        const step4Element = document.querySelector('[data-step="4"]');
+        if (step4Element) {
+          step4Element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 300);
+    }
   };
 
   // Handle file selection
@@ -373,10 +441,64 @@ export default function BookingFlow() {
 
   // Handle order confirmation
   const handleConfirmOrder = async () => {
-    if (!selectedDate || !selectedScreen || !selectedPlan || !designFile) {
-      alert('Please complete all steps before confirming');
+    // Validate all steps and redirect to incomplete step
+    if (!selectedDate) {
+      setIncompleteStep('date-selection');
+      setError('Please select a date to continue');
+      setTimeout(() => {
+        document.querySelector('[data-step="1"]')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 100);
       return;
     }
+    
+    if (!selectedScreen) {
+      setIncompleteStep('screen-selection');
+      setError('Please select a location to continue');
+      setTimeout(() => {
+        document.querySelector('[data-step="2"]')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 100);
+      return;
+    }
+    
+    if (!selectedPlan) {
+      setIncompleteStep('plan-selection');
+      setError('Please select a plan to continue');
+      setTimeout(() => {
+        document.querySelector('[data-step="3"]')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 100);
+      return;
+    }
+    
+    if (!designFile || !fileUploaded) {
+      setIncompleteStep('file-upload');
+      setError('Please upload your creative file to continue');
+      setTimeout(() => {
+        document.querySelector('[data-step="4"]')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 100);
+      return;
+    }
+    
+    if (!address.trim()) {
+      setIncompleteStep('order-details');
+      setError('Please enter your delivery address');
+      return;
+    }
+    
+    if (gstApplicable && (!companyName.trim() || !gstNumber.trim())) {
+      setIncompleteStep('order-details');
+      setError('Please fill in all GST details');
+      return;
+    }
+    
+    if (!termsAccepted) {
+      setIncompleteStep('order-details');
+      setError('Please accept the terms and conditions');
+      return;
+    }
+    
+    // Clear incomplete step indicator
+    setIncompleteStep(null);
+    setConfirmingOrder(true);
 
     try {
       console.log('🔍 Selected Plan:', selectedPlan);
@@ -447,13 +569,12 @@ export default function BookingFlow() {
           alert('Payment gateway not available. Please contact support.');
         }
       } else {
-        console.error('❌ Order creation failed:', result.error);
-        // Show error message but don't block the user completely
-        alert(result.error || 'Failed to create order. Please try again.');
+        setError(result.error || 'Failed to create order. Please try again.');
       }
     } catch (error) {
-      console.error('Order creation error:', error);
-      alert('Failed to create order. Please try again.');
+      setError('Failed to create order. Please try again.');
+    } finally {
+      setConfirmingOrder(false);
     }
   };
 
@@ -525,25 +646,21 @@ export default function BookingFlow() {
           console.log('🔍 Payment verification response:', verifyResponse);
           
           if (verifyResponse.success) {
-            console.log('✅ Payment verified successfully');
             // Redirect to success page
             window.location.href = `/booking-success?orderId=${order.id}&payment_id=${response.razorpay_payment_id}&verified=true`;
           } else {
-            console.error('❌ Payment verification failed:', verifyResponse.error);
-            alert('Payment verification failed. Please contact support.');
-            window.location.href = `/booking-failed?orderId=${order.id}&reason=verification_failed`;
+            // Use backend error message
+            const errorMessage = verifyResponse.error || verifyResponse.message || 'Payment verification failed';
+            window.location.href = `/booking-failed?orderId=${order.id}&message=${encodeURIComponent(errorMessage)}`;
           }
         } catch (error) {
-          console.error('❌ Payment verification error:', error);
-          alert('Payment verification failed. Please contact support.');
-          window.location.href = `/booking-failed?orderId=${order.id}&reason=verification_error`;
+          const errorMessage = error.message || 'Payment verification failed. Please contact support.';
+          window.location.href = `/booking-failed?orderId=${order.id}&message=${encodeURIComponent(errorMessage)}`;
         }
       },
       modal: {
         ondismiss: function() {
-          console.log('⚠️ Payment modal closed by user');
-          // Redirect to failed page if user closes modal
-          window.location.href = `/booking-failed?orderId=${order.id}&reason=payment_cancelled`;
+          window.location.href = `/booking-failed?orderId=${order.id}&message=${encodeURIComponent('Payment was cancelled')}`;
         }
       }
     };
@@ -607,7 +724,7 @@ export default function BookingFlow() {
 
 
         {/* Step 1: Date Selection */}
-        <div className={styles.step} data-step="1">
+        <div className={`${styles.step} ${incompleteStep === 'date-selection' ? styles.incompleteStep : ''}`} data-step="1">
           <h2>Step 1: Select Date</h2>
           <div className={styles.dateSelection}>
               <input
@@ -622,7 +739,7 @@ export default function BookingFlow() {
 
         {/* Step 2: Location Selection */}
         {selectedDate && (
-          <div className={styles.step} data-step="2">
+          <div className={`${styles.step} ${incompleteStep === 'screen-selection' ? styles.incompleteStep : ''}`} data-step="2">
             <h2>Step 2: Choose Location</h2>
             {loadingAvailability || loadingLocations ? (
               <div className={styles.loadingMessage}>
@@ -659,7 +776,10 @@ export default function BookingFlow() {
                     <h3>{location.name}</h3>
                       <p>{location.location}</p>
                       <p>{location.size}</p>
-                      <p>Available: {location.available_slots} slots</p>
+                      <p className={styles.slotInfo}>
+                        <span>Total Slots: {location.totalInventory || location.total_slots || 0}</span>
+                        <span className={styles.availableSlots}>Available: {location.available_slots || 0}</span>
+                      </p>
                   </div>
                   </div>
                 ))}
@@ -670,7 +790,7 @@ export default function BookingFlow() {
 
         {/* Step 3: Plan Selection */}
         {selectedScreen && (
-          <div className={styles.step} data-step="3">
+          <div className={`${styles.step} ${incompleteStep === 'plan-selection' ? styles.incompleteStep : ''}`} data-step="3">
             <h2>Step 3: Select Plan</h2>
             {loadingPlans ? (
               <div className={styles.loadingMessage}>
@@ -827,58 +947,100 @@ export default function BookingFlow() {
 
         {/* Step 4: File Upload */}
         {selectedPlan && (
-          <div className={styles.step} data-step="4">
+          <div className={`${styles.step} ${incompleteStep === 'file-upload' ? styles.incompleteStep : ''}`} data-step="4">
             <h2>Step 4: Upload Design</h2>
             
 
-            <div className={styles.uploadArea}>
-              <input
-                type="file"
-                id="file-upload"
-                onChange={handleFileSelect}
-                accept="image/*,video/*"
-                className={styles.fileInput}
-              />
-              <label htmlFor="file-upload" className={styles.uploadLabel}>
-                {designFile ? designFile.name : 'Choose File'}
-              </label>
-              {designFile && (
+            {!fileUploaded ? (
+              /* Before Upload - Show file selector */
+              <div className={styles.uploadArea}>
+                <input
+                  type="file"
+                  id="file-upload"
+                  onChange={handleFileSelect}
+                  accept="image/*,video/*"
+                  className={styles.fileInput}
+                />
+                <label htmlFor="file-upload" className={styles.uploadLabel}>
+                  <div className={styles.uploadIcon}>📁</div>
+                  <p className={styles.uploadText}>Click to Select Creative File</p>
+                  <small>Accepted formats: Images (JPG, PNG) or Videos (MP4)</small>
+                </label>
+                
+                {designFile && !fileUploaded && (
+                  <div className={styles.fileSelected}>
+                    <p className={styles.selectedFileName}>Selected: {designFile.name}</p>
+                    <div className={styles.uploadActions}>
+                      <button
+                        onClick={uploadFile}
+                        disabled={loading}
+                        className={styles.uploadButton}
+                      >
+                        {loading ? (
+                          <>
+                            <LoadingSpinner size="small" text="" className="inlineSpinner" />
+                            Uploading...
+                          </>
+                        ) : (
+                          'Upload Creative'
+                        )}
+                      </button>
+                      <button
+                        onClick={() => {
+                          setDesignFile(null);
+                          setDesignPreview(null);
+                          const fileInput = document.getElementById('file-upload');
+                          if (fileInput) fileInput.value = '';
+                        }}
+                        className={styles.cancelButton}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                )}
+                
+                {uploadError && (
+                  <div className={styles.errorMessage}>{uploadError}</div>
+                )}
+              </div>
+            ) : (
+              /* After Upload - Show preview with change option */
+              <div className={styles.uploadedSection}>
+                <div className={styles.uploadSuccess}>
+                  <div className={styles.successIcon}>✅</div>
+                  <p className={styles.successText}>Creative Uploaded Successfully!</p>
+                </div>
+                
                 <div className={styles.filePreview}>
                   <img src={designPreview} alt="Preview" className={styles.previewImage} />
+                  <p className={styles.fileName}>{designFile.name}</p>
                 </div>
-              )}
-              {designFile && (
+                
                 <button
-                  onClick={uploadFile}
-                  disabled={loading || fileUploaded}
-                  className={`${styles.uploadButton} ${fileUploaded ? styles.uploaded : ''}`}
+                  onClick={() => {
+                    setFileUploaded(false);
+                    setDesignFile(null);
+                    setDesignPreview(null);
+                    const fileInput = document.getElementById('file-upload');
+                    if (fileInput) fileInput.value = '';
+                  }}
+                  className={styles.changeFileButton}
                 >
-                  {loading ? (
-                    <>
-                      <LoadingSpinner size="small" text="" className="inlineSpinner" />
-                      Uploading...
-                    </>
-                  ) : fileUploaded ? (
-                    '✅ Successfully Uploaded'
-                  ) : (
-                    'Upload File'
-                  )}
-                  </button>
-              )}
-                </div>
-            {uploadError && (
-              <div className={styles.errorMessage}>{uploadError}</div>
-              )}
+                  Change Creative
+                </button>
+              </div>
+            )}
             </div>
         )}
 
         {/* Step 5: Order Details */}
         {designFile && (
-          <div className={styles.step} data-step="5">
+          <div className={`${styles.step} ${incompleteStep === 'order-details' ? styles.incompleteStep : ''}`} data-step="5">
             <h2>Step 5: Order Details</h2>
             <div className={styles.orderForm}>
               <div className={styles.formGroup}>
-                <label>Delivery Address</label>
+                <label>Delivery Address <span className={styles.required}>*</span></label>
                 <textarea
                   value={address}
                   onChange={(e) => setAddress(e.target.value)}
@@ -901,7 +1063,7 @@ export default function BookingFlow() {
               {gstApplicable && (
                 <>
                   <div className={styles.formGroup}>
-                    <label>Company Name</label>
+                    <label>Company Name <span className={styles.required}>*</span></label>
                 <input
                   type="text"
                       value={companyName}
@@ -911,7 +1073,7 @@ export default function BookingFlow() {
                     />
                   </div>
                   <div className={styles.formGroup}>
-                    <label>GST Number</label>
+                    <label>GST Number <span className={styles.required}>*</span></label>
                 <input
                   type="text"
                       value={gstNumber}
@@ -969,6 +1131,7 @@ export default function BookingFlow() {
                     >
                       terms and conditions
                     </button>
+                    <span className={styles.required}>*</span>
                   </span>
                 </label>
               </div>
@@ -1011,10 +1174,17 @@ export default function BookingFlow() {
 
                     <button
               onClick={handleConfirmOrder}
-              disabled={!address.trim() || (gstApplicable && (!companyName.trim() || !gstNumber.trim())) || !termsAccepted}
+              disabled={confirmingOrder || !designFile || !fileUploaded || !address.trim() || (gstApplicable && (!companyName.trim() || !gstNumber.trim())) || !termsAccepted}
               className={styles.confirmButton}
                     >
-              Confirm Order
+              {confirmingOrder ? (
+                <>
+                  <LoadingSpinner size="small" text="" className="inlineSpinner" />
+                  Creating Order...
+                </>
+              ) : (
+                'Confirm Order'
+              )}
                     </button>
                   </div>
         )}
