@@ -9,7 +9,6 @@ export const AuthRouteGuard = ({ children }) => {
 
   // If user is authenticated and trying to access auth pages, redirect to dashboard
   if (isAuthenticated()) {
-    console.log('🔒 AuthRouteGuard: Authenticated user trying to access auth page, redirecting to dashboard');
     return <Navigate to="/dashboard" replace />;
   }
 
@@ -24,7 +23,6 @@ export const ProtectedRoute = ({ children }) => {
 
   // If user is not authenticated and trying to access protected pages, redirect to login
   if (!isAuthenticated()) {
-    console.log('🔒 ProtectedRoute: Unauthenticated user trying to access protected page, redirecting to login');
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 

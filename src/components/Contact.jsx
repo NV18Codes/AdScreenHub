@@ -11,12 +11,10 @@ export default function Contact() {
   const [errorMessage, setErrorMessage] = useState('');
 
   const handleGoBack = () => {
-    console.log('Contact Back button clicked!');
     try {
       // Try React Router navigation first
       navigate('/');
     } catch (error) {
-      console.error('Navigation error:', error);
       // Fallback to direct URL change
       window.location.href = '/';
     }

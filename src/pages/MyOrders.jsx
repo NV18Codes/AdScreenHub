@@ -134,8 +134,6 @@ export default function MyOrders() {
 
   // Handle payment for pending orders
   const handleCompletePayment = (order) => {
-    console.log('💳 Opening payment for order:', order);
-    
     const razorpayOrderId = order.razorpay_order_id || order.razorpayOrderId;
     
     if (!razorpayOrderId) {
@@ -149,11 +147,9 @@ export default function MyOrders() {
       script.src = 'https://checkout.razorpay.com/v1/checkout.js';
       script.async = true;
       script.onload = () => {
-        console.log('✅ Razorpay script loaded');
         openRazorpayForOrder(order, razorpayOrderId);
       };
       script.onerror = () => {
-        console.error('❌ Failed to load Razorpay script');
         alert('Failed to load payment gateway. Please try again.');
       };
       document.body.appendChild(script);
@@ -179,24 +175,19 @@ export default function MyOrders() {
       },
       theme: RAZORPAY_CONFIG.theme,
       handler: async function (response) {
-        console.log('✅ Payment successful:', response);
         window.location.href = `/booking-success?orderId=${order.id}&payment_id=${response.razorpay_payment_id}`;
       },
       modal: {
         ondismiss: function() {
-          console.log('⚠️ Payment modal closed by user');
           alert('Payment cancelled. You can retry payment from My Orders page.');
         }
       }
     };
-
-    console.log('💳 Opening Razorpay with options:', options);
     
     try {
       const razorpay = new window.Razorpay(options);
       razorpay.open();
     } catch (error) {
-      console.error('❌ Error opening Razorpay:', error);
       alert('Failed to open payment gateway. Please try again.');
     }
   };
@@ -389,8 +380,6 @@ export default function MyOrders() {
                                 e.target.style.opacity = '1';
                               }}
                               onError={(e) => {
-                                console.error('Image failed to load:', imageUrl);
-                                console.error('Trying to load as background image...');
                                 // Try displaying URL as fallback
                                 const parent = e.target.parentElement;
                                 const fallback = document.createElement('div');
@@ -443,7 +432,6 @@ export default function MyOrders() {
                                 e.target.style.opacity = '1';
                               }}
                               onError={(e) => {
-                                console.error('Admin image failed to load:', adminImageUrl);
                                 const parent = e.target.parentElement;
                                 const fallback = document.createElement('div');
                                 fallback.style.cssText = 'padding: 1rem; background: #f0f9ff; border: 2px dashed #3b82f6; border-radius: 8px; color: #1e40af; font-size: 0.875rem; text-align: center;';

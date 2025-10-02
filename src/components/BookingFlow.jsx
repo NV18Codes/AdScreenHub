@@ -170,14 +170,7 @@ export default function BookingFlow() {
     // Check each plan in parallel
     const checks = plans.map(async (plan) => {
       try {
-        console.log('🔍 Checking plan availability:', { 
-          planId: plan.id, 
-          planName: plan.name,
-          duration_days: plan.duration_days,
-          duration: plan.duration
-        });
-        
-        // FIRST: Extract plan duration correctly
+        // Extract plan duration correctly
         let planDuration = plan.duration_days;
         if (!planDuration && plan.duration) {
           // Parse from string like "5 days"
@@ -188,9 +181,7 @@ export default function BookingFlow() {
         }
         if (!planDuration) planDuration = 1;
         
-        console.log('🔍 Extracted planDuration:', planDuration);
-        
-        // SECOND: Check user's own bookings for conflicts
+        // Check user's own bookings for conflicts
         const userConflict = checkUserBookingConflict(
           selectedScreen.id,
           selectedDate,
@@ -199,12 +190,11 @@ export default function BookingFlow() {
         
         if (userConflict) {
           // User has a conflicting booking - mark as unavailable
-          console.log('🚫 Plan marked unavailable due to user conflict:', plan.name);
           availabilityMap[plan.id] = false;
           return;
         }
         
-        // THIRD: Check backend availability
+        // Check backend availability
         const result = await dataAPI.checkAvailability(
           selectedScreen.id,
           plan.id,
@@ -214,16 +204,13 @@ export default function BookingFlow() {
         const actualData = result.data?.data || result.data;
         const isAvailable = actualData?.isAvailable === true;
         availabilityMap[plan.id] = isAvailable;
-        console.log(`${isAvailable ? '✅' : '🚫'} Plan ${plan.name} backend availability:`, isAvailable);
       } catch (error) {
-        console.error('❌ Error checking plan:', plan.name, error);
         // If check fails, assume unavailable (be safe)
         availabilityMap[plan.id] = false;
       }
     });
     
     await Promise.all(checks);
-    console.log('📊 Final availability map:', availabilityMap);
     setPlanAvailability(availabilityMap);
   };
 
@@ -258,7 +245,7 @@ export default function BookingFlow() {
           setLocations(availableLocations);
           setAvailabilityData({});
           setError('');
-      } else {
+        } else {
           // No locations in response - show backend message
           setLocations([]);
           setAvailabilityData({});
@@ -295,7 +282,6 @@ export default function BookingFlow() {
     }
     
     if (!isAuthenticated()) {
-      console.log('User not authenticated, please login to check availability');
       return;
     }
     
@@ -329,10 +315,7 @@ export default function BookingFlow() {
 
   // Check for overlapping bookings by the same user
   const checkUserBookingConflict = (locationId, startDate, durationDays) => {
-    console.log('🔍 Checking for conflicts:', { locationId, startDate, durationDays, ordersCount: orders?.length });
-    
     if (!orders || orders.length === 0) {
-      console.log('❌ No orders found');
       return null;
     }
     
@@ -340,23 +323,10 @@ export default function BookingFlow() {
     const newEnd = new Date(newStart);
     newEnd.setDate(newEnd.getDate() + durationDays - 1);
     
-    console.log('📅 New booking range:', { 
-      start: newStart.toISOString().split('T')[0], 
-      end: newEnd.toISOString().split('T')[0] 
-    });
-    
     // Check all user's orders for the same location
     const conflicts = orders.filter(order => {
-      console.log('🔍 Checking order:', { 
-        id: order.id, 
-        locationId: order.locationId || order.location_id,
-        startDate: order.startDate || order.start_date,
-        status: order.status 
-      });
-      
       // Only check non-cancelled orders
       if (order.status === 'Cancelled Display' || order.status === 'Payment Failed') {
-        console.log('⏭️ Skipping cancelled/failed order:', order.id);
         return false;
       }
       
@@ -365,11 +335,8 @@ export default function BookingFlow() {
       const newLocationId = Number(locationId);
       
       if (orderLocationId !== newLocationId) {
-        console.log('⏭️ Different location:', { orderLocationId, newLocationId });
         return false;
       }
-      
-      console.log('✅ Same location, checking dates...');
       
       // Get order's date range
       const orderStart = new Date(order.startDate || order.start_date);
@@ -377,26 +344,13 @@ export default function BookingFlow() {
       const orderEnd = new Date(orderStart);
       orderEnd.setDate(orderEnd.getDate() + orderDuration - 1);
       
-      console.log('📅 Existing order range:', { 
-        start: orderStart.toISOString().split('T')[0], 
-        end: orderEnd.toISOString().split('T')[0],
-        duration: orderDuration
-      });
-      
       // Check for overlap: ranges overlap if start1 <= end2 && start2 <= end1
       const hasOverlap = newStart <= orderEnd && orderStart <= newEnd;
-      console.log(hasOverlap ? '🚫 OVERLAP DETECTED!' : '✅ No overlap');
       
       return hasOverlap;
     });
     
-    if (conflicts.length > 0) {
-      console.log('🚫 Found conflicts:', conflicts.length);
-      return conflicts[0];
-    }
-    
-    console.log('✅ No conflicts found');
-    return null;
+    return conflicts.length > 0 ? conflicts[0] : null;
   };
 
   // Handle plan selection - only allow if plan is available (no error messages)
@@ -406,12 +360,10 @@ export default function BookingFlow() {
     
     if (!isAvailable) {
       // Plan is not available - silently ignore the click
-      console.log('🚫 Plan is unavailable, click ignored');
       return;
     }
     
     // Plan is available, proceed with selection
-    console.log('✅ Plan is available, selecting...');
     setSelectedPlan(plan);
     setError('');
     
@@ -474,35 +426,28 @@ export default function BookingFlow() {
     setUploadError('');
 
     try {
-      console.log('Attempting to get signed upload URL for:', designFile.name, designFile.type);
-      
       // Try to get signed URL from API
       const signedUrlResponse = await filesAPI.getSignedUploadUrl(
         designFile.name,
         designFile.type
       );
 
-      console.log('Signed URL Response:', signedUrlResponse);
-
       if (signedUrlResponse.success) {
         const uploadData = signedUrlResponse.data.data || signedUrlResponse.data;
-        console.log('Upload Data:', uploadData);
         
         if (uploadData && uploadData.signedUrl) {
         const { signedUrl, path: filePath, fileName } = uploadData;
 
         // Upload file to S3
-          console.log('Uploading to S3:', signedUrl);
         const uploadResponse = await fetch(signedUrl, {
           method: 'PUT',
-            body: designFile,
+          body: designFile,
           headers: {
-              'Content-Type': designFile.type,
+            'Content-Type': designFile.type,
           },
         });
 
           if (uploadResponse.ok) {
-            console.log('File uploaded successfully');
             setFileUploaded(true); // Mark as uploaded
             setShowUploadModal(false);
             setShowConfirmation(true);
@@ -516,11 +461,8 @@ export default function BookingFlow() {
         throw new Error(signedUrlResponse.error || 'Failed to get upload URL');
       }
     } catch (error) {
-      console.error('File Upload Error:', error);
-      
       // If it's a network error or API not available, allow user to proceed
       if (error.message.includes('Network error') || error.message.includes('Failed to get upload URL')) {
-        console.log('File upload API not available, proceeding without upload');
         setUploadError('File upload service temporarily unavailable. You can proceed with booking and upload the file later.');
         
         // Auto-proceed to confirmation after a delay
@@ -607,11 +549,6 @@ export default function BookingFlow() {
     setIncompleteStep(null);
 
     try {
-      console.log('🔍 Selected Plan:', selectedPlan);
-      console.log('🔍 Plan Price:', selectedPlan.price);
-      console.log('🔍 Discount Amount:', discountAmount);
-      console.log('🔍 Final Amount:', selectedPlan.price - (discountAmount || 0));
-      
       const orderData = {
         planId: selectedPlan.id,
         locationId: selectedScreen.id,
@@ -638,17 +575,9 @@ export default function BookingFlow() {
         location: selectedScreen.location
       };
 
-      console.log('🚀 Creating order with data:', orderData);
-      console.log('🚀 Order data price:', orderData.price);
-      console.log('🚀 Order data totalAmount:', orderData.totalAmount);
       const result = await createOrder(orderData);
-      console.log('📋 Order creation result:', result);
       
       if (result.success) {
-        console.log('✅ Order created successfully:', result.order);
-        console.log('🔍 API Response:', result.apiResponse);
-        console.log('🔍 Order object:', result.order);
-        
         setNewOrder(result.order);
         
         // Check if we have razorpay_order_id from API response
@@ -659,19 +588,10 @@ export default function BookingFlow() {
                                 result.order?.razorpay_order_id || 
                                 result.order?.razorpayOrderId;
         
-        console.log('🔍 Extracted Razorpay Order ID:', razorpayOrderId);
-        console.log('🔍 result.apiResponse?.data?.order?.razorpay_order_id:', result.apiResponse?.data?.order?.razorpay_order_id);
-        console.log('🔍 result.apiResponse?.data?.razorpayOrder?.id:', result.apiResponse?.data?.razorpayOrder?.id);
-        
         if (razorpayOrderId) {
-          console.log('💳 Razorpay Order ID found:', razorpayOrderId);
-          console.log('💳 Opening Razorpay payment modal...');
           // Show Razorpay payment modal
           handlePayment(result.order, razorpayOrderId);
       } else {
-          console.warn('⚠️ No Razorpay Order ID found');
-          console.warn('⚠️ This means the API did not return razorpay_order_id');
-          console.warn('⚠️ Check your backend /orders/initiate endpoint');
           alert('Payment gateway not available. Please contact support.');
         }
       } else {
@@ -686,19 +606,15 @@ export default function BookingFlow() {
 
   // Handle Razorpay payment
   const handlePayment = (order, razorpayOrderId) => {
-    console.log('💳 Initiating Razorpay payment for order:', order);
-    
     // Load Razorpay script if not already loaded
     if (!window.Razorpay) {
       const script = document.createElement('script');
       script.src = 'https://checkout.razorpay.com/v1/checkout.js';
       script.async = true;
       script.onload = () => {
-        console.log('✅ Razorpay script loaded');
         openRazorpay(order, razorpayOrderId);
       };
       script.onerror = () => {
-        console.error('❌ Failed to load Razorpay script');
         alert('Failed to load payment gateway. Please try again.');
       };
       document.body.appendChild(script);
@@ -708,16 +624,9 @@ export default function BookingFlow() {
   };
 
   const openRazorpay = (order, razorpayOrderId) => {
-    console.log('🎯 openRazorpay called with order:', order);
-    console.log('🎯 razorpayOrderId:', razorpayOrderId);
-    
     const user = JSON.parse(localStorage.getItem('user') || '{}');
     
     const amount = convertToPaise(order.totalAmount || order.amount || order.total_cost || 0);
-    
-    console.log('💰 Payment amount:', order.totalAmount || order.amount || order.total_cost, 'INR');
-    console.log('💰 Payment amount in paise:', amount);
-    console.log('🔑 Razorpay key:', RAZORPAY_KEY);
     
     const options = {
       key: RAZORPAY_KEY,
@@ -733,12 +642,6 @@ export default function BookingFlow() {
       },
       theme: RAZORPAY_CONFIG.theme,
         handler: async function (response) {
-        console.log('✅ Payment successful:', response);
-        console.log('💳 Payment details:', {
-          razorpay_payment_id: response.razorpay_payment_id,
-          razorpay_order_id: response.razorpay_order_id,
-          razorpay_signature: response.razorpay_signature
-        });
         
         // Call verify payment API
         try {
@@ -749,17 +652,15 @@ export default function BookingFlow() {
             razorpay_signature: response.razorpay_signature
           });
           
-          console.log('🔍 Payment verification response:', verifyResponse);
-          
           if (verifyResponse.success) {
             // Redirect to success page
             window.location.href = `/booking-success?orderId=${order.id}&payment_id=${response.razorpay_payment_id}&verified=true`;
-          } else {
+            } else {
             // Use backend error message
             const errorMessage = verifyResponse.error || verifyResponse.message || 'Payment verification failed';
             window.location.href = `/booking-failed?orderId=${order.id}&message=${encodeURIComponent(errorMessage)}`;
-          }
-        } catch (error) {
+            }
+          } catch (error) {
           const errorMessage = error.message || 'Payment verification failed. Please contact support.';
           window.location.href = `/booking-failed?orderId=${order.id}&message=${encodeURIComponent(errorMessage)}`;
         }
@@ -770,14 +671,11 @@ export default function BookingFlow() {
         }
       }
     };
-
-    console.log('💳 Opening Razorpay with options:', options);
     
     try {
       const razorpay = new window.Razorpay(options);
       razorpay.open();
     } catch (error) {
-      console.error('❌ Error opening Razorpay:', error);
       alert('Failed to open payment gateway. Please try again.');
     }
   };
@@ -804,7 +702,6 @@ export default function BookingFlow() {
         setDiscountAmount(0);
       }
     } catch (error) {
-      console.error('Coupon validation error:', error);
       setCouponError('Failed to validate coupon. Please try again.');
       setDiscountAmount(0);
     } finally {
@@ -873,7 +770,7 @@ export default function BookingFlow() {
               <div className={styles.screensGrid}>
                 {locations.map((location) => {
                   const isSelected = selectedScreen?.id === location.id;
-                  return (
+        return (
                   <div
                     key={location.id}
                     className={`${styles.screenCard} ${isSelected ? styles.selectedCard : ''}`}
@@ -933,7 +830,7 @@ export default function BookingFlow() {
                   const isAvailable = planAvailability[plan.id] !== false; // true or undefined = available
                   const isSelected = selectedPlan?.id === plan.id;
                   
-                  return (
+        return (
                   <div
                     key={plan.id}
                     className={`${styles.planCard} ${isSelected ? styles.selected : ''} ${!isAvailable ? styles.unavailable : ''}`}
@@ -1072,27 +969,27 @@ export default function BookingFlow() {
 
             {!fileUploaded ? (
               /* Before Upload - Show file selector */
-              <div className={styles.uploadArea}>
-                <input
-                  type="file"
-                  id="file-upload"
-                  onChange={handleFileSelect}
+            <div className={styles.uploadArea}>
+              <input
+                type="file"
+                id="file-upload"
+                onChange={handleFileSelect}
                   accept=".jpg,.jpeg,.png,image/jpeg,image/png"
-                  className={styles.fileInput}
-                />
-                <label htmlFor="file-upload" className={styles.uploadLabel}>
+                className={styles.fileInput}
+              />
+              <label htmlFor="file-upload" className={styles.uploadLabel}>
                   <div className={styles.uploadIcon}>📁</div>
                   <p className={styles.uploadText}>Click to Select Creative File</p>
                   <small>Accepted formats: JPG, JPEG, PNG</small>
-                </label>
+              </label>
                 
                 {designFile && !fileUploaded && (
                   <div className={styles.fileSelected}>
                     <p className={styles.selectedFileName}>Selected: {designFile.name}</p>
                     <div className={styles.uploadActions}>
-                      <button
-                        onClick={uploadFile}
-                        disabled={loading}
+                <button
+                  onClick={uploadFile}
+                  disabled={loading}
                         className={styles.uploadButton}
                       >
                         {loading ? (
@@ -1104,7 +1001,7 @@ export default function BookingFlow() {
                           'Upload Creative'
                         )}
                       </button>
-                      <button
+                  <button
                         onClick={() => {
                           setDesignFile(null);
                           setDesignPreview(null);
@@ -1114,22 +1011,22 @@ export default function BookingFlow() {
                         className={styles.cancelButton}
                       >
                         Cancel
-                      </button>
+                  </button>
                     </div>
-                  </div>
-                )}
-                
+                </div>
+              )}
+              
                 {uploadError && (
                   <div className={styles.errorMessage}>{uploadError}</div>
-                )}
-              </div>
+              )}
+            </div>
             ) : (
               /* After Upload - Show preview with change option */
               <div className={styles.uploadedSection}>
                 <div className={styles.uploadSuccess}>
                   <div className={styles.successIcon}>✅</div>
                   <p className={styles.successText}>Creative Uploaded Successfully!</p>
-                </div>
+          </div>
                 
                 <div className={styles.filePreview}>
                   <img src={designPreview} alt="Preview" className={styles.previewImage} />
@@ -1240,7 +1137,7 @@ export default function BookingFlow() {
                   />
                   <span>
                     I agree to the{' '}
-                    <button
+              <button
                       type="button"
                       onClick={(e) => {
                         e.preventDefault();
@@ -1249,11 +1146,11 @@ export default function BookingFlow() {
                       className={styles.termsLink}
                     >
                       terms and conditions
-                    </button>
+              </button>
                     <span className={styles.required}>*</span>
                   </span>
                 </label>
-              </div>
+            </div>
           </div>
           </div>
         )}
@@ -1348,7 +1245,7 @@ export default function BookingFlow() {
                   </div>
               </div>
             )}
-
+            
         {/* Terms and Conditions Modal */}
         {showTermsModal && (
           <div className={styles.noticeOverlay}>
@@ -1360,12 +1257,12 @@ export default function BookingFlow() {
                   className={styles.closeNoticeButton}
                 >
                   ×
-                </button>
-              </div>
+            </button>
+          </div>
               <div className={styles.noticeContent}>
                 <div className={styles.scrollableContent}>
                   <TermsContent />
-                </div>
+          </div>
                 <div className={styles.noticeActions}>
                   <button 
                     onClick={() => setShowTermsModal(false)} 
@@ -1373,11 +1270,11 @@ export default function BookingFlow() {
                   >
                     Back to Booking
                   </button>
-                </div>
-              </div>
-            </div>
           </div>
-        )}
+          </div>
+          </div>
+        </div>
+      )}
           </div>
     </div>
   );

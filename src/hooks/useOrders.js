@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { mockOrders, mockScreens } from '../data/mockData';
 import { generateOrderId, manageStorageQuota } from '../utils/validation';
 import { ordersAPI } from '../config/api';
 
@@ -138,23 +137,16 @@ export const useOrders = (userId) => {
 
   // Calculate available inventory for a specific screen and date
   const getAvailableInventory = (screenId, date) => {
-    const screen = mockScreens.find(s => s.id === screenId);
-    if (!screen) return 0;
-
-    // Count existing bookings for this screen and date
-    const bookedCount = orders.filter(order => 
-      order.screenId === screenId && 
-      order.displayDate === date && 
-      order.status !== 'Cancelled Display'
-    ).length;
-
-    // Return available inventory
-    return Math.max(0, screen.totalInventory - bookedCount);
+    // This should be handled by backend API
+    // Keeping function for backward compatibility
+    return 0;
   };
 
   // Check if screen has available inventory for a specific date
   const hasAvailableInventory = (screenId, date) => {
-    return getAvailableInventory(screenId, date) > 0;
+    // This should be handled by backend API
+    // Keeping function for backward compatibility
+    return true;
   };
 
   // Create new order - Call API to initiate order
@@ -384,12 +376,9 @@ export const useOrders = (userId) => {
 
   // Get all booked screens for a specific date
   const getBookedScreensForDate = (date) => {
-    return orders
-      .filter(order => 
-        order.displayDate === date && 
-        order.status !== 'Cancelled Display'
-      )
-      .map(order => order.screenId);
+    // This should be handled by backend API
+    // Keeping function for backward compatibility
+    return [];
   };
 
   // Verify payment for an order
