@@ -51,6 +51,7 @@ export default function BookingFlow() {
   const [incompleteStep, setIncompleteStep] = useState(null);
   const [confirmingOrder, setConfirmingOrder] = useState(false);
   const [planAvailability, setPlanAvailability] = useState({}); // Track which plans are available
+  const [processingPayment, setProcessingPayment] = useState(false); // Track payment verification
 
   // Fetch plans when selectedScreen changes
   useEffect(() => {
@@ -84,22 +85,18 @@ export default function BookingFlow() {
   const transformLocationData = (apiLocations) => {
     if (!Array.isArray(apiLocations)) return [];
     
-    const screenDetails = {
-      1: { size: "20ft x 10ft", pixels: "1920px x 1080px", location: "MG Road" },
-      2: { size: "15ft x 8ft", pixels: "1440px x 720px", location: "Koramangala" },
-      3: { size: "25ft x 12ft", pixels: "2560px x 1280px", location: "Indiranagar" }
-    };
-    
     return apiLocations.map(location => ({
       id: location.id || '',
       name: location.name || 'Unknown Location',
       description: location.description || '',
-      location: screenDetails[location.id]?.location || location.name || 'Unknown Location',
-      size: screenDetails[location.id]?.size || "1440px x 720px",
-      pixels: screenDetails[location.id]?.pixels || "1440px x 720px",
-      orientation: "Landscape",
-      image: "/Banner.png", // Use Banner.png for all screens
+      location: location.name || 'Unknown Location',
+      size: location.size || 'N/A',
+      pixels: location.pixels || 'N/A',
+      orientation: location.orientation || 'Landscape',
+      aspect_ratio: location.aspect_ratio || 'N/A',
+      image: location.display_image_url || '/Banner.png',
       totalInventory: location.total_slots || 0,
+      total_slots: location.total_slots || 0,
       available_slots: location.available_slots || 0
     }));
   };
@@ -642,6 +639,8 @@ export default function BookingFlow() {
       },
       theme: RAZORPAY_CONFIG.theme,
         handler: async function (response) {
+        // Show loading immediately after payment completion
+        setProcessingPayment(true);
         
         // Call verify payment API
         try {
@@ -653,14 +652,16 @@ export default function BookingFlow() {
           });
           
           if (verifyResponse.success) {
-            // Redirect to success page
+            // Keep loading visible while redirecting
             window.location.href = `/booking-success?orderId=${order.id}&payment_id=${response.razorpay_payment_id}&verified=true`;
             } else {
             // Use backend error message
+            setProcessingPayment(false);
             const errorMessage = verifyResponse.error || verifyResponse.message || 'Payment verification failed';
             window.location.href = `/booking-failed?orderId=${order.id}&message=${encodeURIComponent(errorMessage)}`;
             }
           } catch (error) {
+          setProcessingPayment(false);
           const errorMessage = error.message || 'Payment verification failed. Please contact support.';
           window.location.href = `/booking-failed?orderId=${order.id}&message=${encodeURIComponent(errorMessage)}`;
         }
@@ -719,6 +720,17 @@ export default function BookingFlow() {
 
         return (
     <div className={styles.bookingFlow}>
+      {/* Payment Processing Overlay */}
+      {processingPayment && (
+        <div className={styles.paymentProcessingOverlay}>
+          <div className={styles.paymentProcessingContent}>
+            <div className={styles.spinner}></div>
+            <h2>Processing Payment...</h2>
+            <p>Please wait while we verify your payment</p>
+          </div>
+        </div>
+      )}
+      
       <div className={styles.container}>
         <div className={styles.header}>
           <h1>Book Your Ad Slot</h1>
