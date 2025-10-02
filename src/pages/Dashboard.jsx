@@ -45,11 +45,7 @@ export default function Dashboard() {
   const [loadingAvailability, setLoadingAvailability] = useState(false);
   const [availabilityData, setAvailabilityData] = useState({});
   
-  // Debug: Log user object to see available fields
-  console.log('User object:', user);
-  console.log('Available user fields:', user ? Object.keys(user) : 'No user data');
-  if (import.meta.env.DEV) {
-  }
+  // User data is available in the 'user' object from AuthContext
 
   // Transform API plan data to match frontend format
   const transformPlanData = (apiPlans) => {

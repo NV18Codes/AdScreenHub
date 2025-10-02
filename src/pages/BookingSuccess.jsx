@@ -52,6 +52,8 @@ const BookingSuccess = () => {
   }, [orderId]);
 
   const fetchOrderDetails = async () => {
+    setLoading(true); // Ensure loading is shown
+    
     try {
       const response = await ordersAPI.getOrders();
       
@@ -93,6 +95,7 @@ const BookingSuccess = () => {
           
           setOrder(transformedOrder);
           setError('');
+          setLoading(false); // Stop loading after data is set
         } else {
           // Check localStorage as fallback
           const localOrders = JSON.parse(localStorage.getItem('adscreenhub_orders') || '[]');
@@ -101,17 +104,19 @@ const BookingSuccess = () => {
           if (localOrder) {
             setOrder(localOrder);
             setError('');
+            setLoading(false); // Stop loading after data is set
           } else {
             setError('Order not found');
+            setLoading(false); // Stop loading on error
           }
         }
       } else {
         setError(response.error || 'Failed to fetch order details');
+        setLoading(false); // Stop loading on error
       }
     } catch (err) {
       setError('Network error. Please try again.');
-    } finally {
-      setLoading(false);
+      setLoading(false); // Stop loading on error
     }
   };
 

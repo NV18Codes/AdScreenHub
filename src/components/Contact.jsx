@@ -1,11 +1,14 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import LoadingSpinner from './LoadingSpinner';
+import { contactAPI } from '../config/api';
 import styles from '../styles/Contact.module.css';
 
 export default function Contact() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
 
   const handleGoBack = () => {
     console.log('Contact Back button clicked!');
@@ -22,30 +25,46 @@ export default function Contact() {
     e.preventDefault();
     
     setLoading(true);
+    setSuccessMessage('');
+    setErrorMessage('');
     
     try {
       // Get form data
       const formData = new FormData(e.target);
       const data = {
-        name: formData.get('name'),
+        fullName: formData.get('name'),
         email: formData.get('email'),
-        phone: formData.get('phone'),
+        phoneNumber: formData.get('phone'),
         message: formData.get('message')
       };
       
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Call the API
+      const result = await contactAPI.submitContactForm(data);
       
-      // Show success message
-      alert(`Thank you ${data.name}! Your message has been sent. We'll get back to you soon at ${data.email}.`);
-      
-      // Reset form
-      e.target.reset();
-      
-      console.log('Contact form submitted:', data);
+      if (result.success) {
+        // Show success message
+        setSuccessMessage(
+          result.data?.message || 
+          `Thank you ${data.fullName}! Your message has been sent. We'll get back to you soon at ${data.email}.`
+        );
+        
+        // Reset form
+        e.target.reset();
+        
+        // Clear success message after 5 seconds
+        setTimeout(() => {
+          setSuccessMessage('');
+        }, 5000);
+      } else {
+        // Show error message
+        setErrorMessage(
+          result.error || 
+          result.message || 
+          'Failed to send message. Please try again.'
+        );
+      }
     } catch (error) {
-      console.error('Error submitting form:', error);
-      alert('Failed to send message. Please try again.');
+      setErrorMessage('Failed to send message. Please check your connection and try again.');
     } finally {
       setLoading(false);
     }
@@ -66,6 +85,20 @@ export default function Contact() {
       </div>
       
       <div className={styles.scrollableContent}>
+        
+        {/* Success Message */}
+        {successMessage && (
+          <div className={styles.successMessage}>
+            ✓ {successMessage}
+          </div>
+        )}
+        
+        {/* Error Message */}
+        {errorMessage && (
+          <div className={styles.errorMessage}>
+            ✗ {errorMessage}
+          </div>
+        )}
         
         <div className="bg-gray-50 rounded-2xl p-8 shadow-lg">
           <form onSubmit={handleSubmit} className="space-y-6">

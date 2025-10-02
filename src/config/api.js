@@ -38,6 +38,9 @@ export const API_ENDPOINTS = {
     // Alternative patterns to try
     CREATE: '/orders/create',
     BOOK: '/orders/book'
+  },
+  CONTACT: {
+    SUBMIT: '/contact'
   }
 };
 
@@ -169,6 +172,11 @@ export const ordersAPI = {
   
   getUserOrders: () => 
     makeRequest('/orders/user', null, 'GET')
+};
+
+export const contactAPI = {
+  submitContactForm: (formData) => 
+    makeRequest(API_ENDPOINTS.CONTACT.SUBMIT, formData)
 };
 
 export const couponsAPI = {
