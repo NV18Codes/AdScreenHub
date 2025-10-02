@@ -302,13 +302,17 @@ export default function MyOrders() {
                     </div>
 
                     <div className={styles.orderInfo}>
-                      <div className={styles.infoRow}>
-                        <span className={styles.infoLabel}>Location:</span>
-                        <span className={styles.infoValue}>{order.locations?.name || order.locationName || order.location || 'N/A'}</span>
+                      <div className={`${styles.infoRow} ${styles.highlightRow}`}>
+                        <span className={styles.infoLabel}>📍 Location:</span>
+                        <span className={`${styles.infoValue} ${styles.highlightValue}`}>
+                          {order.locations?.name || order.locationName || order.location || 'N/A'}
+                        </span>
                       </div>
-                      <div className={styles.infoRow}>
-                        <span className={styles.infoLabel}>Plan:</span>
-                        <span className={styles.infoValue}>{order.plans?.name || order.planName || 'N/A'}</span>
+                      <div className={`${styles.infoRow} ${styles.highlightRow}`}>
+                        <span className={styles.infoLabel}>📋 Plan:</span>
+                        <span className={`${styles.infoValue} ${styles.highlightValue}`}>
+                          {order.plans?.name || order.planName || 'N/A'}
+                        </span>
                       </div>
                       <div className={styles.infoRow}>
                         <span className={styles.infoLabel}>Display Date:</span>
@@ -325,6 +329,18 @@ export default function MyOrders() {
                       <div className={styles.infoRow}>
                         <span className={styles.infoLabel}>Ordered:</span>
                         <span className={styles.infoValue}>{formatDate(order.created_at || order.createdAt || order.orderDate)}</span>
+                      </div>
+                      
+                      {/* Admin Remarks - Read Only (Always show for demo, or when available) */}
+                      <div className={styles.remarksSection}>
+                        <label className={styles.remarksLabel}>💬 Admin Remarks:</label>
+                        <textarea
+                          value={order.remarks || 'No remarks from admin yet.'}
+                          readOnly
+                          className={styles.remarksTextarea}
+                          rows={3}
+                          placeholder="Admin will add remarks here..."
+                        />
                       </div>
                     </div>
 
@@ -353,22 +369,112 @@ export default function MyOrders() {
 
                   {/* Right Side - Creative Preview (if available) */}
                   <div className={styles.orderRight}>
-                    {order.creatives && order.creatives.length > 0 && order.creatives[0].publicUrl ? (
-                      <div className={styles.creativePreview}>
-                        <img 
-                          src={order.creatives[0].publicUrl} 
-                          alt="Creative Preview"
-                          className={styles.previewImage}
-                        />
-                        <p className={styles.fileName}>{order.creatives[0].file_name}</p>
-                      </div>
-                    ) : (
-                      <div className={styles.creativePreviewPlaceholder}>
-                        <div className={styles.placeholderIcon}>🎨</div>
-                        <p>Creative File</p>
-                        <small>{order.creatives?.[0]?.file_name || 'Pending Upload'}</small>
-                      </div>
-                    )}
+                    {/* User's Uploaded Creative - Always Show */}
+                    <div className={styles.imageSection}>
+                      <h4 className={styles.imageSectionTitle}>🎨 Your Creative</h4>
+                      {(() => {
+                        const imageUrl = order.creatives?.[0]?.image_url || 
+                                       order.creatives?.[0]?.publicUrl || 
+                                       order.creative_image_url;
+                        
+                        return imageUrl ? (
+                          <div className={styles.creativePreview}>
+                            <img 
+                              src={imageUrl} 
+                              alt="Your Creative"
+                              className={styles.previewImage}
+                              crossOrigin="anonymous"
+                              loading="lazy"
+                              onLoad={(e) => {
+                                e.target.style.opacity = '1';
+                              }}
+                              onError={(e) => {
+                                console.error('Image failed to load:', imageUrl);
+                                console.error('Trying to load as background image...');
+                                // Try displaying URL as fallback
+                                const parent = e.target.parentElement;
+                                const fallback = document.createElement('div');
+                                fallback.style.cssText = 'padding: 1rem; background: #f0f9ff; border: 2px dashed #3b82f6; border-radius: 8px; color: #1e40af; font-size: 0.875rem; text-align: center;';
+                                fallback.innerHTML = `
+                                  <p style="margin: 0 0 0.5rem 0; font-weight: 600;">📸 Image Available</p>
+                                  <p style="margin: 0; font-size: 0.75rem; word-break: break-all;">${order.creatives?.[0]?.file_name || 'creative.png'}</p>
+                                  <p style="margin: 0.5rem 0 0 0; font-size: 0.75rem; color: #64748b;">Click download to view</p>
+                                `;
+                                e.target.style.display = 'none';
+                                parent.insertBefore(fallback, e.target.nextSibling);
+                              }}
+                              style={{ opacity: 0, transition: 'opacity 0.3s ease' }}
+                            />
+                            <p className={styles.fileName}>{order.creatives?.[0]?.file_name || 'creative.png'}</p>
+                            <button
+                              onClick={() => {
+                                window.open(imageUrl, '_blank');
+                              }}
+                              className={`${styles.btn} ${styles.btnDownload}`}
+                            >
+                              View/Download
+                            </button>
+                          </div>
+                        ) : (
+                          <div className={styles.creativePreviewPlaceholder}>
+                            <div className={styles.placeholderIcon}>🎨</div>
+                            <p>Creative File</p>
+                            <small>{order.creatives?.[0]?.file_name || 'Pending Upload'}</small>
+                          </div>
+                        );
+                      })()}
+                    </div>
+
+                    {/* Admin's Preview Image - Always Show Section */}
+                    <div className={styles.imageSection}>
+                      <h4 className={styles.imageSectionTitle}>🖼️ Admin Preview</h4>
+                      {(() => {
+                        const adminImageUrl = order.ad_desplay_url || order.admin_preview_url;
+                        
+                        return adminImageUrl ? (
+                          <div className={styles.creativePreview}>
+                            <img 
+                              src={adminImageUrl} 
+                              alt="Admin Preview"
+                              className={styles.previewImage}
+                              crossOrigin="anonymous"
+                              loading="lazy"
+                              onLoad={(e) => {
+                                e.target.style.opacity = '1';
+                              }}
+                              onError={(e) => {
+                                console.error('Admin image failed to load:', adminImageUrl);
+                                const parent = e.target.parentElement;
+                                const fallback = document.createElement('div');
+                                fallback.style.cssText = 'padding: 1rem; background: #f0f9ff; border: 2px dashed #3b82f6; border-radius: 8px; color: #1e40af; font-size: 0.875rem; text-align: center;';
+                                fallback.innerHTML = `
+                                  <p style="margin: 0 0 0.5rem 0; font-weight: 600;">📸 Admin Preview Available</p>
+                                  <p style="margin: 0.5rem 0 0 0; font-size: 0.75rem; color: #64748b;">Click download to view</p>
+                                `;
+                                e.target.style.display = 'none';
+                                parent.insertBefore(fallback, e.target.nextSibling);
+                              }}
+                              style={{ opacity: 0, transition: 'opacity 0.3s ease' }}
+                            />
+                            <p className={styles.fileName}>Preview from Admin</p>
+                            <button
+                              onClick={() => {
+                                window.open(adminImageUrl, '_blank');
+                              }}
+                              className={`${styles.btn} ${styles.btnDownload}`}
+                            >
+                              View/Download
+                            </button>
+                          </div>
+                        ) : (
+                          <div className={styles.creativePreviewPlaceholder}>
+                            <div className={styles.placeholderIcon}>⏳</div>
+                            <p>Admin Preview</p>
+                            <small>Admin will upload preview soon</small>
+                          </div>
+                        );
+                      })()}
+                    </div>
                   </div>
                 </div>
               </div>

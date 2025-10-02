@@ -9,8 +9,8 @@ import TermsContent from './TermsContent';
 import styles from '../styles/BookingFlow.module.css';
 
 export default function BookingFlow() {
-  const { createOrder, hasAvailableInventory, getAvailableInventory, getBookedScreensForDate } = useOrders();
-  const { isAuthenticated } = useAuth();
+  const { createOrder, hasAvailableInventory, getAvailableInventory, getBookedScreensForDate, orders } = useOrders();
+  const { isAuthenticated, user } = useAuth();
   const [selectedDate, setSelectedDate] = useState('');
   const [selectedScreen, setSelectedScreen] = useState(null);
   const [selectedPlan, setSelectedPlan] = useState(null);
@@ -50,6 +50,7 @@ export default function BookingFlow() {
   const [showTermsModal, setShowTermsModal] = useState(false);
   const [incompleteStep, setIncompleteStep] = useState(null);
   const [confirmingOrder, setConfirmingOrder] = useState(false);
+  const [planAvailability, setPlanAvailability] = useState({}); // Track which plans are available
 
   // Fetch plans when selectedScreen changes
   useEffect(() => {
@@ -143,6 +144,9 @@ export default function BookingFlow() {
         const transformedPlans = transformPlanData(plansData);
         setPlans(transformedPlans);
         setError(''); // Clear any previous errors
+        
+        // Check availability for each plan
+        checkPlanAvailability(transformedPlans);
       } else {
         // No plans available - use backend error message
         const errorMessage = result.message || result.error || 'No plans available for this location';
@@ -155,6 +159,72 @@ export default function BookingFlow() {
     } finally {
       setLoadingPlans(false);
     }
+  };
+
+  // Check availability for all plans (including user conflict check)
+  const checkPlanAvailability = async (plans) => {
+    if (!selectedScreen || !selectedDate) return;
+    
+    const availabilityMap = {};
+    
+    // Check each plan in parallel
+    const checks = plans.map(async (plan) => {
+      try {
+        console.log('🔍 Checking plan availability:', { 
+          planId: plan.id, 
+          planName: plan.name,
+          duration_days: plan.duration_days,
+          duration: plan.duration
+        });
+        
+        // FIRST: Extract plan duration correctly
+        let planDuration = plan.duration_days;
+        if (!planDuration && plan.duration) {
+          // Parse from string like "5 days"
+          const match = plan.duration.match(/(\d+)\s*day/i);
+          if (match) {
+            planDuration = parseInt(match[1]);
+          }
+        }
+        if (!planDuration) planDuration = 1;
+        
+        console.log('🔍 Extracted planDuration:', planDuration);
+        
+        // SECOND: Check user's own bookings for conflicts
+        const userConflict = checkUserBookingConflict(
+          selectedScreen.id,
+          selectedDate,
+          planDuration
+        );
+        
+        if (userConflict) {
+          // User has a conflicting booking - mark as unavailable
+          console.log('🚫 Plan marked unavailable due to user conflict:', plan.name);
+          availabilityMap[plan.id] = false;
+          return;
+        }
+        
+        // THIRD: Check backend availability
+        const result = await dataAPI.checkAvailability(
+          selectedScreen.id,
+          plan.id,
+          selectedDate
+        );
+        
+        const actualData = result.data?.data || result.data;
+        const isAvailable = actualData?.isAvailable === true;
+        availabilityMap[plan.id] = isAvailable;
+        console.log(`${isAvailable ? '✅' : '🚫'} Plan ${plan.name} backend availability:`, isAvailable);
+      } catch (error) {
+        console.error('❌ Error checking plan:', plan.name, error);
+        // If check fails, assume unavailable (be safe)
+        availabilityMap[plan.id] = false;
+      }
+    });
+    
+    await Promise.all(checks);
+    console.log('📊 Final availability map:', availabilityMap);
+    setPlanAvailability(availabilityMap);
   };
 
   // Fetch location availability for selected date
@@ -257,74 +327,101 @@ export default function BookingFlow() {
     }, 500);
   };
 
-  // Handle plan selection - check availability for the full duration
-  const handlePlanSelect = async (plan) => {
-    setError(''); // Clear any previous errors
+  // Check for overlapping bookings by the same user
+  const checkUserBookingConflict = (locationId, startDate, durationDays) => {
+    console.log('🔍 Checking for conflicts:', { locationId, startDate, durationDays, ordersCount: orders?.length });
     
-    // CRITICAL: Check availability for this location + plan + date combination
-    // This checks if ALL days in the plan duration are available
-    if (selectedScreen && selectedDate) {
-      setLoadingPlans(true);
-      
-      try {
-        console.log(`🔍 Checking availability: Location ${selectedScreen.id}, Plan ${plan.id}, Date ${selectedDate}`);
-        
-        const availabilityCheck = await dataAPI.checkAvailability(
-          selectedScreen.id,
-          plan.id,
-          selectedDate
-        );
-        
-        // Response is double-nested: availabilityCheck.data.data.isAvailable
-        const actualData = availabilityCheck.data?.data || availabilityCheck.data;
-        const isAvailable = actualData?.isAvailable;
-        const backendMessage = availabilityCheck.data?.message || availabilityCheck.message;
-        
-        console.log('🔍 Checking availability result:');
-        console.log('  - isAvailable:', isAvailable);
-        console.log('  - Backend message:', backendMessage);
-        
-        // Check if slot is NOT available
-        if (!availabilityCheck.success || isAvailable === false) {
-          // STOP - Slot is NOT available
-          const errorMessage = backendMessage || 
-                               'This plan is not available for the selected location and date range. Please choose another plan or date.';
-          setError(errorMessage);
-          setLoadingPlans(false);
-          console.log('❌ BLOCKED - Plan NOT available:', errorMessage);
-          return; // Don't select the plan if not available
-        }
-        
-        // Availability check passed (isAvailable === true)
-        console.log('✅ Plan IS available, proceeding...');
-        setSelectedPlan(plan);
-        setError('');
-        setLoadingPlans(false);
-        
-        // Auto-scroll to step 4 after plan selection
-        setTimeout(() => {
-          const step4Element = document.querySelector('[data-step="4"]');
-          if (step4Element) {
-            step4Element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-          }
-        }, 300);
-        
-      } catch (error) {
-        console.error('❌ Availability check error:', error);
-        setError('Network error while checking availability. Please try again.');
-        setLoadingPlans(false);
-      }
-    } else {
-      // Missing screen or date - shouldn't happen but handle it
-      console.warn('⚠️ Missing screen or date, selecting plan without availability check');
-      setSelectedPlan(plan);
-      setTimeout(() => {
-        const step4Element = document.querySelector('[data-step="4"]');
-        if (step4Element) {
-          step4Element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-      }, 300);
+    if (!orders || orders.length === 0) {
+      console.log('❌ No orders found');
+      return null;
     }
+    
+    const newStart = new Date(startDate);
+    const newEnd = new Date(newStart);
+    newEnd.setDate(newEnd.getDate() + durationDays - 1);
+    
+    console.log('📅 New booking range:', { 
+      start: newStart.toISOString().split('T')[0], 
+      end: newEnd.toISOString().split('T')[0] 
+    });
+    
+    // Check all user's orders for the same location
+    const conflicts = orders.filter(order => {
+      console.log('🔍 Checking order:', { 
+        id: order.id, 
+        locationId: order.locationId || order.location_id,
+        startDate: order.startDate || order.start_date,
+        status: order.status 
+      });
+      
+      // Only check non-cancelled orders
+      if (order.status === 'Cancelled Display' || order.status === 'Payment Failed') {
+        console.log('⏭️ Skipping cancelled/failed order:', order.id);
+        return false;
+      }
+      
+      // Check if it's the same location (convert both to numbers for comparison)
+      const orderLocationId = Number(order.locationId || order.location_id);
+      const newLocationId = Number(locationId);
+      
+      if (orderLocationId !== newLocationId) {
+        console.log('⏭️ Different location:', { orderLocationId, newLocationId });
+        return false;
+      }
+      
+      console.log('✅ Same location, checking dates...');
+      
+      // Get order's date range
+      const orderStart = new Date(order.startDate || order.start_date);
+      const orderDuration = order.planDuration || order.plans?.duration_days || 1;
+      const orderEnd = new Date(orderStart);
+      orderEnd.setDate(orderEnd.getDate() + orderDuration - 1);
+      
+      console.log('📅 Existing order range:', { 
+        start: orderStart.toISOString().split('T')[0], 
+        end: orderEnd.toISOString().split('T')[0],
+        duration: orderDuration
+      });
+      
+      // Check for overlap: ranges overlap if start1 <= end2 && start2 <= end1
+      const hasOverlap = newStart <= orderEnd && orderStart <= newEnd;
+      console.log(hasOverlap ? '🚫 OVERLAP DETECTED!' : '✅ No overlap');
+      
+      return hasOverlap;
+    });
+    
+    if (conflicts.length > 0) {
+      console.log('🚫 Found conflicts:', conflicts.length);
+      return conflicts[0];
+    }
+    
+    console.log('✅ No conflicts found');
+    return null;
+  };
+
+  // Handle plan selection - only allow if plan is available (no error messages)
+  const handlePlanSelect = async (plan) => {
+    // Check if plan is marked as unavailable
+    const isAvailable = planAvailability[plan.id] !== false;
+    
+    if (!isAvailable) {
+      // Plan is not available - silently ignore the click
+      console.log('🚫 Plan is unavailable, click ignored');
+      return;
+    }
+    
+    // Plan is available, proceed with selection
+    console.log('✅ Plan is available, selecting...');
+    setSelectedPlan(plan);
+    setError('');
+    
+    // Auto-scroll to step 4 after plan selection
+    setTimeout(() => {
+      const step4Element = document.querySelector('[data-step="4"]');
+      if (step4Element) {
+        step4Element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }, 300);
   };
 
   // Handle file selection
@@ -441,10 +538,14 @@ export default function BookingFlow() {
 
   // Handle order confirmation
   const handleConfirmOrder = async () => {
+    // Show loading immediately
+    setConfirmingOrder(true);
+    
     // Validate all steps and redirect to incomplete step
     if (!selectedDate) {
       setIncompleteStep('date-selection');
       setError('Please select a date to continue');
+      setConfirmingOrder(false);
       setTimeout(() => {
         document.querySelector('[data-step="1"]')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }, 100);
@@ -454,6 +555,7 @@ export default function BookingFlow() {
     if (!selectedScreen) {
       setIncompleteStep('screen-selection');
       setError('Please select a location to continue');
+      setConfirmingOrder(false);
       setTimeout(() => {
         document.querySelector('[data-step="2"]')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }, 100);
@@ -463,6 +565,7 @@ export default function BookingFlow() {
     if (!selectedPlan) {
       setIncompleteStep('plan-selection');
       setError('Please select a plan to continue');
+      setConfirmingOrder(false);
       setTimeout(() => {
         document.querySelector('[data-step="3"]')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }, 100);
@@ -472,6 +575,7 @@ export default function BookingFlow() {
     if (!designFile || !fileUploaded) {
       setIncompleteStep('file-upload');
       setError('Please upload your creative file to continue');
+      setConfirmingOrder(false);
       setTimeout(() => {
         document.querySelector('[data-step="4"]')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }, 100);
@@ -481,24 +585,26 @@ export default function BookingFlow() {
     if (!address.trim()) {
       setIncompleteStep('order-details');
       setError('Please enter your delivery address');
+      setConfirmingOrder(false);
       return;
     }
     
     if (gstApplicable && (!companyName.trim() || !gstNumber.trim())) {
       setIncompleteStep('order-details');
       setError('Please fill in all GST details');
+      setConfirmingOrder(false);
       return;
     }
     
     if (!termsAccepted) {
       setIncompleteStep('order-details');
       setError('Please accept the terms and conditions');
+      setConfirmingOrder(false);
       return;
     }
     
     // Clear incomplete step indicator
     setIncompleteStep(null);
-    setConfirmingOrder(true);
 
     try {
       console.log('🔍 Selected Plan:', selectedPlan);
@@ -765,12 +871,15 @@ export default function BookingFlow() {
               </div>
             ) : (
               <div className={styles.screensGrid}>
-                {locations.map((location) => (
+                {locations.map((location) => {
+                  const isSelected = selectedScreen?.id === location.id;
+                  return (
                   <div
                     key={location.id}
-                    className={styles.screenCard}
+                    className={`${styles.screenCard} ${isSelected ? styles.selectedCard : ''}`}
                     onClick={() => handleScreenSelect(location)}
                   >
+                    {isSelected && <div className={styles.selectedBadge}>✓ Selected</div>}
                     <img src={location.image} alt={location.name} className={styles.screenImage} />
                     <div className={styles.screenInfo}>
                     <h3>{location.name}</h3>
@@ -782,7 +891,8 @@ export default function BookingFlow() {
                       </p>
                   </div>
                   </div>
-                ))}
+                  );
+                })}
                 </div>
               )}
             </div>
@@ -819,12 +929,20 @@ export default function BookingFlow() {
               </div>
             ) : (
               <div className={styles.plansGrid}>
-                {plans.map((plan) => (
+                {plans.map((plan) => {
+                  const isAvailable = planAvailability[plan.id] !== false; // true or undefined = available
+                  const isSelected = selectedPlan?.id === plan.id;
+                  
+                  return (
                   <div
                     key={plan.id}
-                    className={`${styles.planCard} ${selectedPlan?.id === plan.id ? styles.selected : ''}`}
-                    onClick={() => handlePlanSelect(plan)}
+                    className={`${styles.planCard} ${isSelected ? styles.selected : ''} ${!isAvailable ? styles.unavailable : ''}`}
+                    onClick={() => isAvailable && handlePlanSelect(plan)}
+                    style={{ cursor: isAvailable ? 'pointer' : 'not-allowed' }}
                   >
+                    {isSelected && <div className={styles.selectedBadge}>✓ Selected</div>}
+                    {!isAvailable && <div className={styles.unavailableBadge}>Not Available</div>}
+                    
                     <div className={styles.planHeader}>
                     <h3>{plan.name}</h3>
                       <div className={styles.planPrice}>₹{(plan.price || 0).toLocaleString('en-IN')}</div>
@@ -839,7 +957,8 @@ export default function BookingFlow() {
                       ))}
                     </ul>
                   </div>
-                ))}
+                  );
+                })}
                 </div>
               )}
             </div>
@@ -958,13 +1077,13 @@ export default function BookingFlow() {
                   type="file"
                   id="file-upload"
                   onChange={handleFileSelect}
-                  accept="image/*,video/*"
+                  accept=".jpg,.jpeg,.png,image/jpeg,image/png"
                   className={styles.fileInput}
                 />
                 <label htmlFor="file-upload" className={styles.uploadLabel}>
                   <div className={styles.uploadIcon}>📁</div>
                   <p className={styles.uploadText}>Click to Select Creative File</p>
-                  <small>Accepted formats: Images (JPG, PNG) or Videos (MP4)</small>
+                  <small>Accepted formats: JPG, JPEG, PNG</small>
                 </label>
                 
                 {designFile && !fileUploaded && (

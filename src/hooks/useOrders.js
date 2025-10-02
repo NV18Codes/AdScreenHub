@@ -28,9 +28,13 @@ const processOrdersData = (data) => {
     locationId: order.location_id,
     planId: order.plan_id,
     startDate: order.start_date,
+    start_date: order.start_date, // Keep original for compatibility
     endDate: order.end_date,
+    end_date: order.end_date, // Keep original for compatibility
     displayDate: order.start_date, // For backward compatibility
     totalAmount: order.total_cost || order.final_amount,
+    total_cost: order.total_cost, // Keep original for compatibility
+    final_amount: order.final_amount, // Keep original for compatibility
     amount: order.total_cost || order.final_amount, // For backward compatibility
     price: order.total_cost || order.final_amount, // For backward compatibility
     status: order.status,
@@ -41,22 +45,39 @@ const processOrdersData = (data) => {
     razorpaySignature: order.razorpay_signature,
     razorpay_signature: order.razorpay_signature, // For backward compatibility
     createdAt: order.created_at,
+    created_at: order.created_at, // Keep original for compatibility
     orderDate: order.created_at, // For backward compatibility
     updatedAt: order.updated_at,
-    deliveryAddress: order.delivery_address ? JSON.parse(order.delivery_address) : null,
+    updated_at: order.updated_at, // Keep original for compatibility
+    deliveryAddress: order.delivery_address ? (typeof order.delivery_address === 'string' ? JSON.parse(order.delivery_address) : order.delivery_address) : null,
     gstInfo: order.gst_info,
+    gst_info: order.gst_info, // Keep original for compatibility
     couponCode: order.coupon_code,
     orderUid: order.order_uid,
-    // Plan information
+    order_uid: order.order_uid, // Keep original for compatibility
+    
+    // NEW: Keep original nested objects from API
+    plans: order.plans, // Full plans object
+    locations: order.locations, // Full locations object
+    creatives: order.creatives, // Full creatives array
+    
+    // NEW: Image URLs and remarks
+    creative_image_url: order.creative_image_url,
+    ad_desplay_url: order.ad_desplay_url,
+    remarks: order.remarks,
+    
+    // Plan information (for backward compatibility)
     planName: order.plans?.name || 'Unknown Plan',
     planDescription: order.plans?.description || '',
     planDuration: order.plans?.duration_days || 1,
     planFeatures: order.plans?.features?.features || [],
     planSlots: order.plans?.features?.slots || 0,
     planDurationSec: order.plans?.features?.duration_sec || 10,
-    // Location information (we'll need to fetch this separately or include it in the API)
-    locationName: `Location ${order.location_id}`, // Placeholder until we get location data
-    location: `Location ${order.location_id}`, // For backward compatibility
+    
+    // Location information
+    locationName: order.locations?.name || `Location ${order.location_id}`,
+    location: order.locations?.name || `Location ${order.location_id}`, // For backward compatibility
+    
     // Payment verification status
     paymentVerified: !!order.razorpay_payment_id,
     paymentId: order.razorpay_payment_id
