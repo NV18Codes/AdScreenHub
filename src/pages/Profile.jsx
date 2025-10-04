@@ -9,6 +9,12 @@ export default function Profile() {
   const [isEditing, setIsEditing] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deletePassword, setDeletePassword] = useState('');
+  const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
+
+  const showToast = (message, type = 'success') => {
+    setToast({ show: true, message, type });
+    setTimeout(() => setToast({ show: false, message: '', type: 'success' }), 4000);
+  };
   const [isDeleting, setIsDeleting] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
@@ -503,7 +509,7 @@ export default function Profile() {
         if (response.success) {
           // Account deleted successfully on backend
           logout();
-          alert('Account deleted successfully.');
+          showToast('Account deleted successfully.', 'success');
           return;
         } else {
           throw new Error(response.error || 'Failed to delete account');
@@ -535,7 +541,7 @@ export default function Profile() {
           
           // Show success message
           setTimeout(() => {
-            alert('Account deleted successfully.');
+            showToast('Account deleted successfully.', 'success');
           }, 100);
           
           return;
@@ -984,6 +990,15 @@ export default function Profile() {
               </div>
             </div>
           </div>
+        )}
+
+        {/* Toast Notification */}
+        {toast.show && (
+          <Toast
+            message={toast.message}
+            type={toast.type}
+            onClose={() => setToast({ show: false, message: '', type: 'success' })}
+          />
         )}
       </div>
     </div>

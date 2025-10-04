@@ -4,6 +4,7 @@ import { useAuth } from "../contexts/AuthContext";
 import axios from "axios";
 import { API_BASE_URL, authAPI } from "../config/api";
 import LoadingSpinner from "./LoadingSpinner";
+import Toast from "./Toast";
 
 const API_BASE = `${API_BASE_URL}/auth`;
 
@@ -46,6 +47,12 @@ export default function AuthFlow() {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmNewPassword, setShowConfirmNewPassword] = useState(false);
   const [agreeToPrivacy, setAgreeToPrivacy] = useState(false);
+  const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
+
+  const showToast = (message, type = 'success') => {
+    setToast({ show: true, message, type });
+    setTimeout(() => setToast({ show: false, message: '', type: 'success' }), 4000);
+  };
 
   // Load tokens from localStorage on component mount
   useEffect(() => {
@@ -439,7 +446,7 @@ export default function AuthFlow() {
       });
       
       // Redirect to dashboard immediately
-      setSuccess("Registration successful! Welcome to AdScreenHub!");
+        showToast("Registration successful! Welcome to AdScreenHub!", 'success');
       
       // Force immediate redirect to avoid React state timing issues
       setTimeout(() => {
@@ -498,7 +505,7 @@ export default function AuthFlow() {
         if (res.data.data.user && res.data.data.session.access_token) {
         const loginSuccess = login(res.data.data.user, res.data.data.session.access_token);
         if (loginSuccess) {
-          setSuccess("Logged in successfully! Redirecting...");
+          showToast("Logged in successfully! Redirecting...", 'success');
           localStorage.setItem("authToken", res.data.data.session.access_token);
           localStorage.setItem("user", JSON.stringify(res.data.data.user));
         } else {
@@ -677,6 +684,30 @@ export default function AuthFlow() {
     setSuccess("");
   };
 
+  const handleChangeEmail = () => {
+    setStep("email");
+    setEmail("");
+    setPhone("");
+    setOtp("");
+    setEmailToken("");
+    setPhoneToken("");
+    localStorage.removeItem('emailToken');
+    localStorage.removeItem('phoneToken');
+    localStorage.removeItem('pendingEmail');
+    setError("");
+    setSuccess("");
+  };
+
+  const handleChangePhone = () => {
+    setStep("phone");
+    setPhone("");
+    setOtp("");
+    setPhoneToken("");
+    localStorage.removeItem('phoneToken');
+    setError("");
+    setSuccess("");
+  };
+
   const renderStep = () => {
     switch (step) {
       case "email":
@@ -759,7 +790,7 @@ export default function AuthFlow() {
               </button>
               
               <button
-                onClick={() => setStep("email")}
+                onClick={handleChangeEmail}
                 className="w-full bg-gray-200 text-gray-800 py-3 px-4 rounded-lg hover:bg-gray-300 font-medium"
               >
                 Change Email
@@ -880,7 +911,7 @@ export default function AuthFlow() {
                 
                 <button
                   type="button"
-                  onClick={goBack}
+                  onClick={handleChangePhone}
                   className="w-full bg-gray-200 text-gray-800 py-3 px-4 rounded-lg hover:bg-gray-300 font-medium"
                 >
                   Change Phone Number
@@ -1343,6 +1374,15 @@ export default function AuthFlow() {
               <p className="text-green-600 text-sm font-medium">{success}</p>
             </div>
           </div>
+        )}
+
+        {/* Toast Notification */}
+        {toast.show && (
+          <Toast
+            message={toast.message}
+            type={toast.type}
+            onClose={() => setToast({ show: false, message: '', type: 'success' })}
+          />
         )}
       </div>
     </div>

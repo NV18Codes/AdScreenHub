@@ -11,13 +11,8 @@ export default function Contact() {
   const [errorMessage, setErrorMessage] = useState('');
 
   const handleGoBack = () => {
-    try {
-      // Try React Router navigation first
-      navigate('/');
-    } catch (error) {
-      // Fallback to direct URL change
-      window.location.href = '/';
-    }
+    // Go back to the previous page
+    navigate(-1);
   };
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -71,6 +66,9 @@ export default function Contact() {
   return (
     <div className={styles.container}>
       <div className={styles.header}>
+        <button onClick={handleGoBack} className={styles.backButton}>
+          ← Back
+        </button>
         <h1 className={styles.title}>Contact Us</h1>
         <p className={styles.subtitle}>Get in touch with us using the form or send us an e-mail to : <a href="mailto:info@adscreenhub.com" className={styles.emailLink}>info@adscreenhub.com</a></p>
       </div>

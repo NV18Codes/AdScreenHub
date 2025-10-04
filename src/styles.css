@@ -179,6 +179,11 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
+  
+  /* Ensure consistent font family across all elements */
+  *, *::before, *::after {
+    font-family: inherit;
+  }
 }
 
 @layer components {

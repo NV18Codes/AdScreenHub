@@ -69,7 +69,10 @@ const processOrdersData = (data) => {
     // Plan information (for backward compatibility)
     planName: order.plans?.name || 'Unknown Plan',
     planDescription: order.plans?.description || '',
-    planDuration: order.plans?.duration_days || 1,
+    planDuration: order.plans?.duration_days || order.duration_days || 
+                  (order.plans?.name === 'IMPACT' ? 3 : order.plans?.name === 'THRIVE' ? 5 : 1),
+    duration_days: order.duration_days || order.plans?.duration_days || 
+                   (order.plans?.name === 'IMPACT' ? 3 : order.plans?.name === 'THRIVE' ? 5 : 1),
     planFeatures: order.plans?.features?.features || [],
     planSlots: order.plans?.features?.slots || 0,
     planDurationSec: order.plans?.features?.duration_sec || 10,
@@ -174,6 +177,7 @@ export const useOrders = () => {
         locationId: (orderData.locationId || orderData.screenId || '').toString(),
         startDate: orderData.startDate || orderData.displayDate || '',
         price: orderData.totalAmount || orderData.price || 0,
+        duration_days: orderData.duration_days || orderData.planDuration || 1,
         creativeFilePath: orderData.creativeFilePath || orderData.designFile || '',
         creativeFileName: orderData.creativeFileName || orderData.designFile || '',
         deliveryAddress: {
@@ -216,7 +220,7 @@ export const useOrders = () => {
           id: apiOrderId || generateOrderId(),
           userId: userId,
           orderDate: new Date().toISOString().split('T')[0],
-          status: 'Payment Pending',
+          status: 'Payment Failed',
           screenName: orderData.screenName || 'Unknown Screen',
           location: orderData.location || 'Unknown Location',
           adminProofImage: null,
@@ -272,7 +276,7 @@ export const useOrders = () => {
           id: fallbackOrderId,
           userId: userId,
           orderDate: new Date().toISOString().split('T')[0],
-          status: 'Payment Pending',
+          status: 'Payment Failed',
           orderUid: fallbackOrderId,
           order_uid: fallbackOrderId,
           screenName: orderData.screenName || 'Unknown Screen',
@@ -426,13 +430,13 @@ export const useOrders = () => {
       if (response.success) {
 
         
-        // Update order status to confirmed
+        // Update order status to pending approval
         // NOTE: This is where inventory should be decreased in the backend - after successful payment
         const updatedOrders = orders.map(order => 
           order.id === orderId 
             ? { 
                 ...order, 
-                status: 'Payment Completed - Pending Approval', 
+                status: 'Pending Approval', 
                 paymentVerified: true, 
                 paymentId: razorpayPaymentId,
                 razorpayPaymentId: razorpayPaymentId,
@@ -444,10 +448,34 @@ export const useOrders = () => {
         localStorage.setItem('adscreenhub_orders', JSON.stringify(updatedOrders));
         return { success: true, data: response.data };
       } else {
+        // Update order status to payment failed
+        const updatedOrders = orders.map(order => 
+          order.id === orderId 
+            ? { 
+                ...order, 
+                status: 'Payment Failed',
+                paymentVerified: false
+              }
+            : order
+        );
+        setOrders(updatedOrders);
+        localStorage.setItem('adscreenhub_orders', JSON.stringify(updatedOrders));
 
         return { success: false, error: response.error || 'Payment verification failed' };
       }
     } catch (error) {
+      // Update order status to payment failed on error
+      const updatedOrders = orders.map(order => 
+        order.id === orderId 
+          ? { 
+              ...order, 
+              status: 'Payment Failed',
+              paymentVerified: false
+            }
+          : order
+      );
+      setOrders(updatedOrders);
+      localStorage.setItem('adscreenhub_orders', JSON.stringify(updatedOrders));
 
       return { success: false, error: error.message || 'Payment verification failed' };
     }

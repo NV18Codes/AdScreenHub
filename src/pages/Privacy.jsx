@@ -6,20 +6,16 @@ export default function Privacy() {
   const navigate = useNavigate();
 
   const handleGoBack = () => {
-    console.log('Privacy Back button clicked!');
-    try {
-      // Try React Router navigation first
-      navigate('/');
-    } catch (error) {
-      console.error('Navigation error:', error);
-      // Fallback to direct URL change
-      window.location.href = '/';
-    }
+    // Go back to the previous page (registration form)
+    navigate(-1);
   };
 
   return (
     <div className={styles.container}>
       <div className={styles.header}>
+        <button onClick={handleGoBack} className={styles.backButton}>
+          ← Back
+        </button>
         <h1 className={styles.title}>Privacy Policy</h1>
         <p className={styles.subtitle}>How we collect, use, and protect your information</p>
       </div>

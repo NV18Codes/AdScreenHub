@@ -5,6 +5,7 @@ import { getUserDisplayName, getUserEmail } from '../utils/userUtils';
 import { useNavigate } from 'react-router-dom';
 import { couponsAPI, dataAPI } from '../config/api';
 import LoadingSpinner from '../components/LoadingSpinner';
+import Toast from '../components/Toast';
 import styles from '../styles/Dashboard.module.css';
 
 export default function Dashboard() {
@@ -34,6 +35,12 @@ export default function Dashboard() {
   const [couponError, setCouponError] = useState('');
   const [validatingCoupon, setValidatingCoupon] = useState(false);
   const [confirmingBooking, setConfirmingBooking] = useState(false);
+  const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
+
+  const showToast = (message, type = 'success') => {
+    setToast({ show: true, message, type });
+    setTimeout(() => setToast({ show: false, message: '', type: 'success' }), 4000);
+  };
   const user = JSON.parse(localStorage.getItem('user'));
   const displayName = getUserDisplayName(user);
   
@@ -218,22 +225,22 @@ export default function Dashboard() {
   // Allow booking even with invalid coupon - just ignore the discount
   const handleConfirmBooking = async () => {
     if (!designFile) {
-      alert('Please upload your design first');
+      showToast('Please upload your design first', 'error');
       return;
     }
 
     if (!address.trim()) {
-      alert('Please enter your address');
+      showToast('Please enter your address', 'error');
       return;
     }
 
     if (gstApplicable && (!companyName.trim() || !gstNumber.trim())) {
-      alert('Please enter company name and GST number when GST is applicable');
+      showToast('Please enter company name and GST number when GST is applicable', 'error');
       return;
     }
 
     if (!termsAccepted) {
-      alert('Please accept the terms and conditions');
+      showToast('Please accept the terms and conditions', 'error');
       return;
     }
 
@@ -299,11 +306,11 @@ export default function Dashboard() {
         // Clear localStorage
         localStorage.removeItem('adscreenhub_design');
       } else {
-        alert(result.error || 'Failed to create order. Please try again.');
+        showToast(result.error || 'Failed to create order. Please try again.', 'error');
       }
     } catch (error) {
       console.error('Error creating order:', error);
-      alert('Failed to create order. Please try again.');
+      showToast('Failed to create order. Please try again.', 'error');
     } finally {
       setConfirmingBooking(false);
     }
@@ -391,7 +398,7 @@ export default function Dashboard() {
 
   const handleBooking = () => {
     if (!selectedDate || !selectedScreen || !selectedPlan) {
-      alert('Please select date, screen, and plan');
+      showToast('Please select date, screen, and plan', 'error');
       return;
     }
     
@@ -1108,6 +1115,15 @@ export default function Dashboard() {
         )}
 
         {/* Storage Manager Modal - Removed for simplicity */}
+
+        {/* Toast Notification */}
+        {toast.show && (
+          <Toast
+            message={toast.message}
+            type={toast.type}
+            onClose={() => setToast({ show: false, message: '', type: 'success' })}
+          />
+        )}
       </div>
     </div>
   );

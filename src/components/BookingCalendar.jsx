@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { isDateDisabled, validateFile, generateOrderId, compressImage, manageStorageQuota } from '../utils/validation';
 import { couponsAPI, dataAPI } from '../config/api';
 import LoadingSpinner from './LoadingSpinner';
+import Toast from './Toast';
 import styles from '../styles/BookingCalendar.module.css';
 
 export default function BookingCalendar() {
@@ -41,6 +42,12 @@ export default function BookingCalendar() {
   const [availabilityData, setAvailabilityData] = useState({});
   const [slotAvailabilityStatus, setSlotAvailabilityStatus] = useState({});
   const [showUnavailableModal, setShowUnavailableModal] = useState(false);
+  const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
+
+  const showToast = (message, type = 'success') => {
+    setToast({ show: true, message, type });
+    setTimeout(() => setToast({ show: false, message: '', type: 'success' }), 4000);
+  };
 
   // Transform API plan data to match frontend format
   const transformPlanData = (apiPlans) => {
@@ -270,22 +277,22 @@ export default function BookingCalendar() {
 
   const handleConfirmBooking = async () => {
     if (!designFile) {
-      alert('Please upload your design first');
+      showToast('Please upload your design first', 'error');
       return;
     }
 
     if (!address.trim()) {
-      alert('Please enter your address');
+      showToast('Please enter your address', 'error');
       return;
     }
 
     if (gstApplicable && (!companyName.trim() || !gstNumber.trim())) {
-      alert('Please enter company name and GST number when GST is applicable');
+      showToast('Please enter company name and GST number when GST is applicable', 'error');
       return;
     }
 
     if (!termsAccepted) {
-      alert('Please accept the terms and conditions');
+      showToast('Please accept the terms and conditions', 'error');
       return;
     }
 
@@ -332,7 +339,7 @@ export default function BookingCalendar() {
       
       localStorage.removeItem('adscreenhub_design');
     } else {
-      alert(result.error || 'Failed to create order. Please try again.');
+      showToast(result.error || 'Failed to create order. Please try again.', 'error');
     }
   };
 
@@ -383,7 +390,7 @@ export default function BookingCalendar() {
 
   const handleBooking = () => {
     if (!selectedDate || !selectedScreen || !selectedPlan) {
-      alert('Please select date, screen, and plan');
+      showToast('Please select date, screen, and plan', 'error');
       return;
     }
     
@@ -671,6 +678,15 @@ export default function BookingCalendar() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Toast Notification */}
+      {toast.show && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast({ show: false, message: '', type: 'success' })}
+        />
       )}
     </div>
   );
