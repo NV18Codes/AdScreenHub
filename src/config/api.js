@@ -23,7 +23,8 @@ export const API_ENDPOINTS = {
     GET_LOCATIONS_BY_DATE: '/data/locations/availability',
     GET_PLANS: '/data/plans',
     GET_PLANS_BY_LOCATION: '/data/plans/location',
-    CHECK_AVAILABILITY: '/data/availability'
+    CHECK_AVAILABILITY: '/data/availability',
+    PRECHECK_PLAN_AVAILABILITY: '/data/plans/precheck-availability'
   },
   FILES: {
     GET_SIGNED_UPLOAD_URL: '/files/signed-upload-url',
@@ -150,7 +151,14 @@ export const dataAPI = {
     makeRequest(`${API_ENDPOINTS.DATA.GET_PLANS_BY_LOCATION}/${locationId}`, null, 'GET'),
   
   checkAvailability: (locationId, planId, startDate) => 
-    makeRequest(`${API_ENDPOINTS.DATA.CHECK_AVAILABILITY}/${locationId}?planId=${planId}&startDate=${startDate}`, null, 'GET')
+    makeRequest(`${API_ENDPOINTS.DATA.CHECK_AVAILABILITY}/${locationId}?planId=${planId}&startDate=${startDate}`, null, 'GET'),
+  
+  precheckPlanAvailability: (locationId, startDate, durationDays) => 
+    makeRequest(API_ENDPOINTS.DATA.PRECHECK_PLAN_AVAILABILITY, { 
+      locationId, 
+      startDate, 
+      durationDays 
+    })
 };
 
 // File Upload APIs - REAL ENDPOINTS ONLY
