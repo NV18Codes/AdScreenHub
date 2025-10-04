@@ -22,7 +22,8 @@ export default function BookingFlow() {
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [newOrder, setNewOrder] = useState(null);
   const [showWarningModal, setShowWarningModal] = useState(false);
-  
+  const [signedUrlResponse, setSignedUrlResponse] = useState(null);
+
   // New form fields
   const [address, setAddress] = useState('');
   const [gstApplicable, setGstApplicable] = useState(false);
@@ -381,14 +382,16 @@ export default function BookingFlow() {
       setShowImportantNotice(true);
       
       // Store the file temporarily
-      setDesignFile(file);
+      setDesignFile(file); 
       setUploadError('');
-      
+      console.log("file info", file);
       // Create preview
       const reader = new FileReader();
       reader.onload = (e) => {
         setDesignPreview(e.target.result);
+        console.log("file preview", e.target.result);
       };
+
       reader.readAsDataURL(file);
     }
   };
@@ -431,7 +434,7 @@ export default function BookingFlow() {
 
       if (signedUrlResponse.success) {
         const uploadData = signedUrlResponse.data.data || signedUrlResponse.data;
-        
+        setSignedUrlResponse(uploadData); 
         if (uploadData && uploadData.signedUrl) {
         const { signedUrl, path: filePath, fileName } = uploadData;
 
@@ -552,7 +555,7 @@ export default function BookingFlow() {
         screenId: selectedScreen.id, // Keep for backward compatibility
         startDate: selectedDate,
         displayDate: selectedDate, // Keep for backward compatibility
-        creativeFilePath: designFile.name, // This should be the actual file path from upload
+        creativeFilePath: signedUrlResponse.path, // This should be the actual file path from upload
         creativeFileName: designFile.name,
         designFile: designFile.name, // Keep for backward compatibility
         totalAmount: selectedPlan.price - (discountAmount || 0),
