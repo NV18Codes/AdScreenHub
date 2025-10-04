@@ -44,7 +44,7 @@ export default function ForgotPassword() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4" style={{ paddingTop: '6rem' }}>
+    <div className="min-h-screen flex items-center justify-center bg-white p-4" style={{ paddingTop: '6rem' }}>
       <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md">
         <div className="space-y-6">
           <div className="text-center">

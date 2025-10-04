@@ -82,7 +82,7 @@ export default function Showcase() {
                  zIndex: i % 3,
                }}
              >
-              <div className="w-full h-full bg-gradient-to-br from-blue-400 via-purple-400 to-pink-400 p-1 rounded-2xl shadow-xl">
+              <div className="w-full h-full bg-gradient-to-br from-blue-400 to-blue-600 p-1 rounded-2xl shadow-xl">
                 <div className="w-full h-full bg-white rounded-xl overflow-hidden relative">
                   <img
                     src={ad.image}
