@@ -6,7 +6,7 @@ import { RAZORPAY_KEY, RAZORPAY_CONFIG, convertToPaise } from '../config/razorpa
 import styles from '../styles/MyOrders.module.css';
 
 export default function MyOrders() {
-  const { orders, loading, cancelOrder, reviseOrder, refreshOrders } = useOrders();
+  const { orders, loading, reviseOrder, refreshOrders } = useOrders();
   const navigate = useNavigate();
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [showImageModal, setShowImageModal] = useState(false);
@@ -25,10 +25,10 @@ export default function MyOrders() {
     try {
       const result = await refreshOrders();
       if (!result.success) {
-        setRefreshError(result.error || 'Failed to refresh orders');
+        setRefreshError('Unable to load orders. Please try again.');
       }
     } catch (error) {
-      setRefreshError('Failed to refresh orders');
+      setRefreshError('Unable to load orders. Please try again.');
     } finally {
       setRefreshing(false);
     }
@@ -55,11 +55,6 @@ export default function MyOrders() {
     return order.status === 'Revise Your Design';
   };
 
-  const handleCancelOrder = (orderId) => {
-    if (window.confirm('Are you sure you want to cancel this order?')) {
-      cancelOrder(orderId);
-    }
-  };
 
   const handleReviseOrder = (orderId) => {
     const order = orders.find(o => o.id === orderId);
@@ -284,7 +279,7 @@ export default function MyOrders() {
                   <div className={styles.orderLeft}>
                     <div className={styles.orderHeader}>
                       <div>
-                        <h3>Order #{safeOrders.length - index}</h3>
+                        <h3>Order #{order.orderUid || order.order_uid || `ORD-${order.id}`}</h3>
                         <p className={styles.orderUid}>{order.orderUid || order.order_uid || `ORD-${order.id}`}</p>
                       </div>
                       <div className={`${styles.orderStatus} ${getStatusColor(order.status)}`}>
@@ -345,6 +340,7 @@ export default function MyOrders() {
                           Complete Payment
                         </button>
                       )}
+                      
                       
                       {/* Revise Design Button */}
                       {canReviseOrder(order) && (
@@ -485,7 +481,7 @@ export default function MyOrders() {
               ×
             </button>
             <div className={styles.modalHeader}>
-              <h2>Order #{safeOrders.length - safeOrders.findIndex(o => o.id === selectedOrder.id)}</h2>
+              <h2>Order #{selectedOrder.orderUid || selectedOrder.order_uid || `ORD-${selectedOrder.id}`}</h2>
               <p>Your Advertisement</p>
             </div>
             <div className={styles.modalImage}>
@@ -522,7 +518,7 @@ export default function MyOrders() {
             
             <div className={styles.modalHeader}>
               <h2>Revise Your Design</h2>
-              <p>Upload a new design for Order #{safeOrders.length - safeOrders.findIndex(o => o.id === reviseOrderId)}</p>
+              <p>Upload a new design for Order #{reviseOrder?.orderUid || reviseOrder?.order_uid || `ORD-${reviseOrderId}`}</p>
             </div>
 
             <div className={styles.uploadSection}>

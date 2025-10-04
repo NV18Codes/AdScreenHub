@@ -20,13 +20,6 @@ export default function FAQ() {
   return (
     <div className={styles.container}>
       <div className={styles.header}>
-        <button 
-          onClick={handleGoBack} 
-          className={styles.backButton}
-          type="button"
-        >
-          ← Go Back
-        </button>
         <h1 className={styles.title}>Frequently Asked Questions</h1>
         <p className={styles.subtitle}>Everything you need to know about AdScreenHub's LED digital screen advertising platform</p>
       </div>

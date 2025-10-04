@@ -16,7 +16,11 @@ export default function DashboardOverview() {
   const activeOrders = orders.filter(order => order.status === 'In Display').length;
   const completedOrders = orders.filter(order => order.status === 'Completed Display').length;
   const totalSpent = orders
-    .filter(order => order.status !== 'Cancelled Display')
+    .filter(order => 
+      order.status !== 'Cancelled Display' && 
+      order.status !== 'Pending Payment' &&
+      order.status !== 'Payment Failed'
+    )
     .reduce((sum, order) => sum + order.totalAmount, 0);
 
   // Get recent orders (last 3)

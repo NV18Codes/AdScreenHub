@@ -45,6 +45,7 @@ export default function AuthFlow() {
   const [confirmNewPassword, setConfirmNewPassword] = useState("");
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmNewPassword, setShowConfirmNewPassword] = useState(false);
+  const [agreeToPrivacy, setAgreeToPrivacy] = useState(false);
 
   // Load tokens from localStorage on component mount
   useEffect(() => {
@@ -151,9 +152,7 @@ export default function AuthFlow() {
       case 'phone':
         setPhone(sanitizedValue);
         // Clear OTP when phone number changes
-        if (otp) {
-          setOtp('');
-        }
+        setOtp('');
         break;
       case 'otp':
         setOtp(sanitizedValue);
@@ -352,6 +351,11 @@ export default function AuthFlow() {
       return;
     }
     
+    if (!agreeToPrivacy) {
+      setError("Please agree to the Privacy Policy to continue");
+      return;
+    }
+    
     setLoading(true);
     setError("");
     setSuccess("");
@@ -420,13 +424,28 @@ export default function AuthFlow() {
       localStorage.removeItem('pendingEmail');
       
       // Use the login function from AuthContext
-      login(newUserData, sessionToken);
+      const loginSuccess = login(newUserData, sessionToken);
+      if (!loginSuccess) {
+        setError("Invalid email or password.");
+        return;
+      }
+      
+      // Debug: Check authentication status
+      console.log('🔍 After login call:', {
+        token: sessionToken,
+        userData: newUserData,
+        localStorageToken: localStorage.getItem('token'),
+        localStorageUser: localStorage.getItem('user')
+      });
       
       // Redirect to dashboard immediately
       setSuccess("Registration successful! Welcome to AdScreenHub!");
+      
+      // Force immediate redirect to avoid React state timing issues
       setTimeout(() => {
-        navigate('/dashboard');
-      }, 1000);
+        console.log('🔍 Before redirect - checking auth status');
+        navigate('/dashboard', { replace: true });
+      }, 100);
       
       // Clear password fields for security
       setPassword("");
@@ -477,10 +496,15 @@ export default function AuthFlow() {
       
       console.log('Login response:', res.data);
         if (res.data.data.user && res.data.data.session.access_token) {
-        login(res.data.data.user, res.data.data.session.access_token);
-        setSuccess("Logged in successfully! Redirecting...");
-        localStorage.setItem("authToken", res.data.data.session.access_token);
-        localStorage.setItem("user", JSON.stringify(res.data.data.user));
+        const loginSuccess = login(res.data.data.user, res.data.data.session.access_token);
+        if (loginSuccess) {
+          setSuccess("Logged in successfully! Redirecting...");
+          localStorage.setItem("authToken", res.data.data.session.access_token);
+          localStorage.setItem("user", JSON.stringify(res.data.data.user));
+        } else {
+          setError("Invalid email or password.");
+          return;
+        }
         setTimeout(() => {
           navigate("/dashboard");
         }, 1500);
@@ -760,7 +784,7 @@ export default function AuthFlow() {
                   Phone Number <span className="text-red-500">*</span>
                 </label>
                 <div className="flex">
-                  <span className="inline-flex items-center px-3 rounded-l-lg border border-r-0 border-gray-300 bg-gray-50 text-gray-500 text-sm">
+                  <span className="inline-flex items-center px-3 rounded-l-lg border border-r-0 border-gray-300 bg-gray-50 text-gray-500 text-sm min-w-[50px]">
                     +91
                   </span>
                   <input
@@ -774,7 +798,7 @@ export default function AuthFlow() {
                       }
                     }}
                     placeholder="Enter 10-digit phone number"
-                    className="flex-1 px-4 py-3 border border-gray-300 rounded-r-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="flex-1 px-4 py-3 border border-gray-300 rounded-r-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent min-w-0"
                     maxLength="10"
                     required
                   />
@@ -968,6 +992,20 @@ export default function AuthFlow() {
                     )}
                   </button>
                 </div>
+              </div>
+              
+              <div className="flex items-center">
+                <input
+                  id="privacy-policy"
+                  name="privacy-policy"
+                  type="checkbox"
+                  checked={agreeToPrivacy}
+                  onChange={(e) => setAgreeToPrivacy(e.target.checked)}
+                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                />
+                <label htmlFor="privacy-policy" className="ml-2 block text-sm text-gray-700">
+                  I agree to the <a href="/privacy" target="_blank" className="text-blue-600 hover:text-blue-700 underline">Privacy Policy</a>
+                </label>
               </div>
               
               <div className="space-y-3">
@@ -1285,8 +1323,8 @@ export default function AuthFlow() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100 flex items-center justify-center p-4" style={{ paddingTop: '6rem' }}>
-      <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md">
+    <div className="min-h-screen bg-white flex items-center justify-center p-4" style={{ paddingTop: '6rem' }}>
+      <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md border border-gray-200">
         {renderStep()}
         
         {error && (

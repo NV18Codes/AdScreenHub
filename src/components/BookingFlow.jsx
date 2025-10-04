@@ -53,13 +53,27 @@ export default function BookingFlow() {
   const [confirmingOrder, setConfirmingOrder] = useState(false);
   const [planAvailability, setPlanAvailability] = useState({}); // Track which plans are available
   const [processingPayment, setProcessingPayment] = useState(false); // Track payment verification
+  const [checkingAvailability, setCheckingAvailability] = useState(false); // Track availability checking
 
-  // Fetch plans when selectedScreen changes
+  // Debounced fetch plans when selectedScreen changes
   useEffect(() => {
     if (selectedScreen && selectedScreen.id) {
-      fetchPlans();
+      // Clear any existing timeout
+      const timeoutId = setTimeout(() => {
+        fetchPlans();
+      }, 200); // 200ms debounce for plan fetching
+      
+      return () => clearTimeout(timeoutId);
     }
   }, [selectedScreen]);
+
+  // Re-check plan availability when selectedDate changes (if we already have plans)
+  useEffect(() => {
+    if (selectedDate && selectedScreen && plans.length > 0) {
+      console.log('🔍 Date changed, re-checking plan availability for existing plans');
+      checkPlanAvailability(plans);
+    }
+  }, [selectedDate, selectedScreen, plans]);
 
   // Transform API plan data to match frontend format
   const transformPlanData = (apiPlans) => {
@@ -72,12 +86,10 @@ export default function BookingFlow() {
       duration: `${plan.duration_days || 0} day${(plan.duration_days || 0) > 1 ? 's' : ''}`,
       description: plan.description || '',
       adSlots: 1, // Default to 1 slot per plan
-      features: [
+      features: plan.features?.features || [
         `${plan.duration_days || 0} day display duration`,
         `High-quality LED display`,
-        `Professional ad placement`,
-        `24/7 visibility`,
-        `Real-time monitoring`
+        `Professional ad placement`
       ]
     }));
   };
@@ -86,6 +98,7 @@ export default function BookingFlow() {
   const transformLocationData = (apiLocations) => {
     if (!Array.isArray(apiLocations)) return [];
     
+    console.log('🔍 Raw location data:', apiLocations);
     return apiLocations.map(location => ({
       id: location.id || '',
       name: location.name || 'Unknown Location',
@@ -96,9 +109,9 @@ export default function BookingFlow() {
       orientation: location.orientation || 'Landscape',
       aspect_ratio: location.aspect_ratio || 'N/A',
       image: location.display_image_url || '/Banner.png',
-      totalInventory: location.total_slots || 0,
-      total_slots: location.total_slots || 0,
-      available_slots: location.available_slots || 0
+      totalInventory: location.total_slots || location.totalInventory || 0,
+      total_slots: location.total_slots || location.totalInventory || 0,
+      available_slots: location.available_slots || location.availableInventory || 0
     }));
   };
 
@@ -141,10 +154,12 @@ export default function BookingFlow() {
       if (plansData && Array.isArray(plansData) && plansData.length > 0) {
         const transformedPlans = transformPlanData(plansData);
         setPlans(transformedPlans);
-        setError(''); // Clear any previous errors
         
         // Check availability for each plan
         checkPlanAvailability(transformedPlans);
+        
+        // Clear any error state since we successfully loaded plans
+        setError('');
       } else {
         // No plans available - use backend error message
         const errorMessage = result.message || result.error || 'No plans available for this location';
@@ -159,57 +174,39 @@ export default function BookingFlow() {
     }
   };
 
-  // Check availability for all plans (including user conflict check)
+  // Simplified plan availability checking - if location has slots, all plans are available
   const checkPlanAvailability = async (plans) => {
-    if (!selectedScreen || !selectedDate) return;
-    
-    const availabilityMap = {};
-    
-    // Check each plan in parallel
-    const checks = plans.map(async (plan) => {
-      try {
-        // Extract plan duration correctly
-        let planDuration = plan.duration_days;
-        if (!planDuration && plan.duration) {
-          // Parse from string like "5 days"
-          const match = plan.duration.match(/(\d+)\s*day/i);
-          if (match) {
-            planDuration = parseInt(match[1]);
-          }
-        }
-        if (!planDuration) planDuration = 1;
-        
-        // Check user's own bookings for conflicts
-        const userConflict = checkUserBookingConflict(
-          selectedScreen.id,
-          selectedDate,
-          planDuration
-        );
-        
-        if (userConflict) {
-          // User has a conflicting booking - mark as unavailable
-          availabilityMap[plan.id] = false;
-          return;
-        }
-        
-        // Check backend availability
-        const result = await dataAPI.checkAvailability(
-          selectedScreen.id,
-          plan.id,
-          selectedDate
-        );
-        
-        const actualData = result.data?.data || result.data;
-        const isAvailable = actualData?.isAvailable === true;
-        availabilityMap[plan.id] = isAvailable;
-      } catch (error) {
-        // If check fails, assume unavailable (be safe)
-        availabilityMap[plan.id] = false;
-      }
+    console.log('🔍 checkPlanAvailability called:', {
+      selectedScreen: selectedScreen?.name,
+      selectedDate,
+      hasSelectedScreen: !!selectedScreen,
+      hasSelectedDate: !!selectedDate
     });
     
-    await Promise.all(checks);
+    if (!selectedScreen || !selectedDate) {
+      console.log('🔍 Missing selectedScreen or selectedDate, skipping availability check');
+      return;
+    }
+    
+    // Check if the selected location has available slots
+    const locationHasSlots = (selectedScreen.available_slots || 0) > 0;
+    
+    console.log('🔍 Location slot check:', {
+      locationName: selectedScreen.name,
+      availableSlots: selectedScreen.available_slots,
+      locationHasSlots
+    });
+    
+    // If location has slots, all plans are available
+    // If location has no slots, all plans are unavailable
+    const availabilityMap = {};
+    plans.forEach(plan => {
+      availabilityMap[plan.id] = locationHasSlots;
+    });
+    
+    console.log('🔍 Plan availability based on location slots:', availabilityMap);
     setPlanAvailability(availabilityMap);
+    setCheckingAvailability(false);
   };
 
   // Fetch location availability for selected date
@@ -223,24 +220,15 @@ export default function BookingFlow() {
       
       if (result.success && result.data) {
         const locationsData = result.data.data || result.data;
+        console.log('🔍 Location API Response:', locationsData);
         if (Array.isArray(locationsData) && locationsData.length > 0) {
           const transformedLocations = transformLocationData(locationsData);
+          console.log('🔍 Transformed Locations:', transformedLocations);
           
-          // Check if ANY location has available slots
-          const hasAnyAvailableSlots = transformedLocations.some(loc => loc.available_slots > 0);
+          // Always show locations, regardless of availability
           
-          if (!hasAnyAvailableSlots) {
-            // No locations have available slots - stop immediately
-            setLocations([]);
-            setAvailabilityData({});
-            const errorMessage = result.message || 'No available inventory for the selected date. Please choose another date.';
-            setError(errorMessage);
-            return;
-          }
-          
-          // Filter and show only locations with available slots
-          const availableLocations = transformedLocations.filter(loc => loc.available_slots > 0);
-          setLocations(availableLocations);
+          // Show all locations regardless of availability
+          setLocations(transformedLocations);
           setAvailabilityData({});
           setError('');
         } else {
@@ -312,6 +300,8 @@ export default function BookingFlow() {
   };
 
   // Check for overlapping bookings by the same user
+  // IMPORTANT: Only checks confirmed orders, excludes pending payment orders
+  // This ensures inventory is only reserved after successful payment
   const checkUserBookingConflict = (locationId, startDate, durationDays) => {
     if (!orders || orders.length === 0) {
       return null;
@@ -323,8 +313,10 @@ export default function BookingFlow() {
     
     // Check all user's orders for the same location
     const conflicts = orders.filter(order => {
-      // Only check non-cancelled orders
-      if (order.status === 'Cancelled Display' || order.status === 'Payment Failed') {
+      // Only check confirmed orders (exclude pending payment and failed orders)
+      if (order.status === 'Cancelled Display' || 
+          order.status === 'Payment Failed' || 
+          order.status === 'Pending Payment') {
         return false;
       }
       
@@ -356,8 +348,19 @@ export default function BookingFlow() {
     // Check if plan is marked as unavailable
     const isAvailable = planAvailability[plan.id] !== false;
     
+    console.log(`🔍 Plan selection attempt for ${plan.name}:`, {
+      planId: plan.id,
+      planAvailability: planAvailability[plan.id],
+      isAvailable,
+      selectedScreen: selectedScreen?.name,
+      selectedScreenSlots: selectedScreen?.available_slots,
+      selectedDate,
+      planAvailabilityMap: planAvailability
+    });
+    
     if (!isAvailable) {
       // Plan is not available - silently ignore the click
+      console.log(`❌ Plan ${plan.name} is marked as unavailable`);
       return;
     }
     
@@ -378,6 +381,13 @@ export default function BookingFlow() {
   const handleFileSelect = (event) => {
     const file = event.target.files[0];
     if (file) {
+      // Check file size (50MB limit)
+      const maxSize = 50 * 1024 * 1024; // 50MB in bytes
+      if (file.size > maxSize) {
+        setUploadError('File size must be less than 50MB');
+        return;
+      }
+      
       // Show Important Notice popup before allowing file selection
       setShowImportantNotice(true);
       
@@ -513,6 +523,27 @@ export default function BookingFlow() {
       }, 100);
       return;
     }
+
+    // Debug: Check if selected plan is marked as unavailable
+    const isPlanAvailable = planAvailability[selectedPlan.id] !== false;
+    console.log('🔍 Order confirmation check:', {
+      selectedPlan: selectedPlan.name,
+      planId: selectedPlan.id,
+      planAvailability: planAvailability[selectedPlan.id],
+      isPlanAvailable,
+      selectedScreen: selectedScreen?.name,
+      selectedScreenSlots: selectedScreen?.available_slots
+    });
+
+    if (!isPlanAvailable) {
+      setIncompleteStep('plan-selection');
+      setError('Selected plan is no longer available. Please select a different plan.');
+      setConfirmingOrder(false);
+      setTimeout(() => {
+        document.querySelector('[data-step="3"]')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 100);
+      return;
+    }
     
     if (!designFile || !fileUploaded) {
       setIncompleteStep('file-upload');
@@ -526,7 +557,7 @@ export default function BookingFlow() {
     
     if (!address.trim()) {
       setIncompleteStep('order-details');
-      setError('Please enter your delivery address');
+      setError('Please enter your billing address');
       setConfirmingOrder(false);
       return;
     }
@@ -536,6 +567,17 @@ export default function BookingFlow() {
       setError('Please fill in all GST details');
       setConfirmingOrder(false);
       return;
+    }
+    
+    // Validate GST number format if provided
+    if (gstApplicable && gstNumber.trim()) {
+      const gstRegex = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
+      if (!gstRegex.test(gstNumber.trim().toUpperCase())) {
+        setIncompleteStep('order-details');
+        setError('Please enter a valid GST number (e.g., 27AAPCU1234A1Z5)');
+        setConfirmingOrder(false);
+        return;
+      }
     }
     
     if (!termsAccepted) {
@@ -575,6 +617,9 @@ export default function BookingFlow() {
         location: selectedScreen.location
       };
 
+      console.log('🔍 Order data being sent:', orderData);
+      console.log('🔍 Signed URL response:', signedUrlResponse);
+
       const result = await createOrder(orderData);
       
       if (result.success) {
@@ -590,8 +635,14 @@ export default function BookingFlow() {
         
         if (razorpayOrderId) {
           // Show Razorpay payment modal
+          console.log('🔍 Opening Razorpay payment modal:', {
+            orderId: result.order.id,
+            razorpayOrderId,
+            amount: result.order.totalAmount
+          });
           handlePayment(result.order, razorpayOrderId);
       } else {
+          console.log('❌ No Razorpay order ID found in response:', result);
           alert('Payment gateway not available. Please contact support.');
         }
       } else {
@@ -606,29 +657,38 @@ export default function BookingFlow() {
 
   // Handle Razorpay payment
   const handlePayment = (order, razorpayOrderId) => {
+    console.log('🔍 handlePayment called:', { order: order.id, razorpayOrderId });
+    
     // Load Razorpay script if not already loaded
     if (!window.Razorpay) {
+      console.log('🔍 Loading Razorpay script...');
       const script = document.createElement('script');
       script.src = 'https://checkout.razorpay.com/v1/checkout.js';
       script.async = true;
       script.onload = () => {
+        console.log('✅ Razorpay script loaded, opening payment...');
         openRazorpay(order, razorpayOrderId);
       };
       script.onerror = () => {
+        console.log('❌ Failed to load Razorpay script');
         alert('Failed to load payment gateway. Please try again.');
       };
       document.body.appendChild(script);
     } else {
+      console.log('✅ Razorpay already loaded, opening payment...');
       openRazorpay(order, razorpayOrderId);
     }
   };
 
   const openRazorpay = (order, razorpayOrderId) => {
+    console.log('🔍 openRazorpay called:', { order: order.id, razorpayOrderId });
+    
     const user = JSON.parse(localStorage.getItem('user') || '{}');
     
     const amount = convertToPaise(order.totalAmount || order.amount || order.total_cost || 0);
+    console.log('🔍 Payment amount in paise:', amount);
     
-    const options = {
+      const options = {
       key: RAZORPAY_KEY,
       amount: amount,
       currency: RAZORPAY_CONFIG.currency,
@@ -653,8 +713,8 @@ export default function BookingFlow() {
             razorpay_payment_id: response.razorpay_payment_id,
             razorpay_signature: response.razorpay_signature
           });
-          
-          if (verifyResponse.success) {
+            
+            if (verifyResponse.success) {
             // Keep loading visible while redirecting
             window.location.href = `/booking-success?orderId=${order.id}&payment_id=${response.razorpay_payment_id}&verified=true`;
             } else {
@@ -677,9 +737,13 @@ export default function BookingFlow() {
     };
     
     try {
+      console.log('🔍 Creating Razorpay instance with options:', options);
       const razorpay = new window.Razorpay(options);
+      console.log('✅ Razorpay instance created, opening modal...');
       razorpay.open();
+      console.log('✅ Razorpay modal opened successfully');
     } catch (error) {
+      console.log('❌ Failed to open Razorpay modal:', error);
       alert('Failed to open payment gateway. Please try again.');
     }
   };
@@ -718,7 +782,24 @@ export default function BookingFlow() {
     if (!selectedPlan || !selectedPlan.price) return 0;
     const baseAmount = selectedPlan.price;
     const discount = discountAmount;
-    return Math.max(0, baseAmount - discount);
+    const subtotal = Math.max(0, baseAmount - discount);
+    
+    // Add 18% GST if applicable
+    if (gstApplicable) {
+      const gstAmount = subtotal * 0.18;
+      return subtotal + gstAmount;
+    }
+    
+    return subtotal;
+  };
+
+  // Calculate GST amount separately
+  const calculateGST = () => {
+    if (!selectedPlan || !selectedPlan.price || !gstApplicable) return 0;
+    const baseAmount = selectedPlan.price;
+    const discount = discountAmount;
+    const subtotal = Math.max(0, baseAmount - discount);
+    return subtotal * 0.18;
   };
 
         return (
@@ -737,23 +818,23 @@ export default function BookingFlow() {
       <div className={styles.container}>
         <div className={styles.header}>
           <h1>Book Your Ad Slot</h1>
-          <p>Choose your date, location, and plan to get started</p>
+          <p>Choose your date, location and plan to get started</p>
         </div>
 
 
         {/* Step 1: Date Selection */}
         <div className={`${styles.step} ${incompleteStep === 'date-selection' ? styles.incompleteStep : ''}`} data-step="1">
-          <h2>Step 1: Select Date</h2>
+          <h2>Step1: Select Start Date</h2>
           <div className={styles.dateSelection}>
               <input
                 type="date"
                 value={selectedDate}
               onChange={(e) => handleDateSelect(e.target.value)}
-                min={new Date().toISOString().split('T')[0]}
+                min={new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]}
                 className={styles.dateInput}
               />
+            </div>
           </div>
-        </div>
 
         {/* Step 2: Location Selection */}
         {selectedDate && (
@@ -763,43 +844,39 @@ export default function BookingFlow() {
               <div className={styles.loadingMessage}>
                 <LoadingSpinner size="medium" text="Loading screen availability..." />
               </div>
-            ) : error ? (
-              <div className={styles.errorMessage}>
-                <div className={styles.errorIcon}>⚠️</div>
-                <div className={styles.errorContent}>
-                  <h3>No Available Inventory</h3>
-                  <p>{error}</p>
-              <button
-                    onClick={() => setError('')} 
-                    className={styles.retryButton}
-              >
-                    Try Different Date
-              </button>
-            </div>
-          </div>
             ) : locations.length === 0 ? (
               <div className={styles.loadingMessage}>
-                <p>No screens available for this date. Please try another date.</p>
+                <p>Loading available locations...</p>
               </div>
             ) : (
               <div className={styles.screensGrid}>
                 {locations.map((location) => {
                   const isSelected = selectedScreen?.id === location.id;
+                  const hasAvailableSlots = (location.available_slots || 0) > 0;
+                  
         return (
                   <div
                     key={location.id}
-                    className={`${styles.screenCard} ${isSelected ? styles.selectedCard : ''}`}
-                    onClick={() => handleScreenSelect(location)}
+                    className={`${styles.screenCard} ${isSelected ? styles.selectedCard : ''} ${!hasAvailableSlots ? styles.unavailableLocation : ''}`}
+                    onClick={() => hasAvailableSlots && handleScreenSelect(location)}
+                    style={{ cursor: hasAvailableSlots ? 'pointer' : 'not-allowed' }}
                   >
                     {isSelected && <div className={styles.selectedBadge}>✓ Selected</div>}
+                    {!hasAvailableSlots && <div className={styles.unavailableLocationBadge}>No Slots Available</div>}
                     <img src={location.image} alt={location.name} className={styles.screenImage} />
                     <div className={styles.screenInfo}>
                     <h3>{location.name}</h3>
                       <p>{location.location}</p>
-                      <p>{location.size}</p>
-                      <p className={styles.slotInfo}>
-                        <span>Total Slots: {location.totalInventory || location.total_slots || 0}</span>
-                        <span className={styles.availableSlots}>Available: {location.available_slots || 0}</span>
+                      <p>Size: {location.size} ft</p>
+                      <p>Orientation: {location.orientation}</p>
+                      <p>Resolution: {location.pixels}</p>
+                      <p>Aspect Ratio: {location.aspect_ratio}</p>
+                      <p className={styles.slotsInfo}>
+                        {location.available_slots > 0 ? (
+                          <>Available slots: <span className={styles.availableSlots}>{location.available_slots}</span></>
+                        ) : (
+                          <span className={styles.noSlots}>No slots available</span>
+                        )}
                       </p>
                   </div>
                   </div>
@@ -818,7 +895,11 @@ export default function BookingFlow() {
               <div className={styles.loadingMessage}>
                 <LoadingSpinner size="medium" text="Loading plans..." />
               </div>
-            ) : error ? (
+            ) : checkingAvailability ? (
+              <div className={styles.loadingMessage}>
+                <LoadingSpinner size="small" text="Checking availability..." />
+              </div>
+            ) : error && plans.length === 0 ? (
               <div className={styles.errorMessage}>
                 <div className={styles.errorIcon}>⚠️</div>
                 <div className={styles.errorContent}>
@@ -844,6 +925,16 @@ export default function BookingFlow() {
                 {plans.map((plan) => {
                   const isAvailable = planAvailability[plan.id] !== false; // true or undefined = available
                   const isSelected = selectedPlan?.id === plan.id;
+                  
+                  // Debug: Only log when plan selection changes
+                  if (isSelected && planAvailability[plan.id] !== undefined) {
+                    console.log(`🔍 Rendering selected plan ${plan.name}:`, {
+                      planId: plan.id,
+                      planAvailability: planAvailability[plan.id],
+                      isAvailable,
+                      isSelected
+                    });
+                  }
                   
         return (
                   <div
@@ -989,13 +1080,13 @@ export default function BookingFlow() {
                 type="file"
                 id="file-upload"
                 onChange={handleFileSelect}
-                  accept=".jpg,.jpeg,.png,image/jpeg,image/png"
+                  accept=".jpg,.jpeg,.png,.mov,.mp4,image/jpeg,image/png,video/mp4,video/quicktime"
                 className={styles.fileInput}
               />
               <label htmlFor="file-upload" className={styles.uploadLabel}>
                   <div className={styles.uploadIcon}>📁</div>
                   <p className={styles.uploadText}>Click to Select Creative File</p>
-                  <small>Accepted formats: JPG, JPEG, PNG</small>
+                  <small>Accepted formats: JPG, JPEG, PNG, MP4, MOV (Max 50MB)</small>
               </label>
                 
                 {designFile && !fileUploaded && (
@@ -1071,11 +1162,11 @@ export default function BookingFlow() {
             <h2>Step 5: Order Details</h2>
             <div className={styles.orderForm}>
               <div className={styles.formGroup}>
-                <label>Delivery Address <span className={styles.required}>*</span></label>
+                <label>Billing Address <span className={styles.required}>*</span></label>
                 <textarea
                   value={address}
                   onChange={(e) => setAddress(e.target.value)}
-                  placeholder="Enter your delivery address"
+                  placeholder="Enter your billing address"
                   className={styles.textarea}
                 />
               </div>
@@ -1176,7 +1267,7 @@ export default function BookingFlow() {
             <h2>Step 6: Order Summary</h2>
                 <div className={styles.orderSummary}>
               <div className={styles.summaryItem}>
-                <span>Date:</span>
+                <span>Start Date:</span>
                 <span>{selectedDate}</span>
               </div>
                   <div className={styles.summaryItem}>
@@ -1188,13 +1279,23 @@ export default function BookingFlow() {
                     <span>{selectedPlan?.name}</span>
                   </div>
                   <div className={styles.summaryItem}>
+                    <span>Duration:</span>
+                    <span>{selectedPlan?.duration_days || 1} day{(selectedPlan?.duration_days || 1) > 1 ? 's' : ''}</span>
+                  </div>
+                  <div className={styles.summaryItem}>
                 <span>Base Price:</span>
                 <span>₹{(selectedPlan?.price || 0).toLocaleString('en-IN')}</span>
                   </div>
               {discountAmount > 0 && (
                   <div className={styles.summaryItem}>
-                  <span>Discount:</span>
+                <span>Discount:</span>
                   <span>-₹{discountAmount.toLocaleString('en-IN')}</span>
+                  </div>
+              )}
+              {gstApplicable && (
+                  <div className={styles.summaryItem}>
+                <span>GST (18%):</span>
+                  <span>₹{calculateGST().toLocaleString('en-IN')}</span>
                   </div>
               )}
               <div className={`${styles.summaryItem} ${styles.total}`}>

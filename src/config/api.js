@@ -16,6 +16,7 @@ export const API_ENDPOINTS = {
     RESEND_EMAIL: '/auth/resend-email-verification',
     FORGOT_PASSWORD: '/auth/forgot-password',
     RESET_PASSWORD: '/auth/reset-password',
+    DELETE_ACCOUNT: '/auth/delete-account',
     SIGNOUT: '/auth/signout'
   },
   DATA: {
@@ -130,6 +131,9 @@ export const authAPI = {
 
   resetPassword: (email, otp, password) => 
     makeRequest('/auth/reset-password', { email, otp, password }),
+
+  deleteAccount: (password) => 
+    makeRequest('/auth/delete-account', { password }),
 
   signout: () => 
     makeRequest('/auth/signout', {})

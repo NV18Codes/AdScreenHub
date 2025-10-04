@@ -46,6 +46,11 @@
   -webkit-text-fill-color: transparent;
   background-clip: text;
   color: #1319B3;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  hyphens: auto;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .subtitle {

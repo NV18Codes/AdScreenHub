@@ -124,6 +124,7 @@ export default function Navbar() {
               <button onClick={() => scrollToSection('how-it-works')} className={`${styles.navLink} ${activeSection === 'how-it-works' ? styles.active : ''}`}>How It Works?</button>
               <button onClick={() => scrollToSection('about')} className={`${styles.navLink} ${activeSection === 'about' ? styles.active : ''}`}>About Us</button>
               <button onClick={() => scrollToSection('pricing')} className={`${styles.navLink} ${activeSection === 'pricing' ? styles.active : ''}`}>Pricing</button>
+              <Link to="/faq" className={`${styles.navLink} ${location.pathname === '/faq' ? styles.active : ''}`} onClick={closeMenu}>FAQs</Link>
               <Link to="/contact" className={`${styles.navLink} ${location.pathname === '/contact' ? styles.active : ''}`} onClick={closeMenu}>Contact</Link>
               
               <div className={styles.authSection}>

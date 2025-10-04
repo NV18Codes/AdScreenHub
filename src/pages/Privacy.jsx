@@ -20,13 +20,6 @@ export default function Privacy() {
   return (
     <div className={styles.container}>
       <div className={styles.header}>
-        <button 
-          onClick={handleGoBack} 
-          className={styles.backButton}
-          type="button"
-        >
-          ← Go Back
-        </button>
         <h1 className={styles.title}>Privacy Policy</h1>
         <p className={styles.subtitle}>How we collect, use, and protect your information</p>
       </div>

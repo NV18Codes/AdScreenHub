@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { generateOrderId, manageStorageQuota } from '../utils/validation';
 import { ordersAPI } from '../config/api';
+import { useAuth } from '../contexts/AuthContext';
 
 // Helper function to process orders data from different API response structures
 const processOrdersData = (data) => {
@@ -83,9 +84,10 @@ const processOrdersData = (data) => {
   }));
 };
 
-export const useOrders = (userId) => {
+export const useOrders = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
 
   // Load orders from API and localStorage
   useEffect(() => {
@@ -97,12 +99,21 @@ export const useOrders = (userId) => {
         let ordersData = [];
         let apiSuccess = false;
         
+        // Only fetch orders if user is authenticated
+        if (!user || !user.id) {
+          setOrders([]);
+          setLoading(false);
+          return;
+        }
+        
         // Use main endpoint only (the one that works: /orders)
         try {
           const response = await ordersAPI.getOrders();
           
           if (response.success && response.data) {
-            ordersData = processOrdersData(response.data);
+            const allOrders = processOrdersData(response.data);
+            // Filter orders by current user
+            ordersData = allOrders.filter(order => order.userId === user.id);
             if (ordersData.length > 0) {
               apiSuccess = true;
               setOrders(ordersData);
@@ -119,7 +130,9 @@ export const useOrders = (userId) => {
         if (savedOrders) {
           const parsedOrders = JSON.parse(savedOrders);
           const safeOrders = Array.isArray(parsedOrders) ? parsedOrders : [];
-          setOrders(safeOrders);
+          // Filter stored orders by current user as well
+          const userOrders = safeOrders.filter(order => order.userId === user.id);
+          setOrders(userOrders);
         } else {
           // Initialize with empty orders
           setOrders([]);
@@ -133,7 +146,7 @@ export const useOrders = (userId) => {
     };
 
     loadOrders();
-  }, [userId]);
+  }, [user]);
 
   // Calculate available inventory for a specific screen and date
   const getAvailableInventory = (screenId, date) => {
@@ -152,6 +165,9 @@ export const useOrders = (userId) => {
   // Create new order - Call API to initiate order
   const createOrder = async (orderData) => {
     try {
+      // Get current user ID
+      const userId = user?.id || user?.userId || 'unknown';
+      
       // Prepare the API payload according to your exact API requirements
       const apiPayload = {
         planId: (orderData.planId || orderData.plan?.id || '').toString(),
@@ -175,7 +191,10 @@ export const useOrders = (userId) => {
 
 
       // Call the API to initiate the order
+      // NOTE: Inventory should NOT be decreased here - only after successful payment verification
+      console.log('🔍 Creating order with payload:', apiPayload);
       const response = await ordersAPI.initiateOrder(apiPayload);
+      console.log('🔍 API response:', response);
       
       if (response.success && response.data) {
 
@@ -183,6 +202,9 @@ export const useOrders = (userId) => {
         // Extract order data from nested structure
         const orderData_from_api = response.data.data?.order || response.data.order || response.data;
         const razorpayOrderData = response.data.data?.razorpayOrder || response.data.razorpayOrder;
+        
+        console.log('🔍 Extracted order data:', orderData_from_api);
+        console.log('🔍 Razorpay order data:', razorpayOrderData);
         
 
 
@@ -236,9 +258,10 @@ export const useOrders = (userId) => {
           }
         }
 
+        console.log('✅ Order created successfully:', newOrder);
         return { success: true, order: newOrder, apiResponse: response.data };
       } else {
-
+        console.log('❌ API response not successful:', response);
         
         // Create a local order as fallback when API fails
 
@@ -329,10 +352,6 @@ export const useOrders = (userId) => {
     return { success: true };
   };
 
-  // Cancel order
-  const cancelOrder = (orderId) => {
-    return updateOrderStatus(orderId, 'Cancelled Display');
-  };
 
   // Revise order design
   const reviseOrder = (orderId, newDesignFile, newSupportingDoc) => {
@@ -400,6 +419,7 @@ export const useOrders = (userId) => {
 
         
         // Update order status to confirmed
+        // NOTE: This is where inventory should be decreased in the backend - after successful payment
         const updatedOrders = orders.map(order => 
           order.id === orderId 
             ? { 
@@ -475,13 +495,22 @@ export const useOrders = (userId) => {
       let ordersData = [];
       let apiSuccess = false;
       
+      // Only fetch orders if user is authenticated
+      if (!user || !user.id) {
+        setOrders([]);
+        setLoading(false);
+        return { success: false, error: 'User not authenticated' };
+      }
+      
       // Try main endpoint first
       try {
         const response = await ordersAPI.getOrders();
 
         
         if (response.success && response.data) {
-          ordersData = processOrdersData(response.data);
+          const allOrders = processOrdersData(response.data);
+          // Filter orders by current user
+          ordersData = allOrders.filter(order => order.userId === user.id);
           if (ordersData.length > 0) {
             apiSuccess = true;
           }
@@ -497,7 +526,9 @@ export const useOrders = (userId) => {
 
           
           if (response.success && response.data) {
-            ordersData = processOrdersData(response.data);
+            const allOrders = processOrdersData(response.data);
+            // Filter orders by current user
+            ordersData = allOrders.filter(order => order.userId === user.id);
             if (ordersData.length > 0) {
               apiSuccess = true;
             }
@@ -544,7 +575,6 @@ export const useOrders = (userId) => {
     loading,
     createOrder,
     updateOrderStatus,
-    cancelOrder,
     reviseOrder,
     verifyPayment,
     getOrderById,

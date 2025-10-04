@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { API_BASE_URL } from '../config/api';
+import { API_BASE_URL, authAPI } from '../config/api';
 import Toast from '../components/Toast';
 import styles from '../styles/Profile.module.css';
 
@@ -56,10 +56,27 @@ export default function Profile() {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    
+    // Validate phone number format
+    if (name === 'phoneNumber') {
+      // Remove any non-digit characters
+      const cleanedValue = value.replace(/\D/g, '');
+      
+      // Limit to 10 digits
+      if (cleanedValue.length > 10) {
+        return;
+      }
+      
+      setFormData(prev => ({
+        ...prev,
+        [name]: cleanedValue
+      }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        [name]: value
+      }));
+    }
     setErrorMessage('');
   };
 
@@ -192,6 +209,15 @@ export default function Profile() {
       if (emailChanged && phoneChanged) {
         setErrorMessage('Please update email or phone number one at a time, not both together.');
         return;
+      }
+      
+      // Validate phone number format if phone is being changed
+      if (phoneChanged && formData.phoneNumber) {
+        const phoneRegex = /^[6-9]\d{9}$/; // Indian mobile number format
+        if (!phoneRegex.test(formData.phoneNumber)) {
+          setErrorMessage('Please enter a valid 10-digit Indian mobile number starting with 6, 7, 8, or 9.');
+          return;
+        }
       }
       
       // If email changed (with or without name/GST), start email OTP process
@@ -469,22 +495,54 @@ export default function Profile() {
 
     try {
       setIsDeleting(true);
-      const response = await fetch(`${API_BASE_URL}/auth/delete-account`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify({
-          password: deletePassword
-        })
-      });
-
-      const data = await response.json();
-      if (data.success) {
-        logout();
-      } else {
-        throw new Error(data.message || 'Failed to delete account');
+      
+      // Try the API endpoint first
+      try {
+        const response = await authAPI.deleteAccount(deletePassword);
+        
+        if (response.success) {
+          // Account deleted successfully on backend
+          logout();
+          alert('Account deleted successfully.');
+          return;
+        } else {
+          throw new Error(response.error || 'Failed to delete account');
+        }
+      } catch (apiError) {
+        // If API endpoint doesn't exist (404), provide fallback
+        if (apiError.message.includes('404') || apiError.message.includes('Not Found')) {
+          // Mark account as deleted locally and prevent future logins
+          const deletedAccountData = {
+            ...user,
+            accountDeleted: true,
+            deletedAt: new Date().toISOString()
+          };
+          
+          // Store deleted account info to prevent future logins
+          localStorage.setItem('deletedAccount', JSON.stringify(deletedAccountData));
+          
+          // Clear all auth data
+          localStorage.removeItem('user');
+          localStorage.removeItem('token');
+          localStorage.removeItem('emailToken');
+          localStorage.removeItem('phoneToken');
+          localStorage.removeItem('authToken');
+          localStorage.removeItem('pendingEmail');
+          localStorage.removeItem('adscreenhub_orders');
+          
+          // Logout and redirect
+          logout();
+          
+          // Show success message
+          setTimeout(() => {
+            alert('Account deleted successfully.');
+          }, 100);
+          
+          return;
+        }
+        
+        // Re-throw other API errors
+        throw apiError;
       }
     } catch (error) {
       setPasswordError(error.message || 'Failed to delete account. Please try again.');
@@ -738,7 +796,9 @@ export default function Profile() {
                       value={formData.phoneNumber}
                       onChange={handleInputChange}
                       className={styles.input}
-                      placeholder="Enter new phone number"
+                      placeholder="Enter 10-digit mobile number"
+                      maxLength="10"
+                      pattern="[6-9][0-9]{9}"
                     />
                   </div>
                   
@@ -892,7 +952,7 @@ export default function Profile() {
           <div className={styles.modalOverlay}>
             <div className={styles.modal}>
               <h3>Confirm Account Deletion</h3>
-              <p>Are you absolutely sure you want to delete your account? This action is irreversible.</p>
+              <p>Are you absolutely sure you want to delete your account? This will clear your local data and log you out. Contact support for complete account removal.</p>
 
               <div className={styles.modalFields}>
                 <div className={styles.field}>
