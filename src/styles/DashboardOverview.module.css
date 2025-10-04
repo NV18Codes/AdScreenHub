@@ -20,6 +20,11 @@
   font-size: 2.5rem;
   font-weight: 700;
   margin-bottom: 0.5rem;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  hyphens: auto;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .header p {
@@ -298,6 +303,11 @@
   
   .header h1 {
     font-size: 2rem;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    hyphens: auto;
+    max-width: 100%;
+    box-sizing: border-box;
   }
   
   .header p {
@@ -358,6 +368,11 @@
   
   .header h1 {
     font-size: 1.75rem;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    hyphens: auto;
+    max-width: 100%;
+    box-sizing: border-box;
   }
   
   .header p {

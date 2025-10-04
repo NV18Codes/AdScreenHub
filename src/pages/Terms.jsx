@@ -21,13 +21,6 @@ export default function Terms() {
   return (
     <div className={styles.container}>
       <div className={styles.header}>
-        <button 
-          onClick={handleGoBack} 
-          className={styles.backButton}
-          type="button"
-        >
-          ← Go Back
-        </button>
         <h1 className={styles.title}>Terms of Service</h1>
         <p className={styles.subtitle}>Please read these terms carefully before using AdScreenHub's services</p>
       </div>

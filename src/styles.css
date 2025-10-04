@@ -5,36 +5,60 @@
 /* Consistent Typography System */
 .heading-primary {
   @apply text-6xl font-bold text-blue-900 leading-tight;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  hyphens: auto;
 }
 
 .heading-secondary {
   @apply text-5xl font-bold text-blue-900 leading-tight;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  hyphens: auto;
 }
 
 .heading-tertiary {
   @apply text-4xl font-bold text-blue-900 leading-tight;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  hyphens: auto;
 }
 
 .heading-quaternary {
   @apply text-3xl font-bold text-blue-900 leading-tight;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  hyphens: auto;
 }
 
 .heading-quinary {
   @apply text-2xl font-bold text-blue-900 leading-tight;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  hyphens: auto;
 }
 
 .heading-hero {
   @apply text-7xl md:text-8xl font-bold leading-tight;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  hyphens: auto;
 }
 
 /* Section Headings */
 .section-heading {
   @apply text-5xl font-bold text-blue-900 mb-8 text-center lg:text-left;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  hyphens: auto;
 }
 
 /* Subsection Headings */
 .subsection-heading {
   @apply text-2xl font-bold text-blue-900 mb-6 text-center;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  hyphens: auto;
 }
 
 /* Professional Animations */
@@ -285,6 +309,8 @@ h1, h2, h3, h4, h5, h6, p, span, div {
   min-height: 100vh;
   position: relative;
   overflow-x: hidden;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 
 /* Prevent any text from appearing outside containers */
@@ -294,6 +320,8 @@ main {
   overflow-x: hidden;
   width: 100%;
   max-width: 100vw;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 
 /* Prevent horizontal scroll globally */
@@ -301,6 +329,8 @@ html, body {
   overflow-x: hidden;
   max-width: 100vw;
   position: relative;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 
 /* Ensure sections are properly contained */
@@ -308,12 +338,25 @@ section {
   position: relative;
   overflow-x: hidden;
   contain: layout;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 
 /* Prevent any floating or misplaced text */
 .container, .container-max {
   position: relative;
   contain: layout;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+/* Ensure all headings are properly contained and visible */
+h1, h2, h3, h4, h5, h6 {
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  hyphens: auto;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 /* Ensure proper text containment */

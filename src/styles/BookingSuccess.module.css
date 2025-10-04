@@ -3,8 +3,9 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
   padding: 2rem;
+  padding-top: 6rem; /* Add space for fixed navbar */
 }
 
 .successCard {
@@ -258,10 +259,20 @@
 @media (max-width: 768px) {
   .container {
     padding: 1rem;
+    padding-top: 5rem; /* Add space for fixed navbar on mobile */
   }
   
   .successCard {
     padding: 2rem;
+  }
+  
+  .successIcon {
+    margin-bottom: 1.5rem;
+  }
+  
+  .checkmark {
+    width: 60px;
+    height: 60px;
   }
   
   .successCard h1 {
@@ -283,12 +294,27 @@
 }
 
 @media (max-width: 480px) {
+  .container {
+    padding: 0.75rem;
+    padding-top: 4.5rem; /* Add space for fixed navbar on small mobile */
+  }
+  
   .successCard {
     padding: 1.5rem;
   }
   
   .successCard h1 {
     font-size: 1.8rem;
+  }
+  
+  .checkmark {
+    width: 50px;
+    height: 50px;
+  }
+  
+  .checkmarkCircle {
+    width: 30px;
+    height: 30px;
   }
   
   .successMessage {

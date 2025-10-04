@@ -37,13 +37,18 @@ export default function Login() {
 
       console.log('Login response:', res.data);
       if (res.data.data.user && res.data.data.session.access_token) {
-        login(res.data.data.user, res.data.data.session.access_token);
-        setSuccess("Logged in successfully! Redirecting...");
-        localStorage.setItem("authToken", res.data.data.session.access_token);
-        localStorage.setItem("user", JSON.stringify(res.data.data.user));
-        setTimeout(() => {
-          navigate("/dashboard");
-        }, 1500);
+        const loginSuccess = login(res.data.data.user, res.data.data.session.access_token);
+        if (loginSuccess) {
+          setSuccess("Logged in successfully! Redirecting...");
+          localStorage.setItem("authToken", res.data.data.session.access_token);
+          localStorage.setItem("user", JSON.stringify(res.data.data.user));
+          setTimeout(() => {
+            navigate("/dashboard");
+          }, 1500);
+        } else {
+          // Login was blocked (deleted account)
+          setError("Invalid email or password.");
+        }
       } else {
         setError("Login successful but missing user data. Please try again.");
       }
