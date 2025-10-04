@@ -755,7 +755,8 @@ export default function AuthFlow() {
                 Already have an account? <button 
                   type="button" 
                   onClick={() => setStep("login")}
-                  className="text-blue-600 hover:text-blue-700 font-medium underline"
+                  disabled={loading}
+                  className="text-blue-600 hover:text-blue-700 font-medium underline disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Login
                 </button>
@@ -791,7 +792,8 @@ export default function AuthFlow() {
               
               <button
                 onClick={handleChangeEmail}
-                className="w-full bg-gray-200 text-gray-800 py-3 px-4 rounded-lg hover:bg-gray-300 font-medium"
+                disabled={loading}
+                className="w-full bg-gray-200 text-gray-800 py-3 px-4 rounded-lg hover:bg-gray-300 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Change Email
               </button>
@@ -912,7 +914,8 @@ export default function AuthFlow() {
                 <button
                   type="button"
                   onClick={handleChangePhone}
-                  className="w-full bg-gray-200 text-gray-800 py-3 px-4 rounded-lg hover:bg-gray-300 font-medium"
+                  disabled={loading}
+                  className="w-full bg-gray-200 text-gray-800 py-3 px-4 rounded-lg hover:bg-gray-300 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Change Phone Number
                 </button>
@@ -1043,7 +1046,8 @@ export default function AuthFlow() {
                 <button
                   type="button"
                   onClick={goBack}
-                  className="w-full bg-gray-200 text-gray-800 py-3 px-4 rounded-lg hover:bg-gray-300 font-medium"
+                  disabled={loading}
+                  className="w-full bg-gray-200 text-gray-800 py-3 px-4 rounded-lg hover:bg-gray-300 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Back to OTP
                 </button>
@@ -1141,7 +1145,8 @@ export default function AuthFlow() {
                 <button
                   type="button"
                   onClick={() => setStep("forgot-password")}
-                  className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+                  disabled={loading}
+                  className="text-sm text-blue-600 hover:text-blue-700 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Forgot password?
                 </button>
@@ -1167,7 +1172,8 @@ export default function AuthFlow() {
                   New here? <button 
                     type="button" 
                     onClick={() => setStep("email")}
-                    className="text-blue-600 hover:text-blue-700 font-medium underline"
+                    disabled={loading}
+                    className="text-blue-600 hover:text-blue-700 font-medium underline disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Create an account
                   </button>
@@ -1221,7 +1227,8 @@ export default function AuthFlow() {
               <button 
                 type="button" 
                 onClick={() => setStep("login")}
-                className="text-blue-600 hover:text-blue-700 font-medium underline"
+                disabled={loading}
+                className="text-blue-600 hover:text-blue-700 font-medium underline disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Back to Login
               </button>
@@ -1340,7 +1347,8 @@ export default function AuthFlow() {
               <button 
                 type="button" 
                 onClick={() => setStep("forgot-password")}
-                className="text-blue-600 hover:text-blue-700 font-medium underline"
+                disabled={loading}
+                className="text-blue-600 hover:text-blue-700 font-medium underline disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Back to Email Entry
               </button>
