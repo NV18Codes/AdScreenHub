@@ -449,6 +449,9 @@ export default function AuthFlow() {
         localStorageUser: localStorage.getItem('user')
       });
       
+      // Clear any existing orders to prevent showing other users' data
+      localStorage.removeItem('adscreenhub_orders');
+      
       // Redirect to dashboard immediately
         showToast("Registration successful! Welcome to AdScreenHub!", 'success');
       

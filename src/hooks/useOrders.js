@@ -135,6 +135,13 @@ export const useOrders = () => {
           const safeOrders = Array.isArray(parsedOrders) ? parsedOrders : [];
           // Filter stored orders by current user as well
           const userOrders = safeOrders.filter(order => order.userId === user.id);
+          
+          // If no orders found for this user, clear localStorage to prevent showing other users' data
+          if (userOrders.length === 0 && safeOrders.length > 0) {
+            console.log('🔍 No orders found for current user, clearing localStorage to prevent showing other users\' data');
+            localStorage.removeItem('adscreenhub_orders');
+          }
+          
           setOrders(userOrders);
         } else {
           // Initialize with empty orders
