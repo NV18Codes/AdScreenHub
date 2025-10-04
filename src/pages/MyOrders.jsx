@@ -18,6 +18,7 @@ export default function MyOrders() {
   const [uploadError, setUploadError] = useState('');
   const [refreshError, setRefreshError] = useState('');
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
+  const [searchTerm, setSearchTerm] = useState('');
 
   const showToast = (message, type = 'success') => {
     setToast({ show: true, message, type });
@@ -132,6 +133,20 @@ export default function MyOrders() {
     setUploadError('');
   };
 
+  // Filter orders based on search term
+  const filteredOrders = orders.filter(order => {
+    if (!searchTerm.trim()) return true;
+    
+    const searchLower = searchTerm.toLowerCase();
+    const orderId = order.id?.toString().toLowerCase() || '';
+    const orderUid = order.orderUid?.toString().toLowerCase() || '';
+    const order_uid = order.order_uid?.toString().toLowerCase() || '';
+    
+    return orderId.includes(searchLower) || 
+           orderUid.includes(searchLower) || 
+           order_uid.includes(searchLower);
+  });
+
 
 
   // Handle payment for pending orders
@@ -233,20 +248,9 @@ export default function MyOrders() {
     <div className={styles.myOrders}>
       <div className={styles.container}>
         <div className={styles.header}>
-          <div className={styles.headerContent}>
-            <div className={styles.headerText}>
-              <h1>My Orders</h1>
-              <p>Track your advertising campaigns</p>
-            </div>
-            <div className={styles.headerActions}>
-              <button
-                onClick={handleRefreshOrders}
-                disabled={refreshing || loading}
-                className={`${styles.btn} ${styles.btnSecondary} ${styles.refreshBtn}`}
-              >
-                {refreshing ? 'Refreshing...' : 'Refresh'}
-              </button>
-            </div>
+          <div className={styles.headerText}>
+            <h1>My Orders</h1>
+            <p>Track your advertising campaigns</p>
           </div>
           {refreshError && (
             <div className={styles.errorMessage}>
@@ -255,32 +259,91 @@ export default function MyOrders() {
           )}
         </div>
 
+        {/* Search Bar and Refresh Button */}
+        <div className={styles.searchAndActions}>
+          <div className={styles.searchSection}>
+            <div className={styles.searchContainer}>
+              <div className={styles.searchInputWrapper}>
+                <input
+                  type="text"
+                  placeholder="Enter Order ID (e.g., ORD-123, ABC456)..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className={styles.searchInput}
+                />
+                <div className={styles.searchIcon}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <path d="m21 21-4.35-4.35"></path>
+                  </svg>
+                </div>
+              </div>
+              {searchTerm && (
+                <button
+                  onClick={() => setSearchTerm('')}
+                  className={styles.clearSearchBtn}
+                  title="Clear search"
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                  </svg>
+                </button>
+              )}
+            </div>
+            {searchTerm && (
+              <div className={styles.searchResults}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{marginRight: '0.5rem'}}>
+                  <circle cx="11" cy="11" r="8"></circle>
+                  <path d="m21 21-4.35-4.35"></path>
+                </svg>
+                Found {filteredOrders.length} order{filteredOrders.length !== 1 ? 's' : ''} matching "{searchTerm}"
+              </div>
+            )}
+          </div>
+          
+          <div className={styles.headerActions}>
+            <button
+              onClick={handleRefreshOrders}
+              disabled={refreshing || loading}
+              className={`${styles.btn} ${styles.btnSecondary} ${styles.refreshBtn}`}
+            >
+              {refreshing ? 'Refreshing...' : 'Refresh'}
+            </button>
+          </div>
+        </div>
+
         <div className={styles.pageLayout}>
           <div className={styles.ordersSection}>
-            {safeOrders.length === 0 ? (
+            {filteredOrders.length === 0 ? (
               <div className={styles.emptyState}>
-                <h2>No orders yet</h2>
-                <p>Start your first advertising campaign by booking an LED screen.</p>
-                <button 
-                  onClick={() => navigate('/booking')}
-                  className={`${styles.btn} ${styles.btnPrimary}`}
-                >
-                  Book Your First Ad
-                </button>
+                {searchTerm ? (
+                  <>
+                    <h2>No orders found</h2>
+                    <p>No orders match your search for "{searchTerm}". Try a different Order ID.</p>
+                    <button 
+                      onClick={() => setSearchTerm('')}
+                      className={`${styles.btn} ${styles.btnSecondary}`}
+                    >
+                      Clear Search
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <h2>No orders yet</h2>
+                    <p>Start your first advertising campaign by booking an LED screen.</p>
+                    <button 
+                      onClick={() => navigate('/booking')}
+                      className={`${styles.btn} ${styles.btnPrimary}`}
+                    >
+                      Book Your First Ad
+                    </button>
+                  </>
+                )}
               </div>
             ) : (
               <div className={styles.ordersList}>
-                {/* Book New Ad Button for users with existing orders */}
-                <div className={styles.bookNewSection}>
-                  <button 
-                    onClick={() => navigate('/booking')}
-                    className={`${styles.btn} ${styles.btnPrimary} ${styles.bookNewBtn}`}
-                  >
-                    Book New Ad
-                  </button>
-                </div>
-                
-                {safeOrders.map((order, index) => (
+                {filteredOrders.map((order, index) => (
               <div key={order.id} className={styles.orderCard}>
                 <div className={styles.cardContent}>
                   <div className={styles.orderLeft}>

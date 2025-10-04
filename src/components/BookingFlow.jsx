@@ -186,22 +186,66 @@ export default function BookingFlow() {
     }
   };
 
-  // Simplified plan availability checking - if location has slots, all plans are available
+  // Enhanced plan availability checking with duration-based logic
   const checkPlanAvailability = async (plans) => {
-  if (!selectedScreen || !selectedDate) {
-    return;
-  }
+    if (!selectedScreen || !selectedDate) {
+      return;
+    }
     
-    // Check if the selected location has available slots
-    const locationHasSlots = (selectedScreen.available_slots || 0) > 0;
-    
-    
-    // If location has slots, all plans are available
-    // If location has no slots, all plans are unavailable
+    setCheckingAvailability(true);
     const availabilityMap = {};
-    plans.forEach(plan => {
-      availabilityMap[plan.id] = locationHasSlots;
-    });
+    
+    // Check each plan individually for duration-based availability
+    for (const plan of plans) {
+      const durationDays = plan.duration_days || (plan.name === 'IMPACT' ? 3 : plan.name === 'THRIVE' ? 5 : 1);
+      
+      // Use existing availability API for duration-based checking
+      let isAvailable = true;
+      
+      for (let i = 0; i < durationDays; i++) {
+        const checkDate = new Date(selectedDate);
+        checkDate.setDate(checkDate.getDate() + i);
+        const dateString = checkDate.toISOString().split('T')[0];
+        
+        // Use existing availability API: /data/availability/{locationId}?planId={planId}&startDate={date}
+        const result = await dataAPI.checkAvailability(
+          selectedScreen.id,
+          plan.id,
+          dateString
+        );
+        
+        console.log(`🔍 Availability check for plan ${plan.name} on ${dateString}:`, result);
+        
+        if (!result.success || !result.data) {
+          // Show backend error message
+          const errorMessage = result.error || result.message || 'Availability check failed';
+          console.log(`❌ Availability check failed for plan ${plan.name}:`, errorMessage);
+          showToast(errorMessage, 'error');
+          isAvailable = false;
+          break;
+        }
+        
+        // Check if the response indicates availability
+        const availabilityData = result.data.data || result.data;
+        console.log(`📊 Availability data for plan ${plan.name}:`, availabilityData);
+        
+        // Check availability using the correct field name from API
+        const isAvailableFlag = availabilityData.isAvailable === true;
+        
+        console.log(`✅ Plan ${plan.name} availability check:`, {
+          isAvailable: availabilityData.isAvailable,
+          isAvailableFlag
+        });
+        
+        if (!isAvailableFlag) {
+          console.log(`❌ Plan ${plan.name} not available on ${dateString}`);
+          isAvailable = false;
+          break;
+        }
+      }
+      
+      availabilityMap[plan.id] = isAvailable;
+    }
     
     setPlanAvailability(availabilityMap);
     setCheckingAvailability(false);
