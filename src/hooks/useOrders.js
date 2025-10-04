@@ -227,6 +227,8 @@ export const useOrders = () => {
           totalAmount: orderData_from_api.total_cost || orderData_from_api.final_amount || orderData.totalAmount,
           amount: orderData_from_api.total_cost || orderData_from_api.final_amount || orderData.totalAmount,
           price: orderData_from_api.total_cost || orderData_from_api.final_amount || orderData.totalAmount,
+          orderUid: orderData_from_api.order_uid || orderData_from_api.orderUid,
+          order_uid: orderData_from_api.order_uid || orderData_from_api.orderUid,
           createdAt: new Date().toISOString(),
           apiSyncPending: false,
           // Store full API response for reference
@@ -265,11 +267,14 @@ export const useOrders = () => {
         
         // Create a local order as fallback when API fails
 
+        const fallbackOrderId = generateOrderId();
         const fallbackOrder = {
-          id: generateOrderId(),
+          id: fallbackOrderId,
           userId: userId,
           orderDate: new Date().toISOString().split('T')[0],
           status: 'Payment Pending',
+          orderUid: fallbackOrderId,
+          order_uid: fallbackOrderId,
           screenName: orderData.screenName || 'Unknown Screen',
           location: orderData.location || 'Unknown Location',
           adminProofImage: null,
@@ -300,11 +305,14 @@ export const useOrders = () => {
       
       // Create a local order as fallback when there's an error
 
+      const fallbackOrderId = generateOrderId();
       const fallbackOrder = {
-        id: generateOrderId(),
+        id: fallbackOrderId,
         userId: userId,
         orderDate: new Date().toISOString().split('T')[0],
         status: 'Payment Pending',
+        orderUid: fallbackOrderId,
+        order_uid: fallbackOrderId,
         screenName: orderData.screenName || 'Unknown Screen',
         location: orderData.location || 'Unknown Location',
         adminProofImage: null,

@@ -9,7 +9,7 @@ import TermsContent from './TermsContent';
 import styles from '../styles/BookingFlow.module.css';
 
 export default function BookingFlow() {
-  const { createOrder, hasAvailableInventory, getAvailableInventory, getBookedScreensForDate, orders } = useOrders();
+  const { createOrder, hasAvailableInventory, getAvailableInventory, getBookedScreensForDate, orders, verifyPayment } = useOrders();
   const { isAuthenticated, user } = useAuth();
   const [selectedDate, setSelectedDate] = useState('');
   const [selectedScreen, setSelectedScreen] = useState(null);
@@ -436,9 +436,20 @@ export default function BookingFlow() {
     setUploadError('');
 
     try {
+      // Trim file name and determine file type
+      const trimmedFileName = designFile.name.trim().replace(/\s+/g, '');
+      const fileType = designFile.type.startsWith('video/') ? 'video' : 'image';
+      
+      console.log('🔍 File upload details:', {
+        originalName: designFile.name,
+        trimmedName: trimmedFileName,
+        fileType: fileType,
+        mimeType: designFile.type
+      });
+      
       // Try to get signed URL from API
       const signedUrlResponse = await filesAPI.getSignedUploadUrl(
-        designFile.name,
+        trimmedFileName,
         designFile.type
       );
 
@@ -461,6 +472,18 @@ export default function BookingFlow() {
             setFileUploaded(true); // Mark as uploaded
             setShowUploadModal(false);
             setShowConfirmation(true);
+            
+            // Store file type for later use in order creation
+            setDesignFile(prevFile => ({
+              ...prevFile,
+              fileType: fileType
+            }));
+            
+            console.log('File uploaded successfully!', {
+              fileName: trimmedFileName,
+              fileType: fileType,
+              filePath: filePath
+            });
           } else {
             throw new Error(`S3 upload failed: ${uploadResponse.status} ${uploadResponse.statusText}`);
           }
@@ -490,6 +513,7 @@ export default function BookingFlow() {
 
   // Handle order confirmation
   const handleConfirmOrder = async () => {
+    console.log('🔍 handleConfirmOrder called');
     // Show loading immediately
     setConfirmingOrder(true);
     
@@ -589,6 +613,16 @@ export default function BookingFlow() {
     
     // Clear incomplete step indicator
     setIncompleteStep(null);
+    
+    console.log('🔍 All validations passed, proceeding to create order...');
+    console.log('🔍 Required data check:', {
+      signedUrlResponse: !!signedUrlResponse,
+      signedUrlResponsePath: signedUrlResponse?.path,
+      designFile: !!designFile,
+      selectedPlan: !!selectedPlan,
+      selectedScreen: !!selectedScreen,
+      selectedDate: !!selectedDate
+    });
 
     try {
       const orderData = {
@@ -597,9 +631,10 @@ export default function BookingFlow() {
         screenId: selectedScreen.id, // Keep for backward compatibility
         startDate: selectedDate,
         displayDate: selectedDate, // Keep for backward compatibility
-        creativeFilePath: signedUrlResponse.path, // This should be the actual file path from upload
-        creativeFileName: designFile.name,
-        designFile: designFile.name, // Keep for backward compatibility
+        creativeFilePath: signedUrlResponse?.path || '', // This should be the actual file path from upload
+        creativeFileName: designFile?.name?.trim().replace(/\s+/g, '') || '',
+        designFile: designFile?.name?.trim().replace(/\s+/g, '') || '', // Keep for backward compatibility
+        fileType: designFile?.fileType || (designFile?.type?.startsWith('video/') ? 'video' : 'image'),
         totalAmount: selectedPlan.price - (discountAmount || 0),
         price: selectedPlan.price - (discountAmount || 0), // Keep for backward compatibility
         address: address,
@@ -620,7 +655,9 @@ export default function BookingFlow() {
       console.log('🔍 Order data being sent:', orderData);
       console.log('🔍 Signed URL response:', signedUrlResponse);
 
+      console.log('🔍 Calling createOrder with data:', orderData);
       const result = await createOrder(orderData);
+      console.log('🔍 createOrder result:', result);
       
       if (result.success) {
         setNewOrder(result.order);
@@ -633,6 +670,15 @@ export default function BookingFlow() {
                                 result.order?.razorpay_order_id || 
                                 result.order?.razorpayOrderId;
         
+        console.log('🔍 Looking for razorpay_order_id in:', {
+          'result.apiResponse?.data?.order?.razorpay_order_id': result.apiResponse?.data?.order?.razorpay_order_id,
+          'result.apiResponse?.data?.razorpayOrder?.id': result.apiResponse?.data?.razorpayOrder?.id,
+          'result.apiResponse?.razorpay_order_id': result.apiResponse?.razorpay_order_id,
+          'result.order?.razorpay_order_id': result.order?.razorpay_order_id,
+          'result.order?.razorpayOrderId': result.order?.razorpayOrderId,
+          'Final razorpayOrderId': razorpayOrderId
+        });
+        
         if (razorpayOrderId) {
           // Show Razorpay payment modal
           console.log('🔍 Opening Razorpay payment modal:', {
@@ -641,14 +687,16 @@ export default function BookingFlow() {
             amount: result.order.totalAmount
           });
           handlePayment(result.order, razorpayOrderId);
-      } else {
+        } else {
           console.log('❌ No Razorpay order ID found in response:', result);
+          console.log('❌ Full API response structure:', JSON.stringify(result.apiResponse, null, 2));
           alert('Payment gateway not available. Please contact support.');
         }
       } else {
         setError(result.error || 'Failed to create order. Please try again.');
       }
     } catch (error) {
+      console.log('❌ Error in handleConfirmOrder:', error);
       setError('Failed to create order. Please try again.');
     } finally {
       setConfirmingOrder(false);
@@ -707,12 +755,21 @@ export default function BookingFlow() {
         
         // Call verify payment API
         try {
-          const verifyResponse = await ordersAPI.verifyPayment({
+          const verificationData = {
             orderId: order.id.toString(),
             razorpay_order_id: response.razorpay_order_id,
             razorpay_payment_id: response.razorpay_payment_id,
             razorpay_signature: response.razorpay_signature
-          });
+          };
+          
+          console.log('🔍 Verifying payment with data:', verificationData);
+          const verifyResponse = await verifyPayment(
+            verificationData.orderId,
+            verificationData.razorpay_order_id,
+            verificationData.razorpay_payment_id,
+            verificationData.razorpay_signature
+          );
+          console.log('🔍 Payment verification response:', verifyResponse);
             
             if (verifyResponse.success) {
             // Keep loading visible while redirecting
@@ -1308,6 +1365,19 @@ export default function BookingFlow() {
               onClick={handleConfirmOrder}
               disabled={confirmingOrder || !designFile || !fileUploaded || !address.trim() || (gstApplicable && (!companyName.trim() || !gstNumber.trim())) || !termsAccepted}
               className={styles.confirmButton}
+              onMouseEnter={() => {
+                console.log('🔍 Button hover - disabled state:', {
+                  confirmingOrder,
+                  designFile: !!designFile,
+                  fileUploaded,
+                  address: address.trim(),
+                  gstApplicable,
+                  companyName: companyName.trim(),
+                  gstNumber: gstNumber.trim(),
+                  termsAccepted,
+                  disabled: confirmingOrder || !designFile || !fileUploaded || !address.trim() || (gstApplicable && (!companyName.trim() || !gstNumber.trim())) || !termsAccepted
+                });
+              }}
                     >
               {confirmingOrder ? (
                 <>
