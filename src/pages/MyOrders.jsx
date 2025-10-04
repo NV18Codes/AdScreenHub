@@ -364,32 +364,64 @@ export default function MyOrders() {
                                        order.creatives?.[0]?.publicUrl || 
                                        order.creative_image_url;
                         
+                        // Determine if file is video or image
+                        const isVideo = order.fileType === 'video' || 
+                                       order.creativeFileName?.toLowerCase().match(/\.(mp4|mov|avi|mkv|webm)$/) ||
+                                       imageUrl?.toLowerCase().match(/\.(mp4|mov|avi|mkv|webm)$/);
+                        
                         return imageUrl ? (
                           <div className={styles.creativePreview}>
-                            <img 
-                              src={imageUrl} 
-                              alt="Your Creative"
-                              className={styles.previewImage}
-                              crossOrigin="anonymous"
-                              loading="lazy"
-                              onLoad={(e) => {
-                                e.target.style.opacity = '1';
-                              }}
-                              onError={(e) => {
-                                // Try displaying URL as fallback
-                                const parent = e.target.parentElement;
-                                const fallback = document.createElement('div');
-                                fallback.style.cssText = 'padding: 1rem; background: #f0f9ff; border: 2px dashed #3b82f6; border-radius: 8px; color: #1e40af; font-size: 0.875rem; text-align: center;';
-                                fallback.innerHTML = `
-                                  <p style="margin: 0 0 0.5rem 0; font-weight: 600;">📸 Image Available</p>
-                                  <p style="margin: 0; font-size: 0.75rem; word-break: break-all;">${order.creatives?.[0]?.file_name || 'creative.png'}</p>
-                                  <p style="margin: 0.5rem 0 0 0; font-size: 0.75rem; color: #64748b;">Click download to view</p>
-                                `;
-                                e.target.style.display = 'none';
-                                parent.insertBefore(fallback, e.target.nextSibling);
-                              }}
-                              style={{ opacity: 0, transition: 'opacity 0.3s ease' }}
-                            />
+                            {isVideo ? (
+                              <video 
+                                src={imageUrl} 
+                                className={styles.previewImage}
+                                crossOrigin="anonymous"
+                                controls
+                                preload="metadata"
+                                onLoadStart={(e) => {
+                                  e.target.style.opacity = '1';
+                                }}
+                                onError={(e) => {
+                                  // Try displaying URL as fallback
+                                  const parent = e.target.parentElement;
+                                  const fallback = document.createElement('div');
+                                  fallback.style.cssText = 'padding: 1rem; background: #f0f9ff; border: 2px dashed #3b82f6; border-radius: 8px; color: #1e40af; font-size: 0.875rem; text-align: center;';
+                                  fallback.innerHTML = `
+                                    <p style="margin: 0 0 0.5rem 0; font-weight: 600;">🎬 Video Available</p>
+                                    <p style="margin: 0; font-size: 0.75rem; word-break: break-all;">${order.creatives?.[0]?.file_name || 'creative.mp4'}</p>
+                                    <p style="margin: 0.5rem 0 0 0; font-size: 0.75rem; color: #64748b;">Click download to view</p>
+                                  `;
+                                  e.target.style.display = 'none';
+                                  parent.insertBefore(fallback, e.target.nextSibling);
+                                }}
+                                style={{ opacity: 0, transition: 'opacity 0.3s ease' }}
+                              />
+                            ) : (
+                              <img 
+                                src={imageUrl} 
+                                alt="Your Creative"
+                                className={styles.previewImage}
+                                crossOrigin="anonymous"
+                                loading="lazy"
+                                onLoad={(e) => {
+                                  e.target.style.opacity = '1';
+                                }}
+                                onError={(e) => {
+                                  // Try displaying URL as fallback
+                                  const parent = e.target.parentElement;
+                                  const fallback = document.createElement('div');
+                                  fallback.style.cssText = 'padding: 1rem; background: #f0f9ff; border: 2px dashed #3b82f6; border-radius: 8px; color: #1e40af; font-size: 0.875rem; text-align: center;';
+                                  fallback.innerHTML = `
+                                    <p style="margin: 0 0 0.5rem 0; font-weight: 600;">📸 Image Available</p>
+                                    <p style="margin: 0; font-size: 0.75rem; word-break: break-all;">${order.creatives?.[0]?.file_name || 'creative.png'}</p>
+                                    <p style="margin: 0.5rem 0 0 0; font-size: 0.75rem; color: #64748b;">Click download to view</p>
+                                  `;
+                                  e.target.style.display = 'none';
+                                  parent.insertBefore(fallback, e.target.nextSibling);
+                                }}
+                                style={{ opacity: 0, transition: 'opacity 0.3s ease' }}
+                              />
+                            )}
                             <p className={styles.fileName}>{order.creatives?.[0]?.file_name || 'creative.png'}</p>
                             <button
                               onClick={() => {

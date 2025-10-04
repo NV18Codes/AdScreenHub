@@ -168,7 +168,7 @@ const BookingSuccess = () => {
             <div className={styles.detailsGrid}>
               <div className={styles.detailItem}>
                 <span className={styles.label}>Order ID:</span>
-                <span className={styles.value}>#{order.id}</span>
+                <span className={styles.value}>#{order.orderUid || order.order_uid || `ORD-${order.id}`}</span>
               </div>
               <div className={styles.detailItem}>
                 <span className={styles.label}>Location:</span>
