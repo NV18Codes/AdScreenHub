@@ -96,7 +96,7 @@ export default function Steps() {
                     e.target.style.display = 'none';
                   }}
                 />
-                <div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-indigo-100 opacity-50"></div>
+                <div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-blue-100 opacity-50"></div>
               </div>
               <div className="relative z-10 flex flex-col justify-center h-full">
                 <div className="w-32 h-32 bg-white rounded-full flex items-center justify-center mx-auto mb-8 shadow-xl">
