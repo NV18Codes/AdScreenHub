@@ -3,6 +3,7 @@ import { useOrders } from '../hooks/useOrders';
 import { formatDate, formatCurrency, validateFile, compressImage, manageStorageQuota } from '../utils/validation';
 import { Link, useNavigate } from 'react-router-dom';
 import { RAZORPAY_KEY, RAZORPAY_CONFIG, convertToPaise } from '../config/razorpay';
+import Toast from '../components/Toast';
 import styles from '../styles/MyOrders.module.css';
 
 export default function MyOrders() {
@@ -16,6 +17,12 @@ export default function MyOrders() {
   const [newDesignPreview, setNewDesignPreview] = useState(null);
   const [uploadError, setUploadError] = useState('');
   const [refreshError, setRefreshError] = useState('');
+  const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
+
+  const showToast = (message, type = 'success') => {
+    setToast({ show: true, message, type });
+    setTimeout(() => setToast({ show: false, message: '', type: 'success' }), 4000);
+  };
   const [refreshing, setRefreshing] = useState(false);
 
   // Handle refresh orders
@@ -60,7 +67,7 @@ export default function MyOrders() {
     const order = orders.find(o => o.id === orderId);
     
     if (!canReviseOrder(order)) {
-      alert('This order cannot be revised. Please check the status and timing requirements.');
+      showToast('This order cannot be revised. Please check the status and timing requirements.', 'error');
       return;
     }
 
@@ -132,7 +139,7 @@ export default function MyOrders() {
     const razorpayOrderId = order.razorpay_order_id || order.razorpayOrderId;
     
     if (!razorpayOrderId) {
-      alert('No payment ID found for this order. Please contact support.');
+      showToast('No payment ID found for this order. Please contact support.', 'error');
       return;
     }
     
@@ -145,7 +152,7 @@ export default function MyOrders() {
         openRazorpayForOrder(order, razorpayOrderId);
       };
       script.onerror = () => {
-        alert('Failed to load payment gateway. Please try again.');
+        showToast('Failed to load payment gateway. Please try again.', 'error');
       };
       document.body.appendChild(script);
     } else {
@@ -174,7 +181,7 @@ export default function MyOrders() {
       },
       modal: {
         ondismiss: function() {
-          alert('Payment cancelled. You can retry payment from My Orders page.');
+          showToast('Payment cancelled. You can retry payment from My Orders page.', 'info');
         }
       }
     };
@@ -183,7 +190,7 @@ export default function MyOrders() {
       const razorpay = new window.Razorpay(options);
       razorpay.open();
     } catch (error) {
-      alert('Failed to open payment gateway. Please try again.');
+      showToast('Failed to open payment gateway. Please try again.', 'error');
     }
   };
 
@@ -199,7 +206,7 @@ export default function MyOrders() {
         return styles.statusCancelled;
       case 'Revise Your Design':
         return styles.statusRevision;
-      case 'Payment Completed - Pending Approval':
+      case 'Pending Approval':
         return styles.statusCompleted;
       case 'Payment Failed':
         return styles.statusCancelled;
@@ -306,7 +313,7 @@ export default function MyOrders() {
                       </div>
                       <div className={styles.infoRow}>
                         <span className={styles.infoLabel}>Duration:</span>
-                        <span className={styles.infoValue}>{order.plans?.duration_days || order.planDuration || 1} day(s)</span>
+                        <span className={styles.infoValue}>{order.plans?.duration_days || order.planDuration || order.duration_days || (order.plans?.name === 'IMPACT' ? 3 : order.plans?.name === 'THRIVE' ? 5 : 1)} day(s)</span>
                       </div>
                       <div className={styles.infoRow}>
                         <span className={styles.infoLabel}>Total Amount:</span>
@@ -331,15 +338,6 @@ export default function MyOrders() {
                     </div>
 
                     <div className={styles.orderActions}>
-                      {/* Complete Payment Button */}
-                      {(order.status === 'Pending Payment' && (order.razorpay_order_id || order.razorpayOrderId)) && (
-                        <button
-                          onClick={() => handleCompletePayment(order)}
-                          className={`${styles.btn} ${styles.btnPrimary}`}
-                        >
-                          Complete Payment
-                        </button>
-                      )}
                       
                       
                       {/* Revise Design Button */}
@@ -605,6 +603,15 @@ export default function MyOrders() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Toast Notification */}
+      {toast.show && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast({ show: false, message: '', type: 'success' })}
+        />
       )}
 
     </div>

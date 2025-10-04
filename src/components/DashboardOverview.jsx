@@ -18,7 +18,6 @@ export default function DashboardOverview() {
   const totalSpent = orders
     .filter(order => 
       order.status !== 'Cancelled Display' && 
-      order.status !== 'Pending Payment' &&
       order.status !== 'Payment Failed'
     )
     .reduce((sum, order) => sum + order.totalAmount, 0);

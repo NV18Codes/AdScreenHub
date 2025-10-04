@@ -30,7 +30,7 @@ const BookingFailed = () => {
             onClick={() => navigate('/booking')} 
             className={styles.primaryButton}
           >
-            Try Again
+            Book New Slot
           </button>
           <button 
             onClick={() => navigate('/contact')} 

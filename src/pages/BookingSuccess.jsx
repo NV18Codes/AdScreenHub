@@ -184,7 +184,7 @@ const BookingSuccess = () => {
               </div>
               <div className={styles.detailItem}>
                 <span className={styles.label}>Duration:</span>
-                <span className={styles.value}>{order.plan?.duration || 'N/A'} day{(order.plan?.duration || 1) > 1 ? 's' : ''}</span>
+                <span className={styles.value}>{order.plan?.duration || order.duration_days || order.planDuration || 'N/A'} day{(order.plan?.duration || order.duration_days || order.planDuration || 1) > 1 ? 's' : ''}</span>
               </div>
               <div className={styles.detailItem}>
                 <span className={styles.label}>Total Amount:</span>

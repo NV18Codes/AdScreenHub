@@ -6,20 +6,16 @@ export default function FAQ() {
   const navigate = useNavigate();
 
   const handleGoBack = () => {
-    console.log('FAQ Back button clicked!');
-    try {
-      // Try React Router navigation first
-      navigate('/');
-    } catch (error) {
-      console.error('Navigation error:', error);
-      // Fallback to direct URL change
-      window.location.href = '/';
-    }
+    // Go back to the previous page
+    navigate(-1);
   };
 
   return (
     <div className={styles.container}>
       <div className={styles.header}>
+        <button onClick={handleGoBack} className={styles.backButton}>
+          ← Back
+        </button>
         <h1 className={styles.title}>Frequently Asked Questions</h1>
         <p className={styles.subtitle}>Everything you need to know about AdScreenHub's LED digital screen advertising platform</p>
       </div>
