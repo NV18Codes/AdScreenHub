@@ -74,6 +74,9 @@ export const AuthProvider = ({ children }) => {
       }
     }
     
+    // Clear any existing orders to prevent showing other users' data
+    localStorage.removeItem('adscreenhub_orders');
+    
     setUser(userData);
     localStorage.setItem('user', JSON.stringify(userData));
     localStorage.setItem('token', token);
@@ -102,6 +105,7 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('phoneToken');
     localStorage.removeItem('authToken');
     localStorage.removeItem('pendingEmail');
+    localStorage.removeItem('adscreenhub_orders'); // Clear orders on logout
   };
 
   const isAuthenticated = () => {
