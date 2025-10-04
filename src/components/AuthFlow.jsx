@@ -28,6 +28,7 @@ export default function AuthFlow() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [signupStarted, setSignupStarted] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [showLoginPassword, setShowLoginPassword] = useState(false);
@@ -201,6 +202,7 @@ export default function AuthFlow() {
     setLoading(true);
     setError("");
     setSuccess("");
+    setSignupStarted(true);
     
     try {
       // First check if email already exists
@@ -208,6 +210,7 @@ export default function AuthFlow() {
       if (emailExists) {
         setError("An account with this email already exists. Please use the login form instead.");
         setLoading(false);
+        setSignupStarted(false);
         return;
       }
 
@@ -222,6 +225,7 @@ export default function AuthFlow() {
       setStep("waitForEmailVerify");
     } catch (err) {
       setError(err.response?.data?.message || "Error sending email. Please try again.");
+      setSignupStarted(false);
     } finally {
       setLoading(false);
     }
@@ -696,6 +700,7 @@ export default function AuthFlow() {
     localStorage.removeItem('pendingEmail');
     setError("");
     setSuccess("");
+    setSignupStarted(false);
   };
 
   const handleChangePhone = () => {
@@ -706,6 +711,7 @@ export default function AuthFlow() {
     localStorage.removeItem('phoneToken');
     setError("");
     setSuccess("");
+    setSignupStarted(false);
   };
 
   const renderStep = () => {
@@ -736,7 +742,7 @@ export default function AuthFlow() {
               
               <button
                 type="submit"
-                disabled={loading}
+                disabled={loading || signupStarted}
                 className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed font-medium flex items-center justify-center gap-2"
               >
                 {loading ? (
@@ -744,6 +750,8 @@ export default function AuthFlow() {
                     <LoadingSpinner size="small" text="" className="inlineSpinner" />
                     Sending...
                   </>
+                ) : signupStarted ? (
+                  "Signup in Progress..."
                 ) : (
                   "Send Verification Email"
                 )}
@@ -755,7 +763,7 @@ export default function AuthFlow() {
                 Already have an account? <button 
                   type="button" 
                   onClick={() => setStep("login")}
-                  disabled={loading}
+                  disabled={loading || signupStarted}
                   className="text-blue-600 hover:text-blue-700 font-medium underline disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Login
