@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { useOrders } from '../hooks/useOrders';
 import { formatDate, formatCurrency, validateFile, compressImage, manageStorageQuota } from '../utils/validation';
-import { Link, useNavigate } from 'react-router-dom';
-import { RAZORPAY_KEY, RAZORPAY_CONFIG, convertToPaise } from '../config/razorpay';
+import { useNavigate } from 'react-router-dom';
 import Toast from '../components/Toast';
 import styles from '../styles/MyOrders.module.css';
 
@@ -19,6 +18,7 @@ export default function MyOrders() {
   const [refreshError, setRefreshError] = useState('');
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
   const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('All');
 
   const showToast = (message, type = 'success') => {
     setToast({ show: true, message, type });
@@ -133,81 +133,40 @@ export default function MyOrders() {
     setUploadError('');
   };
 
-  // Filter orders based on search term
+  // Get unique statuses from orders
+  const uniqueStatuses = ['All', ...new Set(orders.map(order => order.status).filter(Boolean))];
+
+  // Filter orders based on search term and status
   const filteredOrders = orders.filter(order => {
+    // Status filter
+    if (statusFilter !== 'All' && order.status !== statusFilter) {
+      return false;
+    }
+    
+    // Search filter
     if (!searchTerm.trim()) return true;
     
     const searchLower = searchTerm.toLowerCase();
+    
+    // Search by Order ID
     const orderId = order.id?.toString().toLowerCase() || '';
     const orderUid = order.orderUid?.toString().toLowerCase() || '';
     const order_uid = order.order_uid?.toString().toLowerCase() || '';
     
+    // Search by Location
+    const locationName = (order.locations?.name || order.locationName || order.location || '').toLowerCase();
+    
+    // Search by Display Date
+    const displayDate = (order.start_date || order.startDate || order.displayDate || '').toLowerCase();
+    
     return orderId.includes(searchLower) || 
            orderUid.includes(searchLower) || 
-           order_uid.includes(searchLower);
+           order_uid.includes(searchLower) ||
+           locationName.includes(searchLower) ||
+           displayDate.includes(searchLower);
   });
 
 
-
-  // Handle payment for pending orders
-  const handleCompletePayment = (order) => {
-    const razorpayOrderId = order.razorpay_order_id || order.razorpayOrderId;
-    
-    if (!razorpayOrderId) {
-      showToast('No payment ID found for this order. Please contact support.', 'error');
-      return;
-    }
-    
-    // Load Razorpay script if not already loaded
-    if (!window.Razorpay) {
-      const script = document.createElement('script');
-      script.src = 'https://checkout.razorpay.com/v1/checkout.js';
-      script.async = true;
-      script.onload = () => {
-        openRazorpayForOrder(order, razorpayOrderId);
-      };
-      script.onerror = () => {
-        showToast('Failed to load payment gateway. Please try again.', 'error');
-      };
-      document.body.appendChild(script);
-    } else {
-      openRazorpayForOrder(order, razorpayOrderId);
-    }
-  };
-
-  const openRazorpayForOrder = (order, razorpayOrderId) => {
-    const user = JSON.parse(localStorage.getItem('user') || '{}');
-    
-    const options = {
-      key: RAZORPAY_KEY,
-      amount: convertToPaise(order.totalAmount || order.amount || order.final_amount || order.total_cost || 0),
-      currency: RAZORPAY_CONFIG.currency,
-      name: RAZORPAY_CONFIG.name,
-      description: `Payment for Order #${order.id}`,
-      order_id: razorpayOrderId,
-      prefill: {
-        name: user.fullName || user.name || '',
-        email: user.email || '',
-        contact: user.phoneNumber || user.phone || ''
-      },
-      theme: RAZORPAY_CONFIG.theme,
-      handler: async function (response) {
-        window.location.href = `/booking-success?orderId=${order.id}&payment_id=${response.razorpay_payment_id}`;
-      },
-      modal: {
-        ondismiss: function() {
-          showToast('Payment cancelled. You can retry payment from My Orders page.', 'info');
-        }
-      }
-    };
-    
-    try {
-      const razorpay = new window.Razorpay(options);
-      razorpay.open();
-    } catch (error) {
-      showToast('Failed to open payment gateway. Please try again.', 'error');
-    }
-  };
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -221,10 +180,10 @@ export default function MyOrders() {
         return styles.statusCancelled;
       case 'Revise Your Design':
         return styles.statusRevision;
-      case 'Pending Approval':
-        return styles.statusCompleted;
       case 'Payment Failed':
         return styles.statusCancelled;
+      case 'Pending Payment':
+        return styles.statusPending;
       case 'Payment Completed - Refund Initiated':
         return styles.statusRefund;
       default:
@@ -259,14 +218,14 @@ export default function MyOrders() {
           )}
         </div>
 
-        {/* Search Bar and Refresh Button */}
+        {/* Search Bar, Filter and Refresh Button */}
         <div className={styles.searchAndActions}>
           <div className={styles.searchSection}>
             <div className={styles.searchContainer}>
               <div className={styles.searchInputWrapper}>
                 <input
                   type="text"
-                  placeholder="Enter Order ID (e.g., ORD-123, ABC456)..."
+                  placeholder="Search by Order ID, Location, or Display Date..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className={styles.searchInput}
@@ -300,6 +259,22 @@ export default function MyOrders() {
                 Found {filteredOrders.length} order{filteredOrders.length !== 1 ? 's' : ''} matching "{searchTerm}"
               </div>
             )}
+          </div>
+          
+          <div className={styles.filterSection}>
+            <label htmlFor="status-filter" className={styles.filterLabel}>Filter by Status:</label>
+            <select
+              id="status-filter"
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className={styles.statusFilterDropdown}
+            >
+              {uniqueStatuses.map((status) => (
+                <option key={status} value={status}>
+                  {status}
+                </option>
+              ))}
+            </select>
           </div>
           
           <div className={styles.headerActions}>
@@ -401,8 +376,6 @@ export default function MyOrders() {
                     </div>
 
                     <div className={styles.orderActions}>
-                      
-                      
                       {/* Revise Design Button */}
                       {canReviseOrder(order) && (
                         <button

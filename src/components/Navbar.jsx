@@ -6,7 +6,7 @@ import styles from '../styles/Navbar.module.css';
 
 export default function Navbar() {
   const location = useLocation();
-  const { user, logout, isAuthenticated } = useAuth();
+  const { user, logout, isAuthenticated, isAdmin } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [activeSection, setActiveSection] = useState('');
   
@@ -91,15 +91,28 @@ export default function Navbar() {
           {isAuthenticated() ? (
             <>
               {/* Authenticated Navigation */}
-              <Link to="/dashboard" className={`${styles.navLink} ${location.pathname === '/dashboard' ? styles.active : ''}`} onClick={closeMenu}>Dashboard</Link>
-              <Link to="/my-orders" className={`${styles.navLink} ${location.pathname === '/my-orders' ? styles.active : ''}`} onClick={closeMenu}>My Orders</Link>
-              <Link to="/profile" className={`${styles.navLink} ${location.pathname === '/profile' ? styles.active : ''}`} onClick={closeMenu}>Profile</Link>
+              {isAdmin() ? (
+                <>
+                  {/* Admin Navigation */}
+                  <Link to="/admin/orders" className={`${styles.navLink} ${location.pathname === '/admin/orders' ? styles.active : ''}`} onClick={closeMenu}>Orders</Link>
+                  <Link to="/admin/profile" className={`${styles.navLink} ${location.pathname === '/admin/profile' ? styles.active : ''}`} onClick={closeMenu}>Profile</Link>
+                </>
+              ) : (
+                <>
+                  {/* Customer Navigation */}
+                  <Link to="/dashboard" className={`${styles.navLink} ${location.pathname === '/dashboard' ? styles.active : ''}`} onClick={closeMenu}>Dashboard</Link>
+                  <Link to="/my-orders" className={`${styles.navLink} ${location.pathname === '/my-orders' ? styles.active : ''}`} onClick={closeMenu}>My Orders</Link>
+                  <Link to="/profile" className={`${styles.navLink} ${location.pathname === '/profile' ? styles.active : ''}`} onClick={closeMenu}>Profile</Link>
+                </>
+              )}
               
               <div className={styles.authSection}>
                 <span className={styles.userName}>Hi, {displayName}</span>
-                <Link to="/booking" className={`${styles.btn} ${styles.btnBookNow}`} onClick={closeMenu}>
-                  Book Now
-                </Link>
+                {!isAdmin() && (
+                  <Link to="/booking" className={`${styles.btn} ${styles.btnBookNow}`} onClick={closeMenu}>
+                    Book Now
+                  </Link>
+                )}
                 <button 
                   onClick={async () => {
                     try {

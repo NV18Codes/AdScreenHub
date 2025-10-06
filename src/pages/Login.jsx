@@ -39,11 +39,20 @@ export default function Login() {
       if (res.data.data.user && res.data.data.session.access_token) {
         const loginSuccess = login(res.data.data.user, res.data.data.session.access_token);
         if (loginSuccess) {
+          const userData = res.data.data.user;
+          const isAdmin = userData.user_role === 'admin' || userData.role === 'admin' || userData.is_admin === true;
+          
           setSuccess("Logged in successfully! Redirecting...");
           localStorage.setItem("authToken", res.data.data.session.access_token);
           localStorage.setItem("user", JSON.stringify(res.data.data.user));
+          
           setTimeout(() => {
-            navigate("/dashboard");
+            // Redirect based on role
+            if (isAdmin) {
+              navigate("/admin/orders");
+            } else {
+              navigate("/dashboard");
+            }
           }, 1500);
         } else {
           // Login was blocked (deleted account)

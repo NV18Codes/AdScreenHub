@@ -712,24 +712,30 @@
 }
 
 .couponButton {
-  background: #6b7280;
+  background: linear-gradient(135deg, #10b981, #059669);
   color: white;
   border: none;
-  padding: 0.75rem 1rem;
+  padding: 0.75rem 1.5rem;
   border-radius: 8px;
   font-weight: 600;
   cursor: pointer;
-  transition: background-color 0.3s ease;
+  transition: all 0.3s ease;
   white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
 }
 
 .couponButton:hover:not(:disabled) {
-  background: #4b5563;
+  background: linear-gradient(135deg, #059669, #047857);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
 }
 
 .couponButton:disabled {
-  opacity: 0.6;
+  background: #d1d5db;
+  color: #9ca3af;
   cursor: not-allowed;
+  box-shadow: none;
+  opacity: 1;
 }
 
 /* Order Summary */
@@ -895,6 +901,284 @@
 .retryButton:hover {
   background: #b91c1c;
   transform: translateY(-1px);
+}
+
+/* Preview and Upload Section - New Design */
+.previewAndUploadSection {
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+  padding: 2.5rem;
+  border-radius: 16px;
+  border: 3px solid #3b82f6;
+  box-shadow: 0 10px 40px rgba(59, 130, 246, 0.15);
+}
+
+.previewHeader {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.previewHeader h3 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1e40af;
+  margin: 0 0 0.5rem 0;
+}
+
+.previewHeader p {
+  font-size: 1rem;
+  color: #64748b;
+  margin: 0;
+}
+
+/* Large Preview Area */
+.largePreviewArea {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 2rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  border: 2px solid #e2e8f0;
+}
+
+.videoPreviewWrapper,
+.imagePreviewWrapper {
+  text-align: center;
+  min-height: 300px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.largePreviewVideo {
+  max-width: 100%;
+  max-height: 500px;
+  width: 100%;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  border: 3px solid #1e40af;
+  object-fit: contain;
+  background: #000;
+}
+
+.largePreviewVideo:focus {
+  outline: 3px solid #3b82f6;
+  outline-offset: 4px;
+}
+
+.largePreviewImage {
+  max-width: 100%;
+  max-height: 500px;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  border: 3px solid #e2e8f0;
+  object-fit: contain;
+  display: block;
+  margin: 0 auto;
+}
+
+/* File Info Bar */
+.fileInfoBar {
+  background: white;
+  padding: 1.25rem 1.5rem;
+  border-radius: 12px;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e2e8f0;
+}
+
+.fileDetails {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.fileIcon {
+  font-size: 2.5rem;
+  flex-shrink: 0;
+}
+
+.fileText {
+  flex: 1;
+}
+
+.fileNameDisplay {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0 0 0.25rem 0;
+  word-break: break-word;
+}
+
+.fileSizeDisplay {
+  font-size: 0.875rem;
+  color: #64748b;
+  margin: 0;
+}
+
+/* Upload Actions Large */
+.uploadActionsLarge {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  align-items: center;
+}
+
+.cancelButtonLarge {
+  background: transparent;
+  color: #64748b;
+  border: 2px solid #cbd5e1;
+  padding: 1rem 2rem;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.cancelButtonLarge:hover {
+  background: #f8fafc;
+  border-color: #94a3b8;
+  color: #475569;
+  transform: translateY(-2px);
+}
+
+.uploadButtonLarge {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: white;
+  border: none;
+  padding: 1rem 3rem;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 20px rgba(16, 185, 129, 0.3);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.uploadButtonLarge:hover:not(:disabled) {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 30px rgba(16, 185, 129, 0.4);
+}
+
+.uploadButtonLarge:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* After Upload Success Styles - Simplified */
+.uploadSuccessLarge {
+  text-align: center;
+  padding: 2rem;
+  background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+  border-radius: 16px;
+  margin-bottom: 1.5rem;
+  border: 2px solid #10b981;
+}
+
+.successIconLarge {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+  animation: scaleIn 0.5s ease-out;
+}
+
+@keyframes scaleIn {
+  from {
+    transform: scale(0);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+
+.successTitle {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #065f46;
+  margin: 0 0 0.5rem 0;
+}
+
+.successSubtext {
+  font-size: 1rem;
+  color: #059669;
+  margin: 0;
+  font-weight: 500;
+}
+
+.uploadedFileInfo {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  background: white;
+  padding: 1.5rem;
+  border-radius: 12px;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e2e8f0;
+}
+
+.fileIconUpload {
+  font-size: 3rem;
+  flex-shrink: 0;
+}
+
+.fileDetailsUpload {
+  flex: 1;
+}
+
+.uploadedFileName {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0 0 0.5rem 0;
+  word-break: break-word;
+}
+
+.uploadedFileSize {
+  font-size: 0.875rem;
+  color: #64748b;
+  margin: 0;
+  font-weight: 500;
+}
+
+/* Coupon Error Message */
+.couponErrorMessage {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #dc2626;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  margin-top: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.couponErrorMessage::before {
+  content: "⚠️";
+  font-size: 1rem;
+}
+
+/* Coupon Success Message */
+.couponSuccessMessage {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  color: #16a34a;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  margin-top: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 /* Modal Styles */
@@ -1361,6 +1645,63 @@
   .bookingFlow {
     padding: 1rem;
     padding-top: 5rem; /* Add space for fixed navbar on mobile */
+  }
+  
+  .previewAndUploadSection {
+    padding: 1.5rem;
+  }
+  
+  .previewHeader h3 {
+    font-size: 1.25rem;
+  }
+  
+  .previewHeader p {
+    font-size: 0.9rem;
+  }
+  
+  .largePreviewArea {
+    padding: 1rem;
+  }
+  
+  .largePreviewVideo,
+  .largePreviewImage {
+    max-height: 350px;
+  }
+  
+  .uploadActionsLarge {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  
+  .cancelButtonLarge,
+  .uploadButtonLarge {
+    width: 100%;
+    justify-content: center;
+    padding: 0.875rem 1.5rem;
+  }
+  
+  .fileIcon {
+    font-size: 2rem;
+  }
+  
+  .successIconLarge {
+    font-size: 3rem;
+  }
+  
+  .successTitle {
+    font-size: 1.5rem;
+  }
+  
+  .successSubtext {
+    font-size: 0.9rem;
+  }
+  
+  .uploadedFileInfo {
+    padding: 1.25rem;
+  }
+  
+  .fileIconUpload {
+    font-size: 2.5rem;
   }
   
   .header h1 {

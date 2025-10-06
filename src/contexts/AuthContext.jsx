@@ -140,6 +140,15 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const isAdmin = () => {
+    if (!user) return false;
+    // Check if user has admin role - check multiple possible field names
+    return user.user_role === 'admin' || 
+           user.role === 'admin' || 
+           user.userType === 'admin' || 
+           user.is_admin === true;
+  };
+
   return (
     <AuthContext.Provider value={{
       user,
@@ -147,6 +156,7 @@ export const AuthProvider = ({ children }) => {
       logout,
       updateUser,
       isAuthenticated,
+      isAdmin,
       loading
     }}>
       {children}

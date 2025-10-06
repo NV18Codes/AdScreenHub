@@ -27,7 +27,7 @@ export default function Profile() {
   const [emailOTP, setEmailOTP] = useState('');
   const [newPhone, setNewPhone] = useState('');
   const [newEmail, setNewEmail] = useState('');
-  
+
   // Form states
   const [formData, setFormData] = useState({
     fullName: '',

@@ -20,9 +20,12 @@ import EmailRedirect from './pages/EmailRedirect';
 import BookingFlow from './components/BookingFlow';
 import BookingSuccess from './pages/BookingSuccess';
 import BookingFailed from './pages/BookingFailed';
+import AdminOrders from './pages/AdminOrders';
+import AdminProfile from './pages/AdminProfile';
 import ScrollToTop from './components/ScrollToTop';
 import ScrollToTopButton from './components/ScrollToTopButton';
 import { AuthRouteGuard, ProtectedRoute } from './components/AuthGuard';
+import { DashboardRedirect } from './components/RoleBasedRedirect';
 
 // Path normalizer to fix double slashes
 const PathNormalizer = () => {
@@ -75,7 +78,7 @@ function App() {
           <Route path="/verify-email" element={<EmailRedirect />} />
           
           {/* Dashboard Routes - Protected from unauthenticated users */}
-          <Route path="/dashboard" element={<ProtectedRoute><Layout><Dashboard /></Layout></ProtectedRoute>} />
+          <Route path="/dashboard" element={<ProtectedRoute><DashboardRedirect><Layout><Dashboard /></Layout></DashboardRedirect></ProtectedRoute>} />
           <Route path="/profile" element={<ProtectedRoute><Layout><Profile /></Layout></ProtectedRoute>} />
           <Route path="/my-orders" element={<ProtectedRoute><Layout><MyOrders /></Layout></ProtectedRoute>} />
           <Route path="/checkout" element={<ProtectedRoute><Layout><Checkout /></Layout></ProtectedRoute>} />
@@ -84,6 +87,10 @@ function App() {
           {/* Booking Result Pages */}
           <Route path="/booking-success" element={<Layout><BookingSuccess /></Layout>} />
           <Route path="/booking-failed" element={<Layout><BookingFailed /></Layout>} />
+
+          {/* Admin Routes - Protected */}
+          <Route path="/admin/orders" element={<ProtectedRoute adminOnly={true}><Layout><AdminOrders /></Layout></ProtectedRoute>} />
+          <Route path="/admin/profile" element={<ProtectedRoute adminOnly={true}><Layout><AdminProfile /></Layout></ProtectedRoute>} />
 
           {/* Catch all */}
           <Route path="*" element={<Navigate to="/" replace />} />
