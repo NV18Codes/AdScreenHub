@@ -52,27 +52,37 @@ const BookingSuccess = () => {
   }, [orderId]);
 
   const fetchOrderDetails = async () => {
-    setLoading(true); // Ensure loading is shown
+    setLoading(true);
     
     try {
+      console.log('🔍 Fetching order details for orderId:', orderId);
       const response = await ordersAPI.getOrders();
+      console.log('📦 BookingSuccess - API response:', response);
       
-      if (response.success) {
+      if (response.success || response.statusCode === 200) {
         // Handle different response structures
         let ordersData = [];
         
         // Try different possible structures
         if (Array.isArray(response.data)) {
           ordersData = response.data;
-        } else if (response.data?.data && Array.isArray(response.data.data)) {
-          ordersData = response.data.data;
-        } else if (response.data?.statusCode === 200 && response.data?.data && Array.isArray(response.data.data)) {
-          ordersData = response.data.data;
+          console.log('✅ Found orders in response.data (array)');
+        } else if (response.data?.data?.orders && Array.isArray(response.data.data.orders)) {
+          ordersData = response.data.data.orders;
+          console.log('✅ Found orders in response.data.data.orders');
         } else if (response.data?.orders && Array.isArray(response.data.orders)) {
           ordersData = response.data.orders;
+          console.log('✅ Found orders in response.data.orders');
+        } else if (response.data?.data && Array.isArray(response.data.data)) {
+          ordersData = response.data.data;
+          console.log('✅ Found orders in response.data.data (array)');
         }
         
+        console.log(`📊 Total orders found: ${ordersData.length}`);
+        console.log(`🔎 Looking for order with ID: ${orderId}`);
+        
         const foundOrder = ordersData.find(o => o.id.toString() === orderId.toString());
+        console.log('🎯 Found order:', foundOrder);
         
         if (foundOrder) {
           // Transform backend order data to frontend format
@@ -85,38 +95,84 @@ const BookingSuccess = () => {
             },
             plan: {
               name: foundOrder.plans?.name || foundOrder.plan?.name || 'N/A',
-              duration: foundOrder.plans?.duration_days || foundOrder.plan?.duration_days || 'N/A'
+              duration: foundOrder.plans?.duration_days || foundOrder.plan?.duration_days || 1
             },
             startDate: foundOrder.start_date || foundOrder.startDate,
             totalAmount: foundOrder.total_cost || foundOrder.final_amount || foundOrder.totalAmount,
-            status: foundOrder.status,
+            status: foundOrder.status || 'Pending Approval',
             createdAt: foundOrder.created_at || foundOrder.createdAt
           };
           
+          console.log('✅ Transformed order:', transformedOrder);
           setOrder(transformedOrder);
           setError('');
-          setLoading(false); // Stop loading after data is set
+          setLoading(false);
         } else {
           // Check localStorage as fallback
+          console.log('⚠️ Order not found in API, checking localStorage...');
           const localOrders = JSON.parse(localStorage.getItem('adscreenhub_orders') || '[]');
+          console.log(`📂 LocalStorage orders count: ${localOrders.length}`);
           const localOrder = localOrders.find(o => o.id.toString() === orderId.toString());
           
           if (localOrder) {
-            setOrder(localOrder);
+            console.log('✅ Found order in localStorage:', localOrder);
+            
+            // Transform localStorage order
+            const transformedOrder = {
+              id: localOrder.id,
+              orderId: localOrder.id,
+              orderUid: localOrder.orderUid || localOrder.order_uid,
+              location: {
+                name: localOrder.locations?.name || localOrder.location?.name || localOrder.locationName || localOrder.screenName || 'N/A'
+              },
+              plan: {
+                name: localOrder.plans?.name || localOrder.plan?.name || localOrder.planName || 'N/A',
+                duration: localOrder.plans?.duration_days || localOrder.plan?.duration_days || localOrder.planDuration || localOrder.duration_days || 1
+              },
+              startDate: localOrder.start_date || localOrder.startDate || localOrder.displayDate,
+              totalAmount: localOrder.total_cost || localOrder.final_amount || localOrder.totalAmount || localOrder.amount,
+              status: localOrder.status || 'Pending Approval',
+              createdAt: localOrder.created_at || localOrder.createdAt
+            };
+            
+            setOrder(transformedOrder);
             setError('');
-            setLoading(false); // Stop loading after data is set
+            setLoading(false);
           } else {
-            setError('Order not found');
-            setLoading(false); // Stop loading on error
+            // Show success even if order details not found - payment was successful!
+            console.log('⚠️ Order not found anywhere, but payment was verified');
+            const paymentId = searchParams.get('payment_id');
+            const verified = searchParams.get('verified');
+            
+            if (verified === 'true' && paymentId) {
+              // Payment was successful, just show basic success
+              setOrder({
+                id: orderId,
+                orderId: orderId,
+                orderUid: `ORD-${orderId}`,
+                location: { name: 'Processing...' },
+                plan: { name: 'Processing...', duration: '...' },
+                startDate: 'Processing...',
+                totalAmount: 0,
+                status: 'Pending Approval',
+                createdAt: new Date().toISOString()
+              });
+              setLoading(false);
+            } else {
+              setError('Order not found');
+              setLoading(false);
+            }
           }
         }
       } else {
+        console.log('❌ API response not successful:', response);
         setError(response.error || 'Failed to fetch order details');
-        setLoading(false); // Stop loading on error
+        setLoading(false);
       }
     } catch (err) {
+      console.error('❌ Error fetching order:', err);
       setError('Network error. Please try again.');
-      setLoading(false); // Stop loading on error
+      setLoading(false);
     }
   };
 
@@ -157,9 +213,9 @@ const BookingSuccess = () => {
           </div>
         </div>
         
-        <h1>Payment Completed</h1>
+        <h1>🎉 Payment Successful!</h1>
         <p className={styles.successMessage}>
-          Your payment has been processed successfully. Your ad is now pending approval and will be reviewed within 24 hours.
+          Your payment has been processed successfully. Your ad campaign is now pending approval and will be reviewed within 24 hours.
         </p>
 
         {order && (
@@ -188,7 +244,9 @@ const BookingSuccess = () => {
               </div>
               <div className={styles.detailItem}>
                 <span className={styles.label}>Total Amount:</span>
-                <span className={styles.value}>₹{order.totalAmount?.toLocaleString('en-IN') || 'N/A'}</span>
+                <span className={styles.value}>
+                  {order.totalAmount > 0 ? `₹${order.totalAmount.toLocaleString('en-IN')}` : 'Processing...'}
+                </span>
               </div>
               <div className={styles.detailItem}>
                 <span className={styles.label}>Status:</span>

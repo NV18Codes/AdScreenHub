@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useOrders } from '../hooks/useOrders';
 import { formatDate, formatCurrency, validateFile, compressImage, manageStorageQuota } from '../utils/validation';
 import { useNavigate } from 'react-router-dom';
@@ -19,6 +19,8 @@ export default function MyOrders() {
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [ordersPerPage] = useState(10);
 
   const showToast = (message, type = 'success') => {
     setToast({ show: true, message, type });
@@ -133,11 +135,22 @@ export default function MyOrders() {
     setUploadError('');
   };
 
-  // Get unique statuses from orders
-  const uniqueStatuses = ['All', ...new Set(orders.map(order => order.status).filter(Boolean))];
+  // All possible statuses (matching admin module)
+  const allStatuses = [
+    'All',
+    'Pending Payment',
+    'Pending Approval',
+    'In Display',
+    'Completed',
+    'Cancelled',
+    'Design Revise',
+    'Cancelled - Refunded',
+    'Payment Failed'
+  ];
 
   // Filter orders based on search term and status
-  const filteredOrders = orders.filter(order => {
+  const getFilteredOrders = () => {
+    return orders.filter(order => {
     // Status filter
     if (statusFilter !== 'All' && order.status !== statusFilter) {
       return false;
@@ -160,31 +173,53 @@ export default function MyOrders() {
     const displayDate = (order.start_date || order.startDate || order.displayDate || '').toLowerCase();
     
     return orderId.includes(searchLower) || 
-           orderUid.includes(searchLower) || 
+           orderUid.includes(searchLower) ||
            order_uid.includes(searchLower) ||
            locationName.includes(searchLower) ||
            displayDate.includes(searchLower);
-  });
+    });
+  };
+
+  const filteredOrders = getFilteredOrders();
+  
+  // Pagination
+  const totalPages = Math.ceil(filteredOrders.length / ordersPerPage);
+  const indexOfLastOrder = currentPage * ordersPerPage;
+  const indexOfFirstOrder = indexOfLastOrder - ordersPerPage;
+  const currentOrders = filteredOrders.slice(indexOfFirstOrder, indexOfLastOrder);
+
+  // Reset to page 1 when filter changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [statusFilter, searchTerm]);
 
 
 
   const getStatusColor = (status) => {
     switch (status) {
+      case 'Pending Payment':
+        return styles.statusPending;
       case 'Pending Approval':
         return styles.statusPending;
       case 'In Display':
         return styles.statusActive;
-      case 'Completed Display':
+      case 'Completed':
         return styles.statusCompleted;
-      case 'Cancelled Display':
+      case 'Cancelled':
         return styles.statusCancelled;
-      case 'Revise Your Design':
+      case 'Design Revise':
         return styles.statusRevision;
+      case 'Cancelled - Refunded':
+        return styles.statusRefund;
       case 'Payment Failed':
+        return styles.statusRevision;
+      case 'Completed Display': // Legacy status
+        return styles.statusCompleted;
+      case 'Cancelled Display': // Legacy status
         return styles.statusCancelled;
-      case 'Pending Payment':
-        return styles.statusPending;
-      case 'Payment Completed - Refund Initiated':
+      case 'Revise Your Design': // Legacy status
+        return styles.statusRevision;
+      case 'Payment Completed - Refund Initiated': // Legacy status
         return styles.statusRefund;
       default:
         return styles.statusPending;
@@ -202,6 +237,11 @@ export default function MyOrders() {
   // Ensure orders is always an array
   const safeOrders = Array.isArray(orders) ? orders : [];
   
+  // Debug: Log orders data
+  console.log('📦 MyOrders - Total orders:', orders.length);
+  console.log('📦 MyOrders - Filtered orders:', filteredOrders.length);
+  console.log('📦 MyOrders - Current page orders:', currentOrders.length);
+  console.log('📦 MyOrders - Loading state:', loading);
 
   return (
     <div className={styles.myOrders}>
@@ -269,7 +309,7 @@ export default function MyOrders() {
               onChange={(e) => setStatusFilter(e.target.value)}
               className={styles.statusFilterDropdown}
             >
-              {uniqueStatuses.map((status) => (
+              {allStatuses.map((status) => (
                 <option key={status} value={status}>
                   {status}
                 </option>
@@ -288,37 +328,56 @@ export default function MyOrders() {
           </div>
         </div>
 
+        {/* Results count */}
+        {filteredOrders.length > 0 && (
+          <div className={styles.resultsCount}>
+            Showing {indexOfFirstOrder + 1}-{Math.min(indexOfLastOrder, filteredOrders.length)} of {filteredOrders.length} orders
+          </div>
+        )}
+
         <div className={styles.pageLayout}>
           <div className={styles.ordersSection}>
-            {filteredOrders.length === 0 ? (
+            {currentOrders.length === 0 ? (
               <div className={styles.emptyState}>
-                {searchTerm ? (
+                {searchTerm || statusFilter !== 'All' ? (
                   <>
                     <h2>No orders found</h2>
-                    <p>No orders match your search for "{searchTerm}". Try a different Order ID.</p>
-                    <button 
-                      onClick={() => setSearchTerm('')}
-                      className={`${styles.btn} ${styles.btnSecondary}`}
-                    >
-                      Clear Search
-                    </button>
+                    <p>No orders match your current filters.</p>
+                    <div style={{display: 'flex', gap: '1rem', justifyContent: 'center', marginTop: '1rem'}}>
+                      {searchTerm && (
+                        <button 
+                          onClick={() => setSearchTerm('')}
+                          className={`${styles.btn} ${styles.btnSecondary}`}
+                        >
+                          Clear Search
+                        </button>
+                      )}
+                      {statusFilter !== 'All' && (
+                        <button 
+                          onClick={() => setStatusFilter('All')}
+                          className={`${styles.btn} ${styles.btnSecondary}`}
+                        >
+                          Clear Filter
+                        </button>
+                      )}
+                    </div>
                   </>
                 ) : (
                   <>
                     <h2>No orders yet</h2>
                     <p>Start your first advertising campaign by booking an LED screen.</p>
                     <button 
-                      onClick={() => navigate('/booking')}
+                      onClick={() => navigate('/')}
                       className={`${styles.btn} ${styles.btnPrimary}`}
                     >
-                      Book Your First Ad
+                      📺 Book Your First Ad
                     </button>
                   </>
                 )}
               </div>
             ) : (
               <div className={styles.ordersList}>
-                {filteredOrders.map((order, index) => (
+                {currentOrders.map((order, index) => (
               <div key={order.id} className={styles.orderCard}>
                 <div className={styles.cardContent}>
                   <div className={styles.orderLeft}>
@@ -534,6 +593,39 @@ export default function MyOrders() {
           </div>
           
         </div>
+
+        {/* Pagination Controls */}
+        {totalPages > 1 && (
+          <div className={styles.paginationContainer}>
+            <button
+              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+              disabled={currentPage === 1}
+              className={styles.paginationBtn}
+            >
+              ← Previous
+            </button>
+            
+            <div className={styles.pageNumbers}>
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                <button
+                  key={page}
+                  onClick={() => setCurrentPage(page)}
+                  className={`${styles.pageBtn} ${currentPage === page ? styles.activePage : ''}`}
+                >
+                  {page}
+                </button>
+              ))}
+            </div>
+            
+            <button
+              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+              disabled={currentPage >= totalPages}
+              className={styles.paginationBtn}
+            >
+              Next →
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Image Modal */}
