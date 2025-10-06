@@ -176,14 +176,14 @@ export const ordersAPI = {
     makeRequest(API_ENDPOINTS.ORDERS.VERIFY_PAYMENT, verificationData),
   
   getOrders: () => 
-    makeRequest(API_ENDPOINTS.ORDERS.GET_ORDERS, null, 'GET'),
+    makeRequest(`${API_ENDPOINTS.ORDERS.GET_ORDERS}?limit=1000`, null, 'GET'),
   
   // Alternative order endpoints to try
   getAllOrders: () => 
-    makeRequest('/orders/all', null, 'GET'),
+    makeRequest('/orders/all?limit=1000', null, 'GET'),
   
   getUserOrders: () => 
-    makeRequest('/orders/user', null, 'GET')
+    makeRequest('/orders/user?limit=1000', null, 'GET')
 };
 
 export const contactAPI = {

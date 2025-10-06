@@ -7,17 +7,29 @@ import { useAuth } from '../contexts/AuthContext';
 const processOrdersData = (data) => {
   let ordersArray = [];
   
+  console.log('🔍 Processing orders data:', data);
+  console.log('🔍 Checking data.data:', data.data);
+  console.log('🔍 Checking data.data.orders:', data.data?.orders);
+  
   if (Array.isArray(data)) {
     // Direct array response
     ordersArray = data;
-  } else if (data.data && Array.isArray(data.data)) {
-    // Nested data structure: response.data.data
-    ordersArray = data.data;
+    console.log('✅ Data is direct array');
+  } else if (data.data?.orders && Array.isArray(data.data.orders)) {
+    // Nested structure: response.data.data.orders (YOUR ACTUAL BACKEND FORMAT)
+    ordersArray = data.data.orders;
+    console.log('✅ Found in data.data.orders');
   } else if (data.orders && Array.isArray(data.orders)) {
     // Alternative nested structure: response.data.orders
     ordersArray = data.orders;
+    console.log('✅ Found in data.orders');
+  } else if (data.data && Array.isArray(data.data)) {
+    // Nested data structure: response.data.data
+    ordersArray = data.data;
+    console.log('✅ Found in data.data');
   } else {
-
+    console.log('❌ Could not find orders array in response');
+    console.log('❌ Data keys:', Object.keys(data));
     return [];
   }
   
@@ -103,21 +115,38 @@ export const useOrders = () => {
         let apiSuccess = false;
         
         // Only fetch orders if user is authenticated
-        if (!user || !user.id) {
+        if (!user) {
           setOrders([]);
           setLoading(false);
           return;
         }
         
+        // Get user ID from various possible fields
+        const currentUserId = user.id || user.user_id || user.sub || user.userId;
+        console.log('👤 Current user ID:', currentUserId);
+        console.log('👤 Full user object:', user);
+        
         // Use main endpoint only (the one that works: /orders)
         try {
           const response = await ordersAPI.getOrders();
+          console.log('📦 Orders API response:', response);
           
           if (response.success && response.data) {
             const allOrders = processOrdersData(response.data);
-            // Filter orders by current user
-            ordersData = allOrders.filter(order => order.userId === user.id);
-            if (ordersData.length > 0) {
+            console.log('📦 All orders from API:', allOrders.length);
+            console.log('📦 Sample order user_id:', allOrders[0]?.userId);
+            
+            // Filter orders by current user - check multiple ID fields
+            ordersData = allOrders.filter(order => 
+              order.userId === currentUserId || 
+              order.user_id === currentUserId ||
+              order.userId === user.id ||
+              order.user_id === user.id
+            );
+            
+            console.log('📦 Filtered orders for current user:', ordersData.length);
+            
+            if (ordersData.length >= 0) {
               apiSuccess = true;
               setOrders(ordersData);
               localStorage.setItem('adscreenhub_orders', JSON.stringify(ordersData));
@@ -125,7 +154,7 @@ export const useOrders = () => {
             }
           }
         } catch (apiError) {
-
+          console.error('❌ API Error:', apiError);
         }
         
         // Fallback to localStorage
@@ -133,18 +162,30 @@ export const useOrders = () => {
         if (savedOrders) {
           const parsedOrders = JSON.parse(savedOrders);
           const safeOrders = Array.isArray(parsedOrders) ? parsedOrders : [];
+          
+          // Get user ID from various possible fields
+          const currentUserId = user.id || user.user_id || user.sub || user.userId;
+          
           // Filter stored orders by current user as well
-          const userOrders = safeOrders.filter(order => order.userId === user.id);
+          const userOrders = safeOrders.filter(order => 
+            order.userId === currentUserId || 
+            order.user_id === currentUserId ||
+            order.userId === user.id ||
+            order.user_id === user.id
+          );
+          
+          console.log('💾 Orders from localStorage:', userOrders.length);
           
           // If no orders found for this user, clear localStorage to prevent showing other users' data
           if (userOrders.length === 0 && safeOrders.length > 0) {
-            console.log('🔍 No orders found for current user, clearing localStorage to prevent showing other users\' data');
+            console.log('🔍 No orders found for current user, clearing localStorage');
             localStorage.removeItem('adscreenhub_orders');
           }
           
           setOrders(userOrders);
         } else {
           // Initialize with empty orders
+          console.log('📭 No orders in localStorage');
           setOrders([]);
         }
       } catch (error) {

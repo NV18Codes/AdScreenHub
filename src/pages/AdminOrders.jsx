@@ -6,12 +6,13 @@ import LoadingSpinner from '../components/LoadingSpinner';
 import styles from '../styles/AdminOrders.module.css';
 
 export default function AdminOrders() {
-  const [orders, setOrders] = useState([]);
-  const [filteredOrders, setFilteredOrders] = useState([]);
+  const [allOrders, setAllOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [ordersPerPage] = useState(10);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [showUpdateModal, setShowUpdateModal] = useState(false);
   const [updateStatus, setUpdateStatus] = useState('');
@@ -39,56 +40,35 @@ export default function AdminOrders() {
     }
     
     try {
-      console.log('🔄 Fetching admin orders...');
       const response = await adminOrdersAPI.getAllOrders();
-      console.log('📦 Full API Response:', JSON.stringify(response, null, 2));
-      console.log('📦 Response type:', typeof response);
-      console.log('📦 Response.success:', response.success);
-      console.log('📦 Response.data:', response.data);
+      console.log('📦 Full API Response:', response);
       
-      // Try different possible response structures
-      let ordersArray = [];
-      
-      if (response.success === true) {
-        // Check for orders in response.data.orders first (your backend structure)
-        if (response.data?.orders && Array.isArray(response.data.orders)) {
-          ordersArray = response.data.orders;
-          console.log('✅ Found orders in response.data.orders:', ordersArray.length);
-        } else if (response.data?.data && Array.isArray(response.data.data)) {
-          ordersArray = response.data.data;
-          console.log('✅ Found orders in response.data.data:', ordersArray.length);
-        } else if (Array.isArray(response.data)) {
-          ordersArray = response.data;
-          console.log('✅ Found orders in response.data:', ordersArray.length);
+      if (response.success === true && response.data?.orders) {
+        const ordersArray = response.data.orders;
+        console.log(`✅ Loaded ${ordersArray.length} orders for admin dashboard`);
+        setAllOrders(ordersArray);
+        setCurrentPage(1); // Reset to first page
+        
+        if (isRefresh) {
+          showToast(`Refreshed! ${ordersArray.length} orders loaded`, 'success');
         }
-      } else if (Array.isArray(response)) {
-        // Response is directly an array
-        ordersArray = response;
-        console.log('✅ Response is directly an array:', ordersArray.length);
-      }
-      
-      console.log('📊 Final orders array:', ordersArray);
-      setOrders(ordersArray);
-      
-      if (isRefresh) {
-        showToast(`✅ Refreshed! ${ordersArray.length} orders loaded`, 'success');
-      } else if (ordersArray.length === 0) {
-        showToast('No orders found. This might be normal if there are no orders yet.', 'info');
+      } else {
+        setAllOrders([]);
+        showToast('No orders found', 'info');
       }
     } catch (error) {
       console.error('❌ Error fetching orders:', error);
-      console.error('❌ Error details:', error.message, error.stack);
-      setOrders([]);
-      showToast('Network error. Please check your connection and authentication.', 'error');
+      setAllOrders([]);
+      showToast('Network error. Please check your connection.', 'error');
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
   };
 
-  // Filter orders
-  useEffect(() => {
-    let filtered = orders;
+  // Filter and paginate orders
+  const getFilteredOrders = () => {
+    let filtered = [...allOrders];
 
     // Status filter
     if (statusFilter !== 'All') {
@@ -113,24 +93,53 @@ export default function AdminOrders() {
       });
     }
 
-    setFilteredOrders(filtered);
-  }, [orders, statusFilter, searchTerm]);
+    return filtered;
+  };
 
-  // Calculate analytics
+  const filteredOrders = getFilteredOrders();
+  const totalPages = Math.ceil(filteredOrders.length / ordersPerPage);
+  const indexOfLastOrder = currentPage * ordersPerPage;
+  const indexOfFirstOrder = indexOfLastOrder - ordersPerPage;
+  const currentOrders = filteredOrders.slice(indexOfFirstOrder, indexOfLastOrder);
+  
+  console.log('📊 Pagination Info:', {
+    totalOrders: allOrders.length,
+    filteredOrders: filteredOrders.length,
+    currentPage,
+    totalPages,
+    showingOrders: currentOrders.length,
+    indexRange: `${indexOfFirstOrder + 1}-${indexOfLastOrder}`
+  });
+
+  // Reset to page 1 when filter changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [statusFilter, searchTerm]);
+
+  // Calculate analytics from ALL orders
   const analytics = {
-    total: orders.length,
-    pendingApproval: orders.filter(o => o.status === 'Pending Approval').length,
-    inDisplay: orders.filter(o => o.status === 'In Display').length,
-    completed: orders.filter(o => o.status === 'Completed Display').length,
-    needsRevision: orders.filter(o => o.status === 'Revise Your Design').length,
-    paymentFailed: orders.filter(o => o.status === 'Payment Failed').length,
-    totalRevenue: orders
-      .filter(o => o.status !== 'Payment Failed' && o.status !== 'Cancelled Display')
+    total: allOrders.length,
+    pendingApproval: allOrders.filter(o => o.status === 'Pending Approval').length,
+    inDisplay: allOrders.filter(o => o.status === 'In Display').length,
+    completed: allOrders.filter(o => o.status === 'Completed').length,
+    needsRevision: allOrders.filter(o => o.status === 'Design Revise').length,
+    paymentFailed: allOrders.filter(o => o.status === 'Payment Failed').length,
+    totalRevenue: allOrders
+      .filter(o => o.status !== 'Payment Failed' && o.status !== 'Cancelled')
       .reduce((sum, o) => sum + (o.total_cost || 0), 0)
   };
 
-  // Get unique statuses
-  const uniqueStatuses = ['All', ...new Set(orders.map(o => o.status).filter(Boolean))];
+  // All possible statuses
+  const allStatuses = [
+    'All',
+    'Pending Payment',
+    'Pending Approval',
+    'In Display',
+    'Completed',
+    'Cancelled',
+    'Design Revise',
+    'Cancelled - Refunded'
+  ];
 
   // Handle file selection
   const handleFileSelect = (e) => {
@@ -201,7 +210,7 @@ export default function AdminOrders() {
       console.log('✅ Update response:', response);
       
       if (response.success) {
-        showToast('✅ Order updated successfully!', 'success');
+        showToast('Order updated successfully!', 'success');
         setShowUpdateModal(false);
         setSelectedOrder(null);
         setUpdateStatus('');
@@ -312,7 +321,7 @@ export default function AdminOrders() {
             <div className={styles.analyticsIcon}>₹</div>
             <div className={styles.analyticsContent}>
               <p className={styles.analyticsLabel}>Total Revenue</p>
-              <p className={styles.analyticsValue}>₹{(analytics.totalRevenue || 0).toLocaleString('en-IN')}</p>
+              <p className={styles.analyticsValue}>{(analytics.totalRevenue || 0).toLocaleString('en-IN')}</p>
             </div>
           </div>
         </div>
@@ -341,7 +350,7 @@ export default function AdminOrders() {
               onChange={(e) => setStatusFilter(e.target.value)}
               className={styles.filterSelect}
             >
-              {uniqueStatuses.map(status => (
+              {allStatuses.map(status => (
                 <option key={status} value={status}>{status}</option>
               ))}
             </select>
@@ -349,18 +358,20 @@ export default function AdminOrders() {
         </div>
 
         {/* Results count */}
-        <div className={styles.resultsCount}>
-          Showing {filteredOrders.length} of {orders.length} orders
-        </div>
+        {filteredOrders.length > 0 && (
+          <div className={styles.resultsCount}>
+            Showing {indexOfFirstOrder + 1}-{Math.min(indexOfLastOrder, filteredOrders.length)} of {filteredOrders.length} orders
+          </div>
+        )}
 
         {/* Orders List */}
-        {filteredOrders.length === 0 ? (
+        {currentOrders.length === 0 ? (
           <div className={styles.emptyState}>
             <p>No orders found</p>
           </div>
         ) : (
           <div className={styles.ordersGrid}>
-            {filteredOrders.map(order => (
+            {currentOrders.map(order => (
               <div key={order.id} className={styles.orderCard}>
                 <div className={styles.orderHeader}>
                   <div>
@@ -396,7 +407,7 @@ export default function AdminOrders() {
                     <span className={styles.value}>{formatDate(order.start_date)}</span>
                   </div>
                   <div className={styles.detailRow}>
-                    <span className={styles.label}>₹ Amount:</span>
+                    <span className={styles.label}>Amount:</span>
                     <span className={styles.valueAmount}>₹{(order.total_cost || 0).toLocaleString('en-IN')}</span>
                   </div>
                   {order.remarks && (
@@ -437,6 +448,39 @@ export default function AdminOrders() {
                 </div>
               </div>
             ))}
+          </div>
+        )}
+
+        {/* Pagination Controls */}
+        {totalPages > 1 && (
+          <div className={styles.paginationContainer}>
+            <button
+              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+              disabled={currentPage === 1}
+              className={styles.paginationBtn}
+            >
+              ← Previous
+            </button>
+            
+            <div className={styles.pageNumbers}>
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                <button
+                  key={page}
+                  onClick={() => setCurrentPage(page)}
+                  className={`${styles.pageBtn} ${currentPage === page ? styles.activePage : ''}`}
+                >
+                  {page}
+                </button>
+              ))}
+            </div>
+            
+            <button
+              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+              disabled={currentPage >= totalPages}
+              className={styles.paginationBtn}
+            >
+              Next →
+            </button>
           </div>
         )}
 

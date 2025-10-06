@@ -14,7 +14,8 @@ export const adminOrdersAPI = {
   // Get all orders
   getAllOrders: async () => {
     try {
-      const response = await fetch(`${ADMIN_API_BASE_URL}/orders/`, {
+      // Fetch with a large limit to get all orders at once
+      const response = await fetch(`${ADMIN_API_BASE_URL}/orders/?limit=1000`, {
         method: 'GET',
         headers: getAuthHeaders()
       });

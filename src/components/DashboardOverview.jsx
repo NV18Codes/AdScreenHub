@@ -10,17 +10,27 @@ export default function DashboardOverview() {
   const { user } = useAuth();
   const displayName = getUserDisplayName(user);
 
-  // Calculate stats - exclude cancelled orders from total spent
+  // Calculate stats from ALL orders - exclude cancelled orders from total spent
   const totalOrders = orders.length;
   const pendingOrders = orders.filter(order => order.status === 'Pending Approval').length;
   const activeOrders = orders.filter(order => order.status === 'In Display').length;
-  const completedOrders = orders.filter(order => order.status === 'Completed Display').length;
+  const completedOrders = orders.filter(order => order.status === 'Completed Display' || order.status === 'Completed').length;
   const totalSpent = orders
     .filter(order => 
       order.status !== 'Cancelled Display' && 
-      order.status !== 'Payment Failed'
+      order.status !== 'Cancelled' &&
+      order.status !== 'Payment Failed' &&
+      order.status !== 'Pending Payment'
     )
-    .reduce((sum, order) => sum + order.totalAmount, 0);
+    .reduce((sum, order) => sum + (order.totalAmount || order.total_cost || order.final_amount || 0), 0);
+
+  // Debug logging
+  console.log('📊 Dashboard Stats - Calculating from ALL orders:');
+  console.log(`   Total orders: ${totalOrders}`);
+  console.log(`   Pending: ${pendingOrders}`);
+  console.log(`   Active: ${activeOrders}`);
+  console.log(`   Completed: ${completedOrders}`);
+  console.log(`   Total spent: ₹${totalSpent.toLocaleString('en-IN')}`);
 
   // Get recent orders (last 3)
   const recentOrders = orders.slice(0, 3);
