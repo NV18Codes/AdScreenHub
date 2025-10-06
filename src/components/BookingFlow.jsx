@@ -424,12 +424,12 @@ export default function BookingFlow() {
       // Store the file temporarily
       setDesignFile(file); 
       setUploadError('');
-      // Create preview
+      
+      // Create preview for both images and videos
       const reader = new FileReader();
       reader.onload = (e) => {
         setDesignPreview(e.target.result);
       };
-
       reader.readAsDataURL(file);
     }
   };
@@ -1110,70 +1110,109 @@ export default function BookingFlow() {
             <h2>Step 4: Upload Design</h2>
             
 
-            {!fileUploaded ? (
-              /* Before Upload - Show file selector */
-            <div className={styles.uploadArea}>
-              <input
-                type="file"
-                id="file-upload"
-                onChange={handleFileSelect}
+            {!designFile ? (
+              /* Step 1: File Selection - No file selected yet */
+              <div className={styles.uploadArea}>
+                <input
+                  type="file"
+                  id="file-upload"
+                  onChange={handleFileSelect}
                   accept=".jpg,.jpeg,.png,.mov,.mp4,image/jpeg,image/png,video/mp4,video/quicktime"
-                className={styles.fileInput}
-              />
-              <label htmlFor="file-upload" className={styles.uploadLabel}>
+                  className={styles.fileInput}
+                />
+                <label htmlFor="file-upload" className={styles.uploadLabel}>
                   <div className={styles.uploadIcon}>📁</div>
                   <p className={styles.uploadText}>Click to Select Creative File</p>
                   <small>Accepted formats: JPG, JPEG, PNG, MP4, MOV (Max 50MB)</small>
-              </label>
+                </label>
                 
-                {designFile && !fileUploaded && (
-                  <div className={styles.fileSelected}>
-                    <p className={styles.selectedFileName}>Selected: {designFile.name}</p>
-                    <div className={styles.uploadActions}>
-                <button
-                  onClick={uploadFile}
-                  disabled={loading}
-                        className={styles.uploadButton}
-                      >
-                        {loading ? (
-                          <>
-                            <LoadingSpinner size="small" text="" className="inlineSpinner" />
-                            Uploading...
-                          </>
-                        ) : (
-                          'Upload Creative'
-                        )}
-                      </button>
-                  <button
-                        onClick={() => {
-                          setDesignFile(null);
-                          setDesignPreview(null);
-                          const fileInput = document.getElementById('file-upload');
-                          if (fileInput) fileInput.value = '';
-                        }}
-                        className={styles.cancelButton}
-                      >
-                        Cancel
-                  </button>
-                    </div>
-                </div>
-              )}
-              
                 {uploadError && (
                   <div className={styles.errorMessage}>{uploadError}</div>
-              )}
-            </div>
-            ) : (
-              /* After Upload - Show preview with change option */
-              <div className={styles.uploadedSection}>
-                <div className={styles.uploadSuccess}>
-                  <div className={styles.successIcon}>✅</div>
-                  <p className={styles.successText}>Creative Uploaded Successfully!</p>
-          </div>
+                )}
+              </div>
+            ) : !fileUploaded ? (
+              /* Step 2: File Selected - Show Preview and Upload Button */
+              <div className={styles.previewAndUploadSection}>
+                <div className={styles.previewHeader}>
+                  <h3>📋 Review Your Creative</h3>
+                  <p>Please review your {designFile.type?.startsWith('video/') ? 'video' : 'image'} before uploading</p>
+                </div>
                 
-                <div className={styles.filePreview}>
-                  <img src={designPreview} alt="Preview" className={styles.previewImage} />
-                  <p className={styles.fileName}>{designFile.name}</p>
+                {/* Large Preview Area */}
+                <div className={styles.largePreviewArea}>
+                  {designFile.type?.startsWith('video/') ? (
+                    <div className={styles.videoPreviewWrapper}>
+                      <video 
+                        src={designPreview} 
+                        controls 
+                        className={styles.largePreviewVideo}
+                        preload="metadata"
+                      >
+                        Your browser does not support the video tag.
+                      </video>
+                    </div>
+                  ) : (
+                    <div className={styles.imagePreviewWrapper}>
+                      <img src={designPreview} alt="Preview" className={styles.largePreviewImage} />
+                    </div>
+                  )}
+                </div>
+                
+                <div className={styles.fileInfoBar}>
+                  <div className={styles.fileDetails}>
+                    <span className={styles.fileIcon}>
+                      {designFile.type?.startsWith('video/') ? '🎬' : '📸'}
+                    </span>
+                    <div className={styles.fileText}>
+                      <p className={styles.fileNameDisplay}>{designFile.name}</p>
+                      <p className={styles.fileSizeDisplay}>
+                        {(designFile.size / (1024 * 1024)).toFixed(2)} MB
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                
+                {uploadError && (
+                  <div className={styles.errorMessage}>{uploadError}</div>
+                )}
+                
+                <div className={styles.uploadActionsLarge}>
+                  <button
+                    onClick={() => {
+                      setDesignFile(null);
+                      setDesignPreview(null);
+                      const fileInput = document.getElementById('file-upload');
+                      if (fileInput) fileInput.value = '';
+                    }}
+                    className={styles.cancelButtonLarge}
+                  >
+                    ← Choose Different File
+                  </button>
+                  <button
+                    onClick={uploadFile}
+                    disabled={loading}
+                    className={styles.uploadButtonLarge}
+                  >
+                    {loading ? (
+                      <>
+                        <LoadingSpinner size="small" text="" className="inlineSpinner" />
+                        Uploading...
+                      </>
+                    ) : (
+                      <>
+                        ✓ Looks Good - Upload Creative
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              /* After Upload - Show success message only */
+              <div className={styles.uploadedSection}>
+                <div className={styles.uploadSuccessLarge}>
+                  <div className={styles.successIconLarge}>✅</div>
+                  <h3 className={styles.successTitle}>Creative Uploaded Successfully!</h3>
+                  <p className={styles.successSubtext}>Your {(designFile.fileType === 'video' || designFile.type?.startsWith('video/')) ? 'video' : 'image'} has been uploaded and is ready.</p>
                 </div>
                 
                 <button
@@ -1250,13 +1289,16 @@ export default function BookingFlow() {
                 <input
                   type="text"
                     value={couponCode}
-                    onChange={(e) => setCouponCode(e.target.value)}
+                    onChange={(e) => {
+                      setCouponCode(e.target.value);
+                      setCouponError(''); // Clear error when user types
+                    }}
                     placeholder="Enter coupon code"
                     className={styles.input}
                   />
                   <button
                     onClick={validateCoupon}
-                    disabled={validatingCoupon}
+                    disabled={!couponCode.trim() || validatingCoupon}
                     className={styles.couponButton}
                   >
                     {validatingCoupon ? (
@@ -1267,7 +1309,12 @@ export default function BookingFlow() {
                   </button>
                 </div>
                 {couponError && (
-                  <div className={styles.errorMessage}>{couponError}</div>
+                  <div className={styles.couponErrorMessage}>{couponError}</div>
+                )}
+                {discountAmount > 0 && !couponError && (
+                  <div className={styles.couponSuccessMessage}>
+                    ✓ Coupon applied! You saved ₹{discountAmount.toLocaleString('en-IN')}
+                  </div>
                 )}
               </div>
 

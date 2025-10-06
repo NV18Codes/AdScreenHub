@@ -452,13 +452,16 @@ export default function AuthFlow() {
       // Clear any existing orders to prevent showing other users' data
       localStorage.removeItem('adscreenhub_orders');
       
-      // Redirect to dashboard immediately
+      // Redirect based on user role
         showToast("Registration successful! Welcome to AdScreenHub!", 'success');
       
       // Force immediate redirect to avoid React state timing issues
       setTimeout(() => {
         console.log('🔍 Before redirect - checking auth status');
-        navigate('/dashboard', { replace: true });
+        const userData = JSON.parse(localStorage.getItem('user') || '{}');
+        const isAdmin = userData.user_role === 'admin' || userData.role === 'admin' || userData.is_admin === true;
+        
+        navigate(isAdmin ? '/admin/orders' : '/dashboard', { replace: true });
       }, 100);
       
       // Clear password fields for security
@@ -519,8 +522,13 @@ export default function AuthFlow() {
           setError("Invalid email or password.");
           return;
         }
+        
+        const userData = res.data.data.user;
+        const isAdmin = userData.user_role === 'admin' || userData.role === 'admin' || userData.is_admin === true;
+        
         setTimeout(() => {
-          navigate("/dashboard");
+          // Redirect based on role
+          navigate(isAdmin ? "/admin/orders" : "/dashboard");
         }, 1500);
       } else {
         setError("Login successful but missing user data. Please try again.");
