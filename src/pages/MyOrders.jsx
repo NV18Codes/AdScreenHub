@@ -193,6 +193,11 @@ export default function MyOrders() {
     setCurrentPage(1);
   }, [statusFilter, searchTerm]);
 
+  // Scroll to top when page changes
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [currentPage]);
+
 
 
   const getStatusColor = (status) => {
@@ -247,10 +252,29 @@ export default function MyOrders() {
     <div className={styles.myOrders}>
       <div className={styles.container}>
         <div className={styles.header}>
-          <div className={styles.headerText}>
-            <h1>My Orders</h1>
-            <p>Track your advertising campaigns</p>
+          <div className={styles.headerLeft}>
+            <div className={styles.headerText}>
+              <h1>My Orders</h1>
+              <p className={styles.headerSubtext}>Track and manage your advertising campaigns</p>
+            </div>
           </div>
+          <button 
+            onClick={handleRefreshOrders}
+            disabled={refreshing || loading}
+            className={`${styles.btn} ${styles.btnPrimary} ${styles.refreshBtn}`}
+            style={{minWidth: '140px'}}
+          >
+            {refreshing ? (
+              <>
+                <span className={styles.spinner}></span>
+                Refreshing...
+              </>
+            ) : (
+              <>
+                🔄 Refresh
+              </>
+            )}
+          </button>
           {refreshError && (
             <div className={styles.errorMessage}>
               {refreshError}
@@ -315,16 +339,6 @@ export default function MyOrders() {
                 </option>
               ))}
             </select>
-          </div>
-          
-          <div className={styles.headerActions}>
-            <button
-              onClick={handleRefreshOrders}
-              disabled={refreshing || loading}
-              className={`${styles.btn} ${styles.btnSecondary} ${styles.refreshBtn}`}
-            >
-              {refreshing ? 'Refreshing...' : 'Refresh'}
-            </button>
           </div>
         </div>
 
