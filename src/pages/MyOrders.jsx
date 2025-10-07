@@ -193,11 +193,6 @@ export default function MyOrders() {
     setCurrentPage(1);
   }, [statusFilter, searchTerm]);
 
-  // Scroll to top when page changes
-  useEffect(() => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, [currentPage]);
-
 
 
   const getStatusColor = (status) => {
@@ -218,14 +213,6 @@ export default function MyOrders() {
         return styles.statusRefund;
       case 'Payment Failed':
         return styles.statusRevision;
-      case 'Completed Display': // Legacy status
-        return styles.statusCompleted;
-      case 'Cancelled Display': // Legacy status
-        return styles.statusCancelled;
-      case 'Revise Your Design': // Legacy status
-        return styles.statusRevision;
-      case 'Payment Completed - Refund Initiated': // Legacy status
-        return styles.statusRefund;
       default:
         return styles.statusPending;
     }

@@ -116,11 +116,6 @@ export default function AdminOrders() {
     setCurrentPage(1);
   }, [statusFilter, searchTerm]);
 
-  // Scroll to top when page changes
-  useEffect(() => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, [currentPage]);
-
   // Calculate analytics from ALL orders
   const analytics = {
     total: allOrders.length,
@@ -509,11 +504,13 @@ export default function AdminOrders() {
                     onChange={(e) => setUpdateStatus(e.target.value)}
                     className={styles.select}
                   >
+                    <option value="Pending Payment">Pending Payment</option>
                     <option value="Pending Approval">Pending Approval</option>
                     <option value="In Display">In Display</option>
-                    <option value="Completed Display">Completed Display</option>
-                    <option value="Revise Your Design">Revise Your Design</option>
-                    <option value="Cancelled Display">Cancelled Display</option>
+                    <option value="Completed">Completed</option>
+                    <option value="Cancelled">Cancelled</option>
+                    <option value="Design Revise">Design Revise</option>
+                    <option value="Cancelled - Refunded">Cancelled - Refunded</option>
                   </select>
                 </div>
 
