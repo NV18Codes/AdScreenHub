@@ -116,6 +116,11 @@ export default function AdminOrders() {
     setCurrentPage(1);
   }, [statusFilter, searchTerm]);
 
+  // Scroll to top when page changes
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [currentPage]);
+
   // Calculate analytics from ALL orders
   const analytics = {
     total: allOrders.length,
