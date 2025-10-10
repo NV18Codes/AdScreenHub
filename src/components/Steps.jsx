@@ -92,7 +92,6 @@ export default function Steps() {
                   alt="Video Background" 
                   className="w-full h-full object-cover opacity-20"
                   onError={(e) => {
-                    console.error('Failed to load Banner.png');
                     e.target.style.display = 'none';
                   }}
                 />

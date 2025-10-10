@@ -89,7 +89,6 @@ export default function Showcase() {
                     alt={ad.title}
                     className="w-full h-full object-cover"
                     onError={(e) => {
-                      console.error("Failed to load image:", ad.image);
                       e.currentTarget.style.display = "none";
                     }}
                   />

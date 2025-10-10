@@ -55,12 +55,20 @@ export default function AuthFlow() {
     setTimeout(() => setToast({ show: false, message: '', type: 'success' }), 4000);
   };
 
+  // Check for session expiry on mount
+  useEffect(() => {
+    const expired = searchParams.get('expired');
+    if (expired === 'true') {
+      setError('Your session has expired. Please login again.');
+      setStep('login');
+    }
+  }, [searchParams]);
+
   // Load tokens from localStorage on component mount
   useEffect(() => {
     const storedEmailToken = localStorage.getItem('emailToken');
     const storedPhoneToken = localStorage.getItem('phoneToken');
     
-    console.log('Loading tokens from localStorage:', { storedEmailToken, storedPhoneToken });
     
     if (storedEmailToken) {
       setEmailToken(storedEmailToken);
@@ -96,11 +104,6 @@ export default function AuthFlow() {
     if (step === 'register') {
       const emailTokenCheck = emailToken || localStorage.getItem('emailToken');
       const phoneTokenCheck = phoneToken || localStorage.getItem('phoneToken');
-      
-      console.log('Registration step token validation:', {
-        emailToken: emailTokenCheck ? 'present' : 'missing',
-        phoneToken: phoneTokenCheck ? 'present' : 'missing'
-      });
       
       if (!emailTokenCheck) {
         setError("Email verification required. Please complete email verification first.");
@@ -183,10 +186,8 @@ export default function AuthFlow() {
   const checkEmailExists = async (emailToCheck) => {
     try {
       // Endpoint not available yet, skip check for now
-      console.log('📧 Email existence check skipped - endpoint not available');
       return false;
     } catch (err) {
-      console.error('Error checking email existence:', err);
       return false;
     }
   };
@@ -258,10 +259,8 @@ export default function AuthFlow() {
   const checkPhoneExists = async (phoneToCheck) => {
     try {
       // Endpoint not available yet, skip check for now
-      console.log('📞 Phone existence check skipped - endpoint not available');
       return false;
     } catch (err) {
-      console.error('Error checking phone existence:', err);
       return false;
     }
   };
@@ -287,22 +286,18 @@ export default function AuthFlow() {
         return;
       }
 
-      console.log("📞 Sending OTP to phone:", phone);
       const response = await axios.post(`${API_BASE}/start-phone-verification`, { phoneNumber: phone });
-      console.log("📱 Phone verification response:", response.data);
       
       // Store phone token if provided
       if (response.data.data?.phoneToken) {
         const token = response.data.data.phoneToken;
         setPhoneToken(token);
         localStorage.setItem('phoneToken', token);
-        console.log("📱 Phone token stored:", token);
       }
       
       setSuccess("OTP sent to your phone!");
       setStep("otp");
     } catch (err) {
-      console.error("📱 Phone verification error:", err);
       setError(err.response?.data?.message || "Failed to send OTP. Please try again.");
     } finally {
       setLoading(false);
@@ -324,7 +319,6 @@ export default function AuthFlow() {
     try {
       const response = await axios.post(`${API_BASE}/verify-phone`, { phoneNumber: phone, otp });
       // Store the phone verification token
-      console.log('Phone verification response:', response.data);
       if (response.data.data.phoneToken) {
         setPhoneToken(response.data.data.phoneToken);
         localStorage.setItem('phoneToken', response.data.data.phoneToken);
@@ -376,13 +370,6 @@ export default function AuthFlow() {
       const emailTokenToUse = emailToken || localStorage.getItem('emailToken');
       const phoneTokenToUse = phoneToken || localStorage.getItem('phoneToken');
       
-      console.log('Registration tokens check:', { 
-        emailToken: emailTokenToUse ? 'present' : 'missing',
-        phoneToken: phoneTokenToUse ? 'present' : 'missing',
-        emailTokenValue: emailTokenToUse,
-        phoneTokenValue: phoneTokenToUse
-      });
-      
       if (!emailTokenToUse) {
         setError("Email verification token missing. Please complete email verification first.");
         setStep("email");
@@ -394,12 +381,7 @@ export default function AuthFlow() {
         setStep("phone");
         return;
       }
-      console.log('Registration tokens check:', {
-        emailToken: emailTokenToUse,
-        phoneToken: phoneTokenToUse,
-        name,
-        password
-      });
+      
       const registrationResponse = await axios.post(`${API_BASE}/complete-registration`, {
         fullName:name,
         password,
@@ -408,7 +390,6 @@ export default function AuthFlow() {
       });
       
       // Registration successful - create authenticated session directly
-      console.log('🔄 Registration successful, creating authenticated session...');
       
       const userEmail = localStorage.getItem('pendingEmail');
       
@@ -441,23 +422,15 @@ export default function AuthFlow() {
         return;
       }
       
-      // Debug: Check authentication status
-      console.log('🔍 After login call:', {
-        token: sessionToken,
-        userData: newUserData,
-        localStorageToken: localStorage.getItem('token'),
-        localStorageUser: localStorage.getItem('user')
-      });
       
       // Clear any existing orders to prevent showing other users' data
       localStorage.removeItem('adscreenhub_orders');
       
       // Redirect based on user role
-        showToast("Registration successful! Welcome to AdScreenHub!", 'success');
+      showToast("Registration successful! Welcome to AdScreenHub!", 'success');
       
       // Force immediate redirect to avoid React state timing issues
       setTimeout(() => {
-        console.log('🔍 Before redirect - checking auth status');
         const userData = JSON.parse(localStorage.getItem('user') || '{}');
         const isAdmin = userData.user_role === 'admin' || userData.role === 'admin' || userData.is_admin === true;
         
@@ -468,7 +441,6 @@ export default function AuthFlow() {
       setPassword("");
       setConfirmPassword("");
     } catch (err) {
-      console.error('Registration error:', err);
       
       if (err.response?.status === 401) {
         setError("Verification tokens have expired. Please restart the verification process.");
@@ -511,7 +483,6 @@ export default function AuthFlow() {
       const normalizedEmail = email.toLowerCase().trim();
       const res = await axios.post(`${API_BASE}/login`, { email: normalizedEmail, password });
       
-      console.log('Login response:', res.data);
         if (res.data.data.user && res.data.data.session.access_token) {
         const loginSuccess = login(res.data.data.user, res.data.data.session.access_token);
         if (loginSuccess) {
@@ -558,7 +529,6 @@ export default function AuthFlow() {
         setError(response.error || "Failed to resend email. Please try again.");
       }
     } catch (err) {
-      console.error('Email resend error:', err);
       setError("Failed to resend email. Please try again.");
     } finally {
       setResendEmailLoading(false);
@@ -582,7 +552,6 @@ export default function AuthFlow() {
         setError(response.error || "Failed to resend OTP. Please try again.");
       }
     } catch (err) {
-      console.error('OTP resend error:', err);
       setError("Failed to resend OTP. Please try again.");
     } finally {
       setResendOTPLoading(false);
@@ -608,7 +577,6 @@ export default function AuthFlow() {
   // 🚀 NEW: Forgot Password
   const handleForgotPassword = async (e) => {
     e.preventDefault();
-    console.log('🔐 Forgot Password submitted!', { forgotPasswordEmail });
     
     if (!forgotPasswordEmail) {
       setError("Email is required");
@@ -630,7 +598,6 @@ export default function AuthFlow() {
         setError(response.error || "Failed to send reset email. Please try again.");
       }
     } catch (err) {
-      console.error('💥 Forgot password error:', err);
       setError("Failed to send reset email. Please try again.");
     } finally {
       setLoading(false);

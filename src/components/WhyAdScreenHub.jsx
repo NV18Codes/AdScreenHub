@@ -16,7 +16,6 @@ export default function WhyAdScreenHub() {
               alt="AdScreenHub Animation" 
               className={styles.titleAnimation}
               onError={(e) => {
-                console.error('Failed to load Animation-transparent-bkgd.gif');
                 e.target.style.display = 'none';
               }}
             />

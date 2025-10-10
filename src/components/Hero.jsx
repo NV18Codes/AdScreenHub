@@ -16,7 +16,6 @@ export default function Hero() {
           alt="Hero Background" 
           className="w-full h-full object-cover"
           onError={(e) => {
-            console.error('Failed to load Banner.png');
             e.target.style.display = 'none';
           }}
         />

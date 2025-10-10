@@ -1,38 +1,20 @@
-// Razorpay Configuration
-// For production, use environment variables
-// 
-// How to get your Razorpay keys:
-// 1. Go to https://dashboard.razorpay.com/
-// 2. Sign in or create an account
-// 3. Go to Settings > API Keys
-// 4. Generate Test/Live keys
-// 5. Replace the keys below
-
-// Test mode key (replace with your actual test key from Razorpay dashboard)
-export const RAZORPAY_KEY_TEST = 'rzp_test_RBC4ETSsTi1taj';
-
-// Production key (replace with your actual production key from Razorpay dashboard)
-export const RAZORPAY_KEY_PROD = 'rzp_live_your_key_here';
-
-// Use test key for both dev and production until you get production key
+export const RAZORPAY_KEY_TEST = import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_test_RBC4ETSsTi1taj';
+export const RAZORPAY_KEY_PROD = import.meta.env.VITE_RAZORPAY_KEY_PROD || 'rzp_live_your_key_here';
 export const RAZORPAY_KEY = RAZORPAY_KEY_TEST;
 
-// Razorpay configuration options
 export const RAZORPAY_CONFIG = {
   currency: 'INR',
-  name: 'AdScreenHub',
-  description: 'LED Billboard Advertising',
+  name: import.meta.env.VITE_APP_NAME || 'AdScreenHub',
+  description: import.meta.env.VITE_APP_DESCRIPTION || 'LED Billboard Advertising',
   theme: {
-    color: '#3b82f6' // Blue color matching your theme
+    color: '#3b82f6'
   }
 };
 
-// Helper function to convert amount to paise (Razorpay requires amount in paise)
 export const convertToPaise = (amount) => {
   return Math.round(amount * 100);
 };
 
-// Helper function to convert paise to rupees
 export const convertToRupees = (paise) => {
   return paise / 100;
 };

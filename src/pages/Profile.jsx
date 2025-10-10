@@ -269,6 +269,10 @@ export default function Profile() {
           setSuccessMessage('OTP sent to new phone number. Please verify to continue.');
           return;
         } else {
+          // Check if phone number already exists
+          if (phoneData.message && phoneData.message.toLowerCase().includes('exist')) {
+            throw new Error('This phone number is already registered with another account. Please use a different number.');
+          }
           throw new Error(phoneData.message || 'Failed to send phone OTP');
         }
       }
@@ -300,6 +304,7 @@ export default function Profile() {
               fullName: formData.fullName, 
               full_name: formData.fullName,
               gstInfo: formData.gstNumber, 
+              gst_info: formData.gstNumber,
               gstNumber: formData.gstNumber 
             });
           }
@@ -366,7 +371,7 @@ export default function Profile() {
         setIsEditing(false);
         setOriginalFormData(formData); // Update original data after successful save
         if (updateUser) {
-          updateUser({ ...user, phoneNumber: newPhone, fullName: formData.fullName, gstInfo: formData.gstNumber });
+          updateUser({ ...user, phoneNumber: newPhone, phone_number: newPhone, fullName: formData.fullName, full_name: formData.fullName, gstInfo: formData.gstNumber, gst_info: formData.gstNumber });
         }
       } else {
         throw new Error(data.message || 'Invalid OTP');
@@ -430,7 +435,7 @@ export default function Profile() {
         setIsEditing(false);
         setOriginalFormData(formData); // Update original data after successful save
         if (updateUser) {
-          updateUser({ ...user, email: newEmail, fullName: formData.fullName, gstInfo: formData.gstNumber });
+          updateUser({ ...user, email: newEmail, fullName: formData.fullName, full_name: formData.fullName, gstInfo: formData.gstNumber, gst_info: formData.gstNumber });
         }
       } else {
         throw new Error(data.message || 'Invalid OTP');
@@ -796,16 +801,19 @@ export default function Profile() {
                 <>
                   <div className={styles.field}>
                     <label>New Phone Number</label>
-                    <input
-                      type="tel"
-                      name="phoneNumber"
-                      value={formData.phoneNumber}
-                      onChange={handleInputChange}
-                      className={styles.input}
-                      placeholder="Enter 10-digit mobile number"
-                      maxLength="10"
-                      pattern="[6-9][0-9]{9}"
-                    />
+                    <div className={styles.phoneInputWrapper}>
+                      <span className={styles.phonePrefix}>+91</span>
+                      <input
+                        type="tel"
+                        name="phoneNumber"
+                        value={formData.phoneNumber}
+                        onChange={handleInputChange}
+                        className={`${styles.input} ${styles.phoneInput}`}
+                        placeholder="Enter 10-digit mobile number"
+                        maxLength="10"
+                        pattern="[6-9][0-9]{9}"
+                      />
+                    </div>
                   </div>
                   
                   <div className={styles.otpActions}>

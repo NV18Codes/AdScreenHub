@@ -30,9 +30,8 @@ export const validateFile = (file) => {
 
 // Generate order ID
 export const generateOrderId = () => {
-  const timestamp = Date.now();
-  const random = Math.random().toString(36).substr(2, 5);
-  return `ORD-${timestamp}-${random}`.toUpperCase();
+  const random = Math.random().toString(36).substr(2, 6).toUpperCase();
+  return `ORD-${random}`;
 };
 
 // Image compression
@@ -103,4 +102,51 @@ export const formatCurrency = (amount) => {
     style: 'currency',
     currency: 'INR'
   }).format(amount);
+};
+
+// GST number validation
+export const validateGSTNumber = (gstNumber) => {
+  if (!gstNumber) {
+    return { valid: false, error: 'GST number is required' };
+  }
+  
+  // Remove any spaces or special characters
+  const cleanGST = gstNumber.replace(/[^A-Z0-9]/g, '').toUpperCase();
+  
+  // GSTIN format: 2 digits (state code) + 10 characters (PAN) + 1 digit (entity code) + 1 character (default alphabet) + 1 digit (checksum)
+  const gstRegex = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}[Z]{1}[0-9A-Z]{1}$/;
+  
+  if (!gstRegex.test(cleanGST)) {
+    return { 
+      valid: false, 
+      error: 'Invalid GST number format. GSTIN should be 15 characters: 2 digits (state) + 10 characters (PAN) + 1 digit (entity) + 1 character (alphabet) + 1 digit (checksum)' 
+    };
+  }
+  
+  return { valid: true };
+};
+
+// Phone number validation for India
+export const validatePhoneNumber = (phoneNumber) => {
+  if (!phoneNumber) {
+    return { valid: false, error: 'Phone number is required' };
+  }
+  
+  // Remove any spaces, dashes, or special characters
+  const cleanPhone = phoneNumber.replace(/[^0-9]/g, '');
+  
+  // Check if it starts with 91 (India country code) or is 10 digits
+  if (cleanPhone.length === 12 && cleanPhone.startsWith('91')) {
+    const withoutCountryCode = cleanPhone.substring(2);
+    if (withoutCountryCode.length === 10 && withoutCountryCode.startsWith('6') || withoutCountryCode.startsWith('7') || withoutCountryCode.startsWith('8') || withoutCountryCode.startsWith('9')) {
+      return { valid: true };
+    }
+  } else if (cleanPhone.length === 10 && (cleanPhone.startsWith('6') || cleanPhone.startsWith('7') || cleanPhone.startsWith('8') || cleanPhone.startsWith('9'))) {
+    return { valid: true };
+  }
+  
+  return { 
+    valid: false, 
+    error: 'Invalid phone number. Please enter a valid 10-digit Indian mobile number or include country code 91' 
+  };
 };

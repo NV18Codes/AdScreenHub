@@ -182,8 +182,13 @@
   font-size: 0.9rem;
   margin: 0 0 0.5rem 0;
   display: block;
-  text-align: center;
+  text-align: right;
   font-weight: 600;
+  word-wrap: break-word;
+  hyphens: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .screenLocation::before {

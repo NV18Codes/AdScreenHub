@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useOrders } from '../hooks/useOrders';
 import { useAuth } from '../contexts/AuthContext';
-import { isDateDisabled, validateFile, generateOrderId, compressImage, manageStorageQuota } from '../utils/validation';
+import { isDateDisabled, validateFile, generateOrderId, compressImage, manageStorageQuota, validateGSTNumber, validatePhoneNumber } from '../utils/validation';
 import { couponsAPI, dataAPI } from '../config/api';
 import LoadingSpinner from './LoadingSpinner';
 import Toast from './Toast';
@@ -102,7 +102,6 @@ export default function BookingCalendar() {
         setPlans([]);
       }
     } catch (error) {
-      console.error('Plans API error:', error);
       setPlans([]);
     } finally {
       setLoadingPlans(false);
@@ -151,12 +150,10 @@ export default function BookingCalendar() {
         });
         setAvailabilityData(transformedAvailability);
       } else {
-        console.error('Location availability API failed - unexpected structure:', result);
         setLocations([]);
         setAvailabilityData({});
       }
     } catch (error) {
-      console.error('Location availability API error:', error);
       setLocations([]);
       setAvailabilityData({});
     } finally {
@@ -183,7 +180,20 @@ export default function BookingCalendar() {
 
   const handleDateChange = async (e) => {
     const newDate = e.target.value;
-    console.log('Date selected:', newDate);
+    
+    // Validate date is at least +2 days from today
+    if (newDate) {
+      const selectedDateObj = new Date(newDate);
+      const today = new Date();
+      const minDate = new Date(today);
+      minDate.setDate(today.getDate() + 2);
+      
+      if (selectedDateObj < minDate) {
+        showToast('Please select a date at least 2 days from today', 'error');
+        return;
+      }
+    }
+    
     setSelectedDate(newDate);
     setSelectedScreen(null);
     setSelectedPlan(null);
@@ -197,17 +207,14 @@ export default function BookingCalendar() {
     
     // Only fetch if authenticated
     if (!isAuthenticated()) {
-      console.log('User not authenticated, please login to check availability');
       return;
     }
     
     // Step 2: Fetch location availability for the selected date
-    console.log('Step 2: Fetching location availability for date:', newDate);
     await fetchLocationAvailability(newDate);
   };
 
   const handleScreenSelect = async (screen) => {
-    console.log('Screen selected:', screen.name);
     setSelectedScreen(screen);
     setShowScreenModal(true);
   };
@@ -238,7 +245,6 @@ export default function BookingCalendar() {
         } else {
         }
       } catch (error) {
-        console.warn('⚠️ Slot availability check failed, proceeding with booking:', error);
       }
     }
   };
@@ -289,6 +295,15 @@ export default function BookingCalendar() {
     if (gstApplicable && (!companyName.trim() || !gstNumber.trim())) {
       showToast('Please enter company name and GST number when GST is applicable', 'error');
       return;
+    }
+
+    // Validate GST number if applicable
+    if (gstApplicable && gstNumber.trim()) {
+      const gstValidation = validateGSTNumber(gstNumber.trim());
+      if (!gstValidation.valid) {
+        showToast(gstValidation.error, 'error');
+        return;
+      }
     }
 
     if (!termsAccepted) {
@@ -383,7 +398,6 @@ export default function BookingCalendar() {
         }
       }
     } catch (error) {
-      console.error('Error processing image:', error);
       setUploadError('Error processing image. Please try again.');
     }
   };
@@ -415,6 +429,11 @@ export default function BookingCalendar() {
   const minDate = new Date(today);
   minDate.setDate(today.getDate() + 2);
   const minDateString = minDate.toISOString().split('T')[0];
+  
+  // Get maximum date (today + 30 days)
+  const maxDate = new Date(today);
+  maxDate.setDate(today.getDate() + 30);
+  const maxDateString = maxDate.toISOString().split('T')[0];
 
   // Format date to dd-mm-yyyy
   const formatDate = (dateString) => {
@@ -459,6 +478,7 @@ export default function BookingCalendar() {
               value={selectedDate}
               onChange={handleDateChange}
               min={minDateString}
+              max={maxDateString}
               className={styles.dateInput}
             />
           </div>
@@ -508,19 +528,7 @@ export default function BookingCalendar() {
                         <p className={styles.screenLocation}>{screen.location}</p>
                         <p className={styles.screenSize}>{screen.size}</p>
                         <p className={styles.screenPixels}>{screen.pixels}</p>
-                        <p className={styles.screenPrice}>LED Screen Available</p>
-                        
-                        {isFullyBooked ? (
-                          <div className={styles.fullyBookedBadge}>
-                            <span>Fully Booked</span>
-                          </div>
-                        ) : (
-                          <div className={styles.inventoryInfo}>
-                            <span className={styles.availableSlots}>
-                              {availability.slots} slot{availability.slots !== 1 ? 's' : ''} available
-                            </span>
-                          </div>
-                        )}
+                        <p className={styles.screenOrientation}>{screen.orientation}</p>
                       </div>
                     </div>
                   );

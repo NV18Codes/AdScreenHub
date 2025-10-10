@@ -16,8 +16,6 @@ export default function EmailRedirect() {
       const selector = searchParams.get('selector');
       const validator = searchParams.get('validator');
       
-      console.log('Email verification params:', { selector, validator });
-      console.log('Current hostname:', window.location.hostname);
       
       if (!selector || !validator) {
         setStatus('error');
@@ -26,9 +24,7 @@ export default function EmailRedirect() {
       }
 
       try {
-        console.log('Calling verify-email API...');
         const response = await axios.post(`${API_BASE}/verify-email`, { selector, validator });
-        console.log('Email verification response:', response.data);
 
         // Store the email verification token
         if (response.data.data.emailToken) { // Changed from .token to .emailToken
@@ -40,11 +36,9 @@ export default function EmailRedirect() {
         
         // Redirect to auth page with phone step after 3 seconds
         setTimeout(() => {
-          console.log('Navigating to auth page...');
           navigate('/auth?step=phone');
         }, 3000);
       } catch (error) {
-        console.error('Email verification error:', error);
         setStatus('error');
         setMessage(error.response?.data?.message || 'Email verification failed. Please try again.');
       }

@@ -11,6 +11,7 @@ import Checkout from './pages/Checkout';
 import FAQ from './pages/FAQ';
 import Terms from './pages/Terms';
 import Privacy from './pages/Privacy';
+import CancellationRefund from './pages/CancellationRefund';
 import Contact from './pages/Contact';
 import Auth from './pages/Auth';
 import Login from './pages/Login';
@@ -67,6 +68,7 @@ function App() {
                   <Route path="/faq" element={<Layout><FAQ /></Layout>} />
                   <Route path="/terms" element={<Layout><Terms /></Layout>} />
                   <Route path="/privacy" element={<Layout><Privacy /></Layout>} />
+                  <Route path="/cancellation-refund" element={<Layout><CancellationRefund /></Layout>} />
                   <Route path="/contact" element={<Layout><Contact /></Layout>} />
           
           {/* Authentication - Protected from authenticated users */}

@@ -55,9 +55,7 @@ const BookingSuccess = () => {
     setLoading(true);
     
     try {
-      console.log('🔍 Fetching order details for orderId:', orderId);
       const response = await ordersAPI.getOrders();
-      console.log('📦 BookingSuccess - API response:', response);
       
       if (response.success || response.statusCode === 200) {
         // Handle different response structures
@@ -66,23 +64,16 @@ const BookingSuccess = () => {
         // Try different possible structures
         if (Array.isArray(response.data)) {
           ordersData = response.data;
-          console.log('✅ Found orders in response.data (array)');
         } else if (response.data?.data?.orders && Array.isArray(response.data.data.orders)) {
           ordersData = response.data.data.orders;
-          console.log('✅ Found orders in response.data.data.orders');
         } else if (response.data?.orders && Array.isArray(response.data.orders)) {
           ordersData = response.data.orders;
-          console.log('✅ Found orders in response.data.orders');
         } else if (response.data?.data && Array.isArray(response.data.data)) {
           ordersData = response.data.data;
-          console.log('✅ Found orders in response.data.data (array)');
         }
         
-        console.log(`📊 Total orders found: ${ordersData.length}`);
-        console.log(`🔎 Looking for order with ID: ${orderId}`);
         
         const foundOrder = ordersData.find(o => o.id.toString() === orderId.toString());
-        console.log('🎯 Found order:', foundOrder);
         
         if (foundOrder) {
           // Transform backend order data to frontend format
@@ -103,19 +94,15 @@ const BookingSuccess = () => {
             createdAt: foundOrder.created_at || foundOrder.createdAt
           };
           
-          console.log('✅ Transformed order:', transformedOrder);
           setOrder(transformedOrder);
           setError('');
           setLoading(false);
         } else {
           // Check localStorage as fallback
-          console.log('⚠️ Order not found in API, checking localStorage...');
           const localOrders = JSON.parse(localStorage.getItem('adscreenhub_orders') || '[]');
-          console.log(`📂 LocalStorage orders count: ${localOrders.length}`);
           const localOrder = localOrders.find(o => o.id.toString() === orderId.toString());
           
           if (localOrder) {
-            console.log('✅ Found order in localStorage:', localOrder);
             
             // Transform localStorage order
             const transformedOrder = {
@@ -140,7 +127,6 @@ const BookingSuccess = () => {
             setLoading(false);
           } else {
             // Show success even if order details not found - payment was successful!
-            console.log('⚠️ Order not found anywhere, but payment was verified');
             const paymentId = searchParams.get('payment_id');
             const verified = searchParams.get('verified');
             
@@ -165,12 +151,10 @@ const BookingSuccess = () => {
           }
         }
       } else {
-        console.log('❌ API response not successful:', response);
         setError(response.error || 'Failed to fetch order details');
         setLoading(false);
       }
     } catch (err) {
-      console.error('❌ Error fetching order:', err);
       setError('Network error. Please try again.');
       setLoading(false);
     }

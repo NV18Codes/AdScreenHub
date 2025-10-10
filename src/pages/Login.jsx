@@ -35,7 +35,6 @@ export default function Login() {
     try {
       const res = await axios.post(`${API_BASE}/login`, { email, password });
 
-      console.log('Login response:', res.data);
       if (res.data.data.user && res.data.data.session.access_token) {
         const loginSuccess = login(res.data.data.user, res.data.data.session.access_token);
         if (loginSuccess) {

@@ -3,7 +3,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
   padding: 2rem;
   padding-top: 6rem; /* Add space for fixed navbar */
 }
@@ -76,9 +76,10 @@
   width: 80px;
   height: 80px;
   border-radius: 50%;
-  background: #4CAF50;
+  background: #1319b3;
   position: relative;
   animation: checkmarkPulse 2s ease-in-out infinite;
+  margin: 0 auto;
 }
 
 @keyframes checkmarkPulse {
@@ -97,22 +98,22 @@
 
 .checkmarkStem {
   position: absolute;
-  width: 3px;
+  width: 4px;
   height: 20px;
   background: white;
-  left: 15px;
-  top: 5px;
+  left: 18px;
+  top: 8px;
   transform: rotate(45deg);
   border-radius: 2px;
 }
 
 .checkmarkKick {
   position: absolute;
-  width: 3px;
+  width: 4px;
   height: 12px;
   background: white;
-  left: 8px;
-  top: 15px;
+  left: 10px;
+  top: 18px;
   transform: rotate(-45deg);
   border-radius: 2px;
 }

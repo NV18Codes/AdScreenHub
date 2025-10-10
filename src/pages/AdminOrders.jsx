@@ -41,11 +41,9 @@ export default function AdminOrders() {
     
     try {
       const response = await adminOrdersAPI.getAllOrders();
-      console.log('📦 Full API Response:', response);
       
       if (response.success === true && response.data?.orders) {
         const ordersArray = response.data.orders;
-        console.log(`✅ Loaded ${ordersArray.length} orders for admin dashboard`);
         setAllOrders(ordersArray);
         setCurrentPage(1); // Reset to first page
         
@@ -57,7 +55,6 @@ export default function AdminOrders() {
         showToast('No orders found', 'info');
       }
     } catch (error) {
-      console.error('❌ Error fetching orders:', error);
       setAllOrders([]);
       showToast('Network error. Please check your connection.', 'error');
     } finally {
@@ -102,14 +99,6 @@ export default function AdminOrders() {
   const indexOfFirstOrder = indexOfLastOrder - ordersPerPage;
   const currentOrders = filteredOrders.slice(indexOfFirstOrder, indexOfLastOrder);
   
-  console.log('📊 Pagination Info:', {
-    totalOrders: allOrders.length,
-    filteredOrders: filteredOrders.length,
-    currentPage,
-    totalPages,
-    showingOrders: currentOrders.length,
-    indexRange: `${indexOfFirstOrder + 1}-${indexOfLastOrder}`
-  });
 
   // Reset to page 1 when filter changes
   useEffect(() => {
@@ -167,26 +156,20 @@ export default function AdminOrders() {
         const fileName = `admin-preview-${selectedOrder.id}-${Date.now()}.${uploadFile.name.split('.').pop()}`;
         
         // Get signed URL
-        console.log('📤 Getting upload URL for:', fileName);
         const urlResponse = await adminOrdersAPI.getUploadUrl(
           selectedOrder.id,
           fileName,
           uploadFile.type
         );
-        console.log('🔗 Upload URL response:', urlResponse);
 
         if (urlResponse.success && urlResponse.data) {
           // Response structure: { success: true, data: { signedUrl, path }, message }
           const signedUrl = urlResponse.data.signedUrl;
           adDisplayPath = urlResponse.data.path;
           
-          console.log('🔗 Signed URL:', signedUrl);
-          console.log('📁 Path:', adDisplayPath);
 
-          console.log('⬆️ Uploading file to:', signedUrl);
           // Upload file
           const uploadResponse = await adminOrdersAPI.uploadImage(signedUrl, uploadFile);
-          console.log('✅ Upload response:', uploadResponse);
           
           if (!uploadResponse.success) {
             throw new Error('Failed to upload file');
@@ -205,9 +188,7 @@ export default function AdminOrders() {
         ...(adDisplayPath && { adDisplayPath })
       };
 
-      console.log('📝 Updating order with:', updateData);
       const response = await adminOrdersAPI.updateOrder(selectedOrder.id, updateData);
-      console.log('✅ Update response:', response);
       
       if (response.success) {
         showToast('Order updated successfully!', 'success');
@@ -223,7 +204,6 @@ export default function AdminOrders() {
         showToast(response.error || response.message || 'Failed to update order', 'error');
       }
     } catch (error) {
-      console.error('❌ Error updating order:', error);
       showToast(error.message || 'Error updating order', 'error');
     } finally {
       setUploading(false);

@@ -2,7 +2,7 @@
   min-height: 100vh;
   background: white;
   padding: 20px 0;
-  padding-top: 6rem; /* Account for sticky navbar */
+  padding-top: 6rem;
 }
 
 .header {
@@ -28,295 +28,161 @@
   align-items: center;
   gap: 8px;
   z-index: 10;
-  pointer-events: auto;
 }
 
 .backButton:hover {
-  background: #0f147a;
-  transform: translateY(-50%) translateX(-2px);
+  background: #0f1499;
+  transform: translateY(-50%) translateY(-2px);
+  box-shadow: 0 4px 12px rgba(19, 25, 179, 0.3);
 }
 
 .title {
   font-size: 2.5rem;
   font-weight: 700;
-  text-align: center;
-  margin: 0;
-  background: linear-gradient(135deg, #1e40af 0%, #2563eb 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
   color: #1319B3;
-  word-wrap: break-word;
-  overflow-wrap: break-word;
-  hyphens: auto;
-  max-width: 100%;
-  box-sizing: border-box;
+  margin: 0;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .subtitle {
   font-size: 1.1rem;
-  color: #6b7280;
-  text-align: center;
+  color: #666;
   margin: 10px 0 0 0;
+  font-weight: 400;
 }
 
-.faqHeader h1 {
-  color: var(--text-dark);
-  font-size: 3rem;
-  font-weight: 800;
-  margin-bottom: 1rem;
-  background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+.intro {
+  max-width: 900px;
+  margin: 0 auto 40px auto;
+  padding: 25px 30px;
+  background: linear-gradient(135deg, #e0e7ff 0%, #dbeafe 100%);
+  border-radius: 12px;
+  border-left: 4px solid #1319B3;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
-.faqHeader p {
-  color: var(--text-light);
-  font-size: 1.25rem;
-  max-width: 600px;
-  margin: 0 auto;
-  line-height: 1.6;
+.intro p {
+  color: #333;
+  font-size: 1rem;
+  line-height: 1.8;
+  margin: 0;
+  text-align: justify;
 }
 
 .scrollableContent {
   max-width: 900px;
   margin: 0 auto;
-  background: white;
-  border-radius: 20px;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-  padding: 40px;
-  line-height: 1.7;
-  max-height: 70vh;
-  overflow-y: auto;
-  scrollbar-width: thin;
-  scrollbar-color: #1319B3 #e5e7eb;
+  padding: 0 20px;
 }
 
-.scrollableContent::-webkit-scrollbar {
-  width: 8px;
+.categorySection {
+  margin-bottom: 50px;
 }
 
-.scrollableContent::-webkit-scrollbar-track {
-  background: #e5e7eb;
-  border-radius: 4px;
-}
-
-.scrollableContent::-webkit-scrollbar-thumb {
-  background: #1319B3;
-  border-radius: 4px;
-}
-
-.scrollableContent::-webkit-scrollbar-thumb:hover {
-  background: #0f147a;
-}
-
-.section {
-  margin-bottom: 30px;
-}
-
-.section h2 {
-  font-size: 1.5rem;
-  font-weight: 600;
+.categoryTitle {
   color: #1319B3;
-  margin-bottom: 15px;
-  padding-bottom: 8px;
-  border-bottom: 2px solid #e2e8f0;
+  font-size: 2rem;
+  font-weight: 700;
+  margin: 0 0 30px 0;
+  padding-bottom: 15px;
+  border-bottom: 3px solid #1319B3;
   position: relative;
 }
 
-.section h2::after {
+.categoryTitle::after {
   content: '';
   position: absolute;
-  bottom: -2px;
+  bottom: -3px;
   left: 0;
   width: 60px;
-  height: 2px;
-  background: linear-gradient(90deg, #1e40af, #2563eb);
-  border-radius: 1px;
-}
-
-.section p {
-  font-size: 1rem;
-  color: #374151;
-  margin-bottom: 15px;
-  text-align: justify;
-}
-
-.section ul {
-  margin: 15px 0;
-  padding-left: 20px;
-}
-
-.section li {
-  font-size: 1rem;
-  color: #374151;
-  margin-bottom: 10px;
-  line-height: 1.6;
-  position: relative;
-}
-
-.section li::before {
-  content: '•';
-  color: #1319B3;
-  font-weight: bold;
-  position: absolute;
-  left: -15px;
+  height: 3px;
+  background: linear-gradient(90deg, #1319B3, #3b82f6);
 }
 
 .faqItem {
-  margin-bottom: 2rem;
-  padding: 1.5rem;
-  background: var(--gray-50);
-  border-radius: 0.75rem;
-  border-left: 4px solid var(--primary-color);
+  margin-bottom: 30px;
+  padding: 25px;
+  background: #f8f9fa;
+  border-radius: 12px;
+  border-left: 4px solid #3b82f6;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
   transition: all 0.3s ease;
 }
 
 .faqItem:hover {
-  transform: translateX(5px);
-  box-shadow: 0 4px 15px rgba(19, 25, 179, 0.1);
-  background: var(--white);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+  border-left-color: #1319B3;
 }
 
-.faqItem:last-child {
-  margin-bottom: 0;
-}
-
-.faqItem h3 {
-  color: var(--text-dark);
-  font-size: 1.25rem;
+.question {
+  color: #1319B3;
+  font-size: 1.2rem;
   font-weight: 600;
-  margin-bottom: 1rem;
-  line-height: 1.4;
+  margin: 0 0 15px 0;
+  line-height: 1.5;
 }
 
-.faqItem p {
-  color: var(--text-light);
+.answer {
+  color: #333;
   font-size: 1rem;
   line-height: 1.7;
-  margin-bottom: 1rem;
 }
 
-.faqItem ul {
-  margin: 1rem 0;
-  padding-left: 1.5rem;
-}
-
-.faqItem li {
-  color: var(--text-light);
-  font-size: 1rem;
-  line-height: 1.6;
-  margin-bottom: 0.5rem;
-}
-
-.faqItem strong {
-  color: var(--text-dark);
-  font-weight: 600;
-}
-
-/* Package Cards */
-.packageCard {
-  background: var(--white);
-  border: 2px solid var(--gray-200);
-  border-radius: 0.75rem;
-  padding: 1.5rem;
-  margin: 1rem 0;
-  transition: all 0.3s ease;
-}
-
-.packageCard:hover {
-  border-color: var(--primary-color);
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(19, 25, 179, 0.15);
-}
-
-.packageCard h4 {
-  color: var(--primary-color);
-  font-size: 1.125rem;
-  font-weight: 700;
-  margin-bottom: 1rem;
-  padding-bottom: 0.5rem;
-  border-bottom: 2px solid var(--primary-color);
-}
-
-.packageCard ul {
-  margin: 0;
-  padding-left: 1.25rem;
-}
-
-.packageCard li {
-  margin-bottom: 0.75rem;
-  font-size: 0.95rem;
-}
-
-/* Prohibited List */
-.prohibitedList {
-  background: #fef2f2;
-  border: 1px solid #fecaca;
-  border-radius: 0.5rem;
-  padding: 1.5rem;
-  margin: 1rem 0;
-}
-
-.prohibitedList li {
-  color: #991b1b;
-  font-weight: 500;
-  margin-bottom: 0.5rem;
-  padding: 0.25rem 0;
-}
-
-/* Contact Section */
-.contactSection {
-  background: #f8fafc;
-  padding: 25px;
-  border-radius: 15px;
-  border-left: 4px solid #1319B3;
-  margin-top: 30px;
-}
-
-.contactSection h2 {
-  font-size: 1.5rem;
-  font-weight: 600;
-  color: #1319B3;
-  margin-bottom: 15px;
-  padding-bottom: 8px;
-  border-bottom: 2px solid #e2e8f0;
-  position: relative;
-}
-
-.contactSection h2::after {
-  content: '';
-  position: absolute;
-  bottom: -2px;
-  left: 0;
-  width: 60px;
-  height: 2px;
-  background: linear-gradient(90deg, #1e40af, #2563eb);
-  border-radius: 1px;
-}
-
-.contactSection p {
-  font-size: 1rem;
-  color: #374151;
-  margin-bottom: 15px;
+.answer p {
+  margin: 8px 0;
   text-align: justify;
 }
 
-.contactEmail {
-  color: #1319B3;
-  text-decoration: none;
-  font-weight: 500;
-  transition: all 0.3s ease;
+.answer p:first-child {
+  margin-top: 0;
 }
 
-.contactEmail:hover {
-  color: #2563eb;
+.answer p:last-child {
+  margin-bottom: 0;
+}
+
+.contactSection {
+  margin-top: 50px;
+  padding: 30px;
+  background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+  border-radius: 12px;
+  border-left: 4px solid #10b981;
+  text-align: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.contactSection h2 {
+  color: #1319B3;
+  font-size: 1.8rem;
+  font-weight: 700;
+  margin: 0 0 15px 0;
+}
+
+.contactSection p {
+  color: #333;
+  font-size: 1.1rem;
+  margin: 0;
+}
+
+.emailLink {
+  color: #1319B3;
+  text-decoration: none;
+  font-weight: 600;
+  transition: color 0.3s ease;
+}
+
+.emailLink:hover {
+  color: #0f1499;
   text-decoration: underline;
 }
 
 /* Mobile Responsive */
 @media (max-width: 768px) {
+  .container {
+    padding-top: 5rem;
+  }
+  
   .header {
     margin-bottom: 20px;
   }
@@ -325,138 +191,110 @@
     position: static;
     transform: none;
     margin-bottom: 20px;
-    width: auto;
-    align-self: flex-start;
-  }
-  
-  .scrollableContent {
-    margin: 10px;
-    padding: 20px;
-    border-radius: 15px;
-    max-height: 60vh;
   }
   
   .title {
     font-size: 2rem;
-    margin-bottom: 20px;
   }
   
-  .section h2 {
-    font-size: 1.3rem;
+  .subtitle {
+    font-size: 1rem;
   }
   
-  .section p,
-  .section li {
+  .intro {
+    padding: 20px;
+    margin-bottom: 30px;
+  }
+  
+  .intro p {
     font-size: 0.95rem;
   }
   
-  .container {
-    padding: 1rem 0;
+  .scrollableContent {
+    padding: 0 15px;
   }
-
-  .faqHeader {
-    margin-bottom: 2rem;
+  
+  .categorySection {
+    margin-bottom: 40px;
   }
-
-  .faqHeader h1 {
-    font-size: 2.25rem;
+  
+  .categoryTitle {
+    font-size: 1.6rem;
+    margin-bottom: 20px;
   }
-
-  .faqHeader p {
-    font-size: 1.125rem;
-  }
-
-  .faqContent {
-    padding: 0 0.75rem;
-  }
-
-  .faqSection {
-    padding: 1.5rem;
-    margin-bottom: 1.5rem;
-  }
-
-  .faqSection h2 {
-    font-size: 1.75rem;
-    margin-bottom: 1rem;
-  }
-
+  
   .faqItem {
-    padding: 1.25rem;
-    margin-bottom: 1.5rem;
+    padding: 20px;
+    margin-bottom: 20px;
   }
-
-  .faqItem h3 {
-    font-size: 1.125rem;
+  
+  .question {
+    font-size: 1.1rem;
   }
-
-  .packageCard {
-    padding: 1.25rem;
-    margin: 0.75rem 0;
+  
+  .answer {
+    font-size: 0.95rem;
   }
-
+  
   .contactSection {
-    padding: 2rem 1.5rem;
-    margin-top: 2rem;
+    padding: 25px;
   }
-
+  
   .contactSection h2 {
-    font-size: 1.75rem;
+    font-size: 1.5rem;
+  }
+  
+  .contactSection p {
+    font-size: 1rem;
   }
 }
 
 @media (max-width: 480px) {
-  .faqHeader h1 {
-    font-size: 2rem;
+  .container {
+    padding-top: 4.5rem;
   }
-
-  .faqHeader p {
-    font-size: 1rem;
+  
+  .title {
+    font-size: 1.8rem;
   }
-
-  .faqSection {
-    padding: 1rem;
-    margin-bottom: 1rem;
-  }
-
-  .faqSection h2 {
-    font-size: 1.5rem;
-  }
-
-  .faqItem {
-    padding: 1rem;
-    margin-bottom: 1rem;
-  }
-
-  .faqItem h3 {
-    font-size: 1rem;
-  }
-
-  .faqItem p,
-  .faqItem li {
+  
+  .subtitle {
     font-size: 0.95rem;
   }
-
-  .packageCard {
-    padding: 1rem;
+  
+  .intro {
+    padding: 15px;
   }
-
-  .packageCard h4 {
-    font-size: 1rem;
-  }
-
-  .packageCard li {
+  
+  .intro p {
     font-size: 0.9rem;
   }
-
-  .contactSection {
-    padding: 1.5rem 1rem;
+  
+  .categoryTitle {
+    font-size: 1.4rem;
   }
-
-  .contactSection h2 {
-    font-size: 1.5rem;
+  
+  .faqItem {
+    padding: 15px;
   }
-
-  .contactSection p {
+  
+  .question {
     font-size: 1rem;
+  }
+  
+  .answer {
+    font-size: 0.9rem;
+  }
+  
+  .contactSection {
+    padding: 20px;
+  }
+  
+  .contactSection h2 {
+    font-size: 1.3rem;
+  }
+  
+  .contactSection p {
+    font-size: 0.95rem;
   }
 }

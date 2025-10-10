@@ -61,6 +61,29 @@ export const AuthProvider = ({ children }) => {
     }
     
     setLoading(false);
+    
+    // Listen for session expiry events
+    const handleSessionExpired = () => {
+      // Clear all auth data
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      localStorage.removeItem('authToken');
+      localStorage.removeItem('emailToken');
+      localStorage.removeItem('phoneToken');
+      localStorage.removeItem('pendingEmail');
+      localStorage.removeItem('adscreenhub_orders');
+      
+      setUser(null);
+      
+      // Redirect to login page
+      window.location.href = '/auth?expired=true';
+    };
+    
+    window.addEventListener('auth:session-expired', handleSessionExpired);
+    
+    return () => {
+      window.removeEventListener('auth:session-expired', handleSessionExpired);
+    };
   }, []);
 
   const login = (userData, token) => {

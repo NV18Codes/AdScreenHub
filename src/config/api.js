@@ -1,9 +1,7 @@
 import { API_BASE_URL } from './constants.js';
 
-// Re-export API_BASE_URL for backward compatibility
 export { API_BASE_URL };
 
-// Centralized API endpoints
 export const API_ENDPOINTS = {
   AUTH: {
     START_EMAIL_VERIFICATION: '/auth/start-email-verification',
@@ -28,16 +26,16 @@ export const API_ENDPOINTS = {
   },
   FILES: {
     GET_SIGNED_UPLOAD_URL: '/files/signed-upload-url',
-    // Alternative patterns to try
     GET_UPLOAD_URL: '/files/upload-url',
     GET_SIGNED_URL: '/files/signed-url',
-    UPLOAD: '/upload'
+    UPLOAD: '/upload',
+    REUPLOAD_URL: '/files/reupload-url',
+    FINALIZE_REUPLOAD: '/files/finalize-reupload'
   },
   ORDERS: {
     INITIATE: '/orders/initiate',
     VERIFY_PAYMENT: '/orders/verify-payment',
     GET_ORDERS: '/orders',
-    // Alternative patterns to try
     CREATE: '/orders/create',
     BOOK: '/orders/book'
   },
@@ -46,11 +44,10 @@ export const API_ENDPOINTS = {
   }
 };
 
-// Optimized API request function
 const makeRequest = async (endpoint, body = null, method = 'POST', customHeaders = {}) => {
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s timeout
+    const timeoutId = setTimeout(() => controller.abort(), 30000);
 
     const token = localStorage.getItem('token');
     
@@ -80,9 +77,16 @@ const makeRequest = async (endpoint, body = null, method = 'POST', customHeaders
     if (response.ok) {
       return { success: true, data };
     } else {
-      // Handle 401 Unauthorized - token expired or invalid
       if (response.status === 401) {
-        // Optionally redirect to login or refresh token here
+        // Session expired - trigger logout
+        const event = new CustomEvent('auth:session-expired');
+        window.dispatchEvent(event);
+        
+        return {
+          success: false,
+          error: 'Session expired. Please login again.',
+          statusCode: 401
+        };
       }
       
       const errorMessage = data.message || data.error || response.statusText || `Request failed with status ${response.status}`;
@@ -100,7 +104,6 @@ const makeRequest = async (endpoint, body = null, method = 'POST', customHeaders
   }
 };
 
-// Authentication API
 export const authAPI = {
   startEmailVerification: (email, redirectUrl) => 
     makeRequest('/auth/start-email-verification', { email, redirectUrl }),
@@ -120,7 +123,6 @@ export const authAPI = {
   login: (email, password) => 
     makeRequest('/auth/login', { email, password }),
 
-  // 🚀 NEW API INTEGRATIONS
   resendOTP: (phoneNumber) => 
     makeRequest('/auth/resend-otp', { phoneNumber }),
 
@@ -140,7 +142,6 @@ export const authAPI = {
     makeRequest('/auth/signout', {})
 };
 
-// Data APIs - REAL ENDPOINTS ONLY
 export const dataAPI = {
   getPlans: () => makeRequest(API_ENDPOINTS.DATA.GET_PLANS, null, 'GET'),
   
@@ -161,13 +162,32 @@ export const dataAPI = {
     })
 };
 
-// File Upload APIs - REAL ENDPOINTS ONLY
 export const filesAPI = {
   getSignedUploadUrl: (fileName, fileType) => 
-    makeRequest(API_ENDPOINTS.FILES.GET_SIGNED_UPLOAD_URL, { fileName, fileType })
+    makeRequest(API_ENDPOINTS.FILES.GET_SIGNED_UPLOAD_URL, { fileName, fileType }),
+
+  uploadFile: async (signedUrl, file, fileType) => {
+    try {
+      const response = await fetch(signedUrl, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': fileType,
+        },
+        body: file,
+      });
+      return { success: response.ok, status: response.status };
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
+  },
+
+  getReuploadUrl: (orderId, fileName, fileType) =>
+    makeRequest(`/files/reupload-url/${orderId}`, { fileName, fileType }),
+
+  finalizeReupload: (orderId, filePath, fileName, docType) =>
+    makeRequest(API_ENDPOINTS.FILES.FINALIZE_REUPLOAD, { orderId, filePath, fileName, docType }, 'PATCH'),
 };
 
-// Order APIs - REAL ENDPOINTS ONLY
 export const ordersAPI = {
   initiateOrder: (orderData) => 
     makeRequest(API_ENDPOINTS.ORDERS.INITIATE, orderData),
@@ -178,7 +198,6 @@ export const ordersAPI = {
   getOrders: () => 
     makeRequest(`${API_ENDPOINTS.ORDERS.GET_ORDERS}?limit=1000`, null, 'GET'),
   
-  // Alternative order endpoints to try
   getAllOrders: () => 
     makeRequest('/orders/all?limit=1000', null, 'GET'),
   

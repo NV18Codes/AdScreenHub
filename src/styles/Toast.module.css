@@ -38,6 +38,24 @@
   color: #991b1b;
 }
 
+.toast.info {
+  background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+  border: 2px solid #3b82f6;
+  color: #1e40af;
+}
+
+.toast.warning {
+  background: linear-gradient(135deg, #fef3c7, #fde68a);
+  border: 2px solid #f59e0b;
+  color: #92400e;
+}
+
+.toast.loading {
+  background: linear-gradient(135deg, #e0e7ff, #c7d2fe);
+  border: 2px solid #6366f1;
+  color: #3730a3;
+}
+
 .toastContent {
   display: flex;
   align-items: center;
