@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { API_BASE_URL, authAPI } from '../config/api';
+import { validateGSTNumber } from '../utils/validation';
 import Toast from '../components/Toast';
 import styles from '../styles/Profile.module.css';
 
@@ -682,15 +683,38 @@ export default function Profile() {
               <div className={styles.field}>
                 <label>GST Number <span className={styles.optionalBadge}>Optional</span></label>
                 {isEditing ? (
-                  <input
-                    type="text"
-                    name="gstNumber"
-                    value={formData.gstNumber}
-                    onChange={handleInputChange}
-                    className={styles.input}
-                    placeholder="Enter GST number (if applicable)"
-                    maxLength="15"
-                  />
+                  <>
+                    <input
+                      type="text"
+                      name="gstNumber"
+                      value={formData.gstNumber}
+                      onChange={(e) => {
+                        // Convert to uppercase, remove special characters, and limit to 15 characters
+                        const cleanedValue = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 15);
+                        setFormData(prev => ({ ...prev, gstNumber: cleanedValue }));
+                        
+                        // Real-time validation
+                        if (cleanedValue.length > 0) {
+                          const validation = validateGSTNumber(cleanedValue);
+                          if (!validation.valid) {
+                            setErrorMessage(validation.error);
+                          } else {
+                            setErrorMessage('');
+                          }
+                        }
+                      }}
+                      className={styles.input}
+                      placeholder="Enter GST number (e.g., 27AAPCU1234A1Z5)"
+                      maxLength="15"
+                      pattern="[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}[Z]{1}[0-9A-Z]{1}"
+                      title="GST number format: 2 digits (state) + 5 letters + 4 digits + 1 letter + 1 digit/letter + Z + 1 digit/letter"
+                    />
+                    {formData.gstNumber && (
+                      <div className={styles.gstHelpText}>
+                        Format: State Code (2 digits) + PAN (10 chars) + Entity (1) + Z + Checksum (1)
+                      </div>
+                    )}
+                  </>
                 ) : (
                   <span className={styles.fieldValue}>{formData.gstNumber || 'Not provided'}</span>
                 )}

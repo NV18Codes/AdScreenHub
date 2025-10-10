@@ -86,27 +86,7 @@ export default function BookingCalendar() {
     }));
   };
 
-  // Fetch plans data
-  const fetchPlans = async () => {
-    setLoadingPlans(true);
-    try {
-      const result = await dataAPI.getPlans();
-      // Handle nested data structure: result.data.data
-      if (result.success && result.data && result.data.data && Array.isArray(result.data.data)) {
-        const transformedPlans = transformPlanData(result.data.data);
-        setPlans(transformedPlans);
-      } else if (result.success && result.data && Array.isArray(result.data)) {
-        const transformedPlans = transformPlanData(result.data);
-        setPlans(transformedPlans);
-      } else {
-        setPlans([]);
-      }
-    } catch (error) {
-      setPlans([]);
-    } finally {
-      setLoadingPlans(false);
-    }
-  };
+  // Plans fetching removed - not needed in BookingCalendar component
 
   // Fetch location availability for a specific date
   const fetchLocationAvailability = async (date) => {
@@ -162,13 +142,7 @@ export default function BookingCalendar() {
     }
   };
 
-  // Load plans when component mounts (only if authenticated)
-  useEffect(() => {
-    if (isAuthenticated()) {
-      fetchPlans();
-    } else {
-    }
-  }, [isAuthenticated]);
+  // Plans are not needed in BookingCalendar - removed to prevent unnecessary API calls
 
   // Load saved design from localStorage
   useEffect(() => {
@@ -482,13 +456,19 @@ export default function BookingCalendar() {
               className={styles.dateInput}
               placeholder="dd/mm/yyyy"
               data-placeholder="dd/mm/yyyy"
+              title="Select date in dd/mm/yyyy format"
             />
+            {!selectedDate && (
+              <div className={styles.datePlaceholder}>
+                dd/mm/yyyy
+              </div>
+            )}
           </div>
           <p className={styles.dateNote}>
             Note: Bookings must be made at least 2 days in advance
           </p>
           <p className={styles.dateFormatNote}>
-            Format: dd/mm/yyyy
+            📅 Format: dd/mm/yyyy
           </p>
         </div>
 

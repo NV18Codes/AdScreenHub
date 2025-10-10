@@ -145,9 +145,12 @@ export const authAPI = {
 export const dataAPI = {
   getPlans: async () => {
     try {
-      return await makeRequest(API_ENDPOINTS.DATA.GET_PLANS, null, 'GET');
+      console.log('📞 Calling plans API:', `${API_BASE_URL}${API_ENDPOINTS.DATA.GET_PLANS}`);
+      const result = await makeRequest(API_ENDPOINTS.DATA.GET_PLANS, null, 'GET');
+      console.log('📞 Plans API response:', result);
+      return result;
     } catch (error) {
-      console.error('Error in getPlans:', error);
+      console.error('❌ Error in getPlans:', error);
       return { success: false, error: error.message, data: null };
     }
   },

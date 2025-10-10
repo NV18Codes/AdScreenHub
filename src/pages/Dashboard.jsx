@@ -69,27 +69,7 @@ export default function Dashboard() {
     }));
   };
 
-  // Fetch plans data
-  const fetchPlans = async () => {
-    setLoadingPlans(true);
-    try {
-      const result = await dataAPI.getPlans();
-      // Handle the actual API response structure
-      if (result.success && result.data && result.data.data && Array.isArray(result.data.data)) {
-        const transformedPlans = transformPlanData(result.data.data);
-        setPlans(transformedPlans);
-      } else if (result.success && result.data && Array.isArray(result.data)) {
-        const transformedPlans = transformPlanData(result.data);
-        setPlans(transformedPlans);
-      } else {
-        setPlans([]);
-      }
-    } catch (error) {
-      setPlans([]);
-    } finally {
-      setLoadingPlans(false);
-    }
-  };
+  // Plans will be fetched in BookingFlow component when needed
 
   // Fetch location availability for a specific date
   const fetchLocationAvailability = async (date) => {
@@ -318,24 +298,8 @@ export default function Dashboard() {
     }
   }, []);
 
-  // Fetch plans data on component mount
-  useEffect(() => {
-    fetchPlans();
-    
-    // Test API connectivity
-    testAPIConnectivity();
-  }, []);
-
-  // Test API connectivity
-  const testAPIConnectivity = async () => {
-    try {
-      const result = await dataAPI.getPlans();
-      if (result.success) {
-        // API is working
-      }
-    } catch (error) {
-    }
-  };
+  // Don't fetch plans on mount - only fetch when user starts booking
+  // Plans will be loaded in BookingFlow when date and location are selected
 
   const handleFileUpload = async (e) => {
     const file = e.target.files[0];
