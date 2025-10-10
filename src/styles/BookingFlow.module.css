@@ -646,6 +646,13 @@
   border-color: #3b82f6;
 }
 
+.gstHelpText {
+  font-size: 0.75rem;
+  color: #6b7280;
+  margin-top: 0.25rem;
+  font-style: italic;
+}
+
 .textarea {
   min-height: 100px;
   resize: vertical;

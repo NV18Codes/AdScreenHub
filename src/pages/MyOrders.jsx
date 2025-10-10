@@ -342,24 +342,40 @@ export default function MyOrders() {
     // Search filter
     if (!searchTerm.trim()) return true;
     
-    const searchLower = searchTerm.toLowerCase();
+    const searchLower = searchTerm.toLowerCase().trim();
     
-    // Search by Order ID
-    const orderId = order.id?.toString().toLowerCase() || '';
-    const orderUid = order.orderUid?.toString().toLowerCase() || '';
-    const order_uid = order.order_uid?.toString().toLowerCase() || '';
+    // Search by Order ID - exact match or starts with
+    const orderId = order.id?.toString() || '';
+    const orderUid = order.orderUid?.toString() || '';
+    const order_uid = order.order_uid?.toString() || '';
     
-    // Search by Location
+    // Check for exact order ID match first
+    if (orderId === searchLower || 
+        orderUid.toLowerCase() === searchLower || 
+        order_uid.toLowerCase() === searchLower) {
+      return true;
+    }
+    
+    // Check if order ID starts with search term
+    if (orderId.startsWith(searchLower) || 
+        orderUid.toLowerCase().startsWith(searchLower) || 
+        order_uid.toLowerCase().startsWith(searchLower)) {
+      return true;
+    }
+    
+    // Search by Location - word match
     const locationName = (order.locations?.name || order.locationName || order.location || '').toLowerCase();
+    if (locationName.includes(searchLower)) {
+      return true;
+    }
     
-    // Search by Display Date
+    // Search by Display Date - exact match or contains
     const displayDate = (order.start_date || order.startDate || order.displayDate || '').toLowerCase();
+    if (displayDate.includes(searchLower)) {
+      return true;
+    }
     
-    return orderId.includes(searchLower) || 
-           orderUid.includes(searchLower) || 
-           order_uid.includes(searchLower) ||
-           locationName.includes(searchLower) ||
-           displayDate.includes(searchLower);
+    return false;
     });
   };
 

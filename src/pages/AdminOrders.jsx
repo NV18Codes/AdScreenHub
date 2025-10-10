@@ -32,6 +32,36 @@ export default function AdminOrders() {
     fetchOrders();
   }, []);
 
+  // Check and update orders that should move from "Pending Display" to "In Display"
+  const checkDisplayDates = async (orders) => {
+    const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
+    
+    const ordersToUpdate = orders.filter(order => {
+      if (order.status !== 'Pending Display') return false;
+      
+      const displayDate = order.start_date || order.startDate || order.displayDate;
+      if (!displayDate) return false;
+      
+      // Convert display date to YYYY-MM-DD format for comparison
+      const orderDisplayDate = new Date(displayDate).toISOString().split('T')[0];
+      return orderDisplayDate <= today;
+    });
+    
+    // Update orders that should be "In Display" now
+    for (const order of ordersToUpdate) {
+      try {
+        await adminOrdersAPI.updateOrder(order.id, {
+          status: 'In Display',
+          remarks: (order.remarks || '') + ' [Auto-updated: Display date reached]'
+        });
+      } catch (error) {
+        console.error(`Failed to update order ${order.id} to In Display:`, error);
+      }
+    }
+    
+    return ordersToUpdate.length;
+  };
+
   const fetchOrders = async (isRefresh = false) => {
     if (isRefresh) {
       setRefreshing(true);
@@ -44,11 +74,30 @@ export default function AdminOrders() {
       
       if (response.success === true && response.data?.orders) {
         const ordersArray = response.data.orders;
-        setAllOrders(ordersArray);
+        
+        // Check and update orders that should move to "In Display"
+        const updatedCount = await checkDisplayDates(ordersArray);
+        
+        if (updatedCount > 0) {
+          // Re-fetch orders to get updated statuses
+          const updatedResponse = await adminOrdersAPI.getAllOrders();
+          if (updatedResponse.success === true && updatedResponse.data?.orders) {
+            const updatedOrdersArray = updatedResponse.data.orders;
+            setAllOrders(updatedOrdersArray);
+          } else {
+            setAllOrders(ordersArray);
+          }
+        } else {
+          setAllOrders(ordersArray);
+        }
+        
         setCurrentPage(1); // Reset to first page
         
         if (isRefresh) {
-          showToast(`Refreshed! ${ordersArray.length} orders loaded`, 'success');
+          const message = updatedCount > 0 
+            ? `Refreshed! ${ordersArray.length} orders loaded. ${updatedCount} orders moved to "In Display".`
+            : `Refreshed! ${ordersArray.length} orders loaded`;
+          showToast(message, 'success');
         }
       } else {
         setAllOrders([]);
@@ -109,12 +158,13 @@ export default function AdminOrders() {
   const analytics = {
     total: allOrders.length,
     pendingApproval: allOrders.filter(o => o.status === 'Pending Approval').length,
+    pendingDisplay: allOrders.filter(o => o.status === 'Pending Display').length,
     inDisplay: allOrders.filter(o => o.status === 'In Display').length,
     completed: allOrders.filter(o => o.status === 'Completed').length,
     needsRevision: allOrders.filter(o => o.status === 'Design Revise').length,
     paymentFailed: allOrders.filter(o => o.status === 'Payment Failed').length,
     totalRevenue: allOrders
-      .filter(o => ['Pending Approval', 'In Display', 'Completed', 'Design Revise'].includes(o.status))
+      .filter(o => ['Pending Display', 'In Display', 'Completed', 'Design Revise'].includes(o.status))
       .reduce((sum, o) => sum + (o.total_cost || 0), 0)
   };
 
@@ -123,6 +173,7 @@ export default function AdminOrders() {
     'All',
     'Pending Payment',
     'Pending Approval',
+    'Pending Display',
     'In Display',
     'Completed',
     'Cancelled',
@@ -277,6 +328,13 @@ export default function AdminOrders() {
             </div>
           </div>
           <div className={styles.analyticsCard}>
+            <div className={styles.analyticsIcon}>✅</div>
+            <div className={styles.analyticsContent}>
+              <p className={styles.analyticsLabel}>Pending Display</p>
+              <p className={styles.analyticsValue}>{analytics.pendingDisplay}</p>
+            </div>
+          </div>
+          <div className={styles.analyticsCard}>
             <div className={styles.analyticsIcon}>🟢</div>
             <div className={styles.analyticsContent}>
               <p className={styles.analyticsLabel}>In Display</p>
@@ -311,7 +369,7 @@ export default function AdminOrders() {
           <div className={styles.searchContainer}>
             <input
               type="text"
-              placeholder="Search by Order ID Email Name or Location..."
+              placeholder="Search by Order ID Email Name or Location"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className={styles.searchInput}
@@ -486,6 +544,7 @@ export default function AdminOrders() {
                   >
                     <option value="Pending Payment">Pending Payment</option>
                     <option value="Pending Approval">Pending Approval</option>
+                    <option value="Pending Display">Pending Display (Approved)</option>
                     <option value="In Display">In Display</option>
                     <option value="Completed">Completed</option>
                     <option value="Cancelled">Cancelled</option>

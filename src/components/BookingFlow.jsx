@@ -65,28 +65,21 @@ export default function BookingFlow() {
   const [globalAvailabilityCache, setGlobalAvailabilityCache] = useState({}); // Global cache for availability data
   const [availabilityCheckTimeout, setAvailabilityCheckTimeout] = useState(null);
 
-  // Debounced fetch plans when selectedScreen changes
+  // Fetch plans ONLY when BOTH date AND location are selected
   useEffect(() => {
-    if (selectedScreen && selectedScreen.id) {
+    if (selectedDate && selectedScreen && selectedScreen.id) {
       // Clear any existing timeout
       const timeoutId = setTimeout(() => {
         fetchPlans();
-      }, 200); // 200ms debounce for plan fetching
+      }, 300); // 300ms debounce
       
       return () => clearTimeout(timeoutId);
+    } else {
+      // Clear plans if date or screen is not selected
+      setPlans([]);
+      setPlanAvailability({});
     }
-  }, [selectedScreen]);
-
-  // Re-check plan availability when selectedDate or selectedScreen changes (if we already have plans)
-  useEffect(() => {
-    if (selectedDate && selectedScreen && plans.length > 0) {
-      // Only check if we don't already have availability data for this combination
-      const hasAvailabilityData = Object.keys(planAvailability).length > 0;
-      if (!hasAvailabilityData) {
-        checkPlanAvailability(plans);
-      }
-    }
-  }, [selectedDate, selectedScreen]); // Removed 'plans' from dependencies to prevent unnecessary calls
+  }, [selectedDate, selectedScreen]);
 
   // Transform API plan data to match frontend format
   const transformPlanData = (apiPlans) => {
@@ -136,38 +129,31 @@ export default function BookingFlow() {
 
   // Fetch plans data
   const fetchPlans = async () => {
-    if (!selectedScreen || !selectedScreen.id) {
+    if (!selectedScreen || !selectedScreen.id || !selectedDate) {
       setPlans([]);
       return;
     }
 
     setLoadingPlans(true);
-    setError(''); // Clear previous errors
+    setCheckingAvailability(true);
+    setError('');
     
     try {
-      // First, try location-specific plans API
-      let result = await dataAPI.getPlansByLocation(selectedScreen.id);
+      // Step 1: Get plans for specific location
+      console.log('📞 Fetching plans for location:', selectedScreen.id);
+      const result = await dataAPI.getPlansByLocation(selectedScreen.id);
       
-      // If location-specific API fails or returns no data, fallback to general plans API
-      if (!result.success || !result.data) {
-        console.warn('Location-specific plans API failed, falling back to general plans API');
-        result = await dataAPI.getPlans();
-      }
+      console.log('📦 Plans by location result:', result);
       
       // Handle different possible response structures
       let plansData = null;
       
       if (result.success && result.data) {
-        // Check if data is directly an array
-        if (Array.isArray(result.data)) {
-          plansData = result.data;
-        }
-        // Check if data has a nested array (like data.plans or data.data)
-        else if (result.data.data && Array.isArray(result.data.data)) {
+        if (result.data.data && Array.isArray(result.data.data)) {
           plansData = result.data.data;
-        }
-        // Check if data is an object with plans property
-        else if (result.data.plans && Array.isArray(result.data.plans)) {
+        } else if (Array.isArray(result.data)) {
+          plansData = result.data;
+        } else if (result.data.plans && Array.isArray(result.data.plans)) {
           plansData = result.data.plans;
         }
       }
@@ -176,28 +162,21 @@ export default function BookingFlow() {
         const transformedPlans = transformPlanData(plansData);
         setPlans(transformedPlans);
         
-        // Only check availability if we have a selected screen and date
-        if (selectedScreen && selectedDate) {
-          checkPlanAvailability(transformedPlans);
-        }
+        // Step 2: Pre-check availability for each plan
+        await checkPlanAvailability(transformedPlans);
         
-        // Clear any error state since we successfully loaded plans
         setError('');
       } else {
-        // No plans available - use fallback message
-        const errorMessage = 'Unable to load plans. Please refresh the page or try again later.';
-        setError(errorMessage);
         setPlans([]);
-        showToast(errorMessage, 'error');
+        setError('No plans available for this location.');
       }
     } catch (error) {
-      console.error('Error fetching plans:', error);
-      const errorMessage = error.message || 'Network error. Please check your connection and try again.';
-      setError(errorMessage);
+      console.error('❌ Error fetching plans:', error);
       setPlans([]);
-      showToast(errorMessage, 'error');
+      setError('Unable to load plans. Please try again.');
     } finally {
       setLoadingPlans(false);
+      setCheckingAvailability(false);
     }
   };
 
@@ -228,111 +207,80 @@ export default function BookingFlow() {
   };
 
   const performAvailabilityCheck = async (plans) => {
-    if (!selectedScreen || !selectedDate) {
+    if (!selectedScreen || !selectedDate || !plans || plans.length === 0) {
       return;
     }
     
     setCheckingAvailability(true);
     const availabilityMap = {};
     
-    // Use global cache to avoid duplicate API calls for the same date across sessions
-    const dateAvailabilityCache = { ...globalAvailabilityCache };
-    
-    // Get all unique dates we need to check
-    const datesToCheck = new Set();
-    const planDurations = {};
-    
-    for (const plan of plans) {
-      const durationDays = plan.duration_days || (plan.name === 'IMPACT' ? 3 : plan.name === 'THRIVE' ? 5 : 1);
-      planDurations[plan.id] = durationDays;
-      
-      // Add all dates for this plan's duration
-      for (let i = 0; i < durationDays; i++) {
-        const checkDate = new Date(selectedDate);
-        checkDate.setDate(checkDate.getDate() + i);
-        const dateString = checkDate.toISOString().split('T')[0];
-        datesToCheck.add(dateString);
-      }
-    }
-    
-    // Check availability for all dates at once
-    const availabilityPromises = Array.from(datesToCheck).map(async (dateString) => {
-      const cacheKey = `${selectedScreen.id}-${dateString}`;
-      
-      // Check if we already have availability data for this date
-      if (dateAvailabilityCache[cacheKey] !== undefined) {
-        return { date: dateString, isAvailable: dateAvailabilityCache[cacheKey] };
-      }
-      
-      // Make a single API call for this date (checking all plans at once)
-      try {
-        const result = await dataAPI.checkAvailability(
-          selectedScreen.id,
-          null, // No specific plan - get availability for all plans
-          dateString
-        );
+    try {
+      // Check availability for each plan individually using the Pre-Check API
+      const availabilityPromises = plans.map(async (plan) => {
+        const cacheKey = `${selectedScreen.id}-${plan.id}-${selectedDate}`;
         
-        if (!result.success || !result.data) {
-          console.warn(`Availability check failed for ${dateString}:`, result.error || result.message);
-          return { date: dateString, isAvailable: false };
+        // Check cache first
+        if (globalAvailabilityCache[cacheKey] !== undefined) {
+          return { planId: plan.id, isAvailable: globalAvailabilityCache[cacheKey] };
         }
         
-        // Check if the response indicates availability
-        const availabilityData = result.data.data || result.data;
-        const isAvailableFlag = availabilityData.isAvailable === true;
-        
-        // Cache the result for this date
-        dateAvailabilityCache[cacheKey] = isAvailableFlag;
-        
-        return { date: dateString, isAvailable: isAvailableFlag };
-      } catch (error) {
-        console.warn(`Error checking availability for ${dateString}:`, error);
-        return { date: dateString, isAvailable: false };
-      }
-    });
-    
-    // Wait for all availability checks to complete
-    const availabilityResults = await Promise.all(availabilityPromises);
-    
-    // Create a map of date to availability
-    const dateAvailabilityMap = {};
-    availabilityResults.forEach(({ date, isAvailable }) => {
-      dateAvailabilityMap[date] = isAvailable;
-    });
-    
-    // Now check each plan's availability based on its duration
-    for (const plan of plans) {
-      const durationDays = planDurations[plan.id];
-      let isAvailable = true;
-      
-      for (let i = 0; i < durationDays; i++) {
-        const checkDate = new Date(selectedDate);
-        checkDate.setDate(checkDate.getDate() + i);
-        const dateString = checkDate.toISOString().split('T')[0];
-        
-        if (!dateAvailabilityMap[dateString]) {
-          isAvailable = false;
-          break;
+        try {
+          // Use the Pre-Check Full Plan Duration API
+          const result = await dataAPI.checkAvailability(
+            selectedScreen.id,
+            plan.id, // Actual plan ID
+            selectedDate
+          );
+          
+          if (result.success && result.data) {
+            const availabilityData = result.data.data || result.data;
+            const isAvailable = availabilityData.isAvailable === true;
+            
+            // Cache the result
+            globalAvailabilityCache[cacheKey] = isAvailable;
+            setGlobalAvailabilityCache({ ...globalAvailabilityCache, [cacheKey]: isAvailable });
+            
+            return { planId: plan.id, isAvailable };
+          } else {
+            // If API fails, assume available (backend will validate)
+            return { planId: plan.id, isAvailable: true };
+          }
+        } catch (error) {
+          console.warn(`Availability check failed for plan ${plan.id}:`, error);
+          // If error, assume available (backend will validate)
+          return { planId: plan.id, isAvailable: true };
         }
-      }
+      });
       
-      availabilityMap[plan.id] = isAvailable;
+      // Wait for all checks to complete
+      const results = await Promise.all(availabilityPromises);
+      
+      // Create availability map from results
+      results.forEach(({ planId, isAvailable }) => {
+        availabilityMap[planId] = isAvailable;
+      });
+      
+      setPlanAvailability(availabilityMap);
+      
+      // Update global cache
+      const overallCacheKey = `${selectedScreen.id}-${selectedDate}`;
+      setGlobalAvailabilityCache(prev => ({
+        ...prev,
+        [overallCacheKey]: true
+      }));
+      
+      console.log('✅ Plan availability checked for', plans.length, 'plans');
+    } catch (error) {
+      console.error('Error in availability check:', error);
+      // If error, mark all plans as available (backend will validate)
+      const fallbackAvailability = {};
+      plans.forEach(plan => {
+        fallbackAvailability[plan.id] = true;
+      });
+      setPlanAvailability(fallbackAvailability);
+    } finally {
+      setCheckingAvailability(false);
     }
-    
-    setPlanAvailability(availabilityMap);
-    setCheckingAvailability(false);
-    
-    // Update global cache with new data
-    setGlobalAvailabilityCache(dateAvailabilityCache);
-    
-    // Cache the overall availability check result
-    const overallCacheKey = `${selectedScreen.id}-${selectedDate}`;
-    setGlobalAvailabilityCache(prev => ({
-      ...prev,
-      [overallCacheKey]: true // Mark as checked
-    }));
-    
-    console.log('✅ Plan availability check completed for', overallCacheKey, 'with', availabilityResults.length, 'API calls');
   };
 
   // Fetch location availability for selected date
@@ -979,12 +927,11 @@ export default function BookingFlow() {
         return (
                   <div
                     key={location.id}
-                    className={`${styles.screenCard} ${isSelected ? styles.selectedCard : ''} ${!hasAvailableSlots ? styles.unavailableLocation : ''}`}
-                    onClick={() => hasAvailableSlots && handleScreenSelect(location)}
-                    style={{ cursor: hasAvailableSlots ? 'pointer' : 'not-allowed' }}
+                    className={`${styles.screenCard} ${isSelected ? styles.selectedCard : ''}`}
+                    onClick={() => handleScreenSelect(location)}
+                    style={{ cursor: 'pointer' }}
                   >
                     {isSelected && <div className={styles.selectedBadge}>✓ Selected</div>}
-                    {!hasAvailableSlots && <div className={styles.unavailableLocationBadge}>No Slots Available</div>}
                     <img src={location.image} alt={location.name} className={styles.screenImage} />
                     <div className={styles.screenInfo}>
                     <h3>{location.name}</h3>
@@ -1380,15 +1327,38 @@ export default function BookingFlow() {
                   </div>
                   <div className={styles.formGroup}>
                     <label>GST Number <span className={styles.required}>*</span></label>
-                <input
-                  type="text"
+                    <input
+                      type="text"
                       value={gstNumber}
-                      onChange={(e) => setGstNumber(e.target.value.toUpperCase())}
+                      onChange={(e) => {
+                        // Convert to uppercase, remove special characters, and limit to 15 characters
+                        const cleanedValue = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 15);
+                        setGstNumber(cleanedValue);
+                        
+                        // Real-time validation
+                        if (cleanedValue.length > 0) {
+                          const validation = validateGSTNumber(cleanedValue);
+                          if (!validation.valid) {
+                            // Show validation error in real-time
+                            setError(validation.error);
+                          } else {
+                            // Clear error if valid
+                            setError('');
+                          }
+                        }
+                      }}
                       placeholder="Enter GST number (e.g., 27AAPCU1234A1Z5)"
                       className={styles.input}
                       maxLength={15}
-                />
-              </div>
+                      pattern="[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}[Z]{1}[0-9A-Z]{1}"
+                      title="GST number format: 2 digits (state) + 5 letters + 4 digits + 1 letter + 1 digit/letter + Z + 1 digit/letter"
+                    />
+                    {gstNumber && (
+                      <div className={styles.gstHelpText}>
+                        Format: State Code (2 digits) + PAN (10 chars) + Entity (1) + Z + Checksum (1)
+                      </div>
+                    )}
+                  </div>
                 </>
               )}
               

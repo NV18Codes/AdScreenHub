@@ -105,22 +105,51 @@ export const formatCurrency = (amount) => {
   }).format(amount);
 };
 
-// GST number validation
+// GST number validation with proper Indian GSTIN format
 export const validateGSTNumber = (gstNumber) => {
   if (!gstNumber) {
     return { valid: false, error: 'GST number is required' };
   }
   
-  // Remove any spaces or special characters
-  const cleanGST = gstNumber.replace(/[^A-Z0-9]/g, '').toUpperCase();
+  // Remove any spaces or special characters and convert to uppercase
+  const cleanGST = gstNumber.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
   
-  // GSTIN format: 2 digits (state code) + 10 characters (PAN) + 1 digit (entity code) + 1 character (default alphabet) + 1 digit (checksum)
+  // Check length first
+  if (cleanGST.length !== 15) {
+    return { 
+      valid: false, 
+      error: 'GST number must be exactly 15 characters' 
+    };
+  }
+  
+  // Indian GSTIN format: 2 digits (state code) + 10 characters (PAN: 5 letters + 4 digits + 1 letter) + 1 digit (entity code) + 1 letter (default alphabet Z) + 1 digit/letter (checksum)
+  // Format: XXAAAAA0000AZ5
+  // Where: XX = state code (2 digits), AAAAA = first 5 letters of PAN, 0000 = 4 digits of PAN, A = last letter of PAN, Z = default alphabet, 5 = checksum
   const gstRegex = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}[Z]{1}[0-9A-Z]{1}$/;
   
   if (!gstRegex.test(cleanGST)) {
     return { 
       valid: false, 
-      error: 'Invalid GST number format. GSTIN should be 15 characters: 2 digits (state) + 10 characters (PAN) + 1 digit (entity) + 1 character (alphabet) + 1 digit (checksum)' 
+      error: 'Invalid GST number format. Expected format: 27ABCDE1234F1Z5 (2 digits + 5 letters + 4 digits + 1 letter + 1 digit/letter + Z + 1 digit/letter)' 
+    };
+  }
+  
+  // Additional validation: Check if state code is valid (01-37 for Indian states)
+  const stateCode = parseInt(cleanGST.substring(0, 2));
+  if (stateCode < 1 || stateCode > 37) {
+    return { 
+      valid: false, 
+      error: 'Invalid state code in GST number. State code should be between 01-37' 
+    };
+  }
+  
+  // Additional validation: Check if PAN format is valid (5 letters + 4 digits + 1 letter)
+  const panPart = cleanGST.substring(2, 12);
+  const panRegex = /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/;
+  if (!panRegex.test(panPart)) {
+    return { 
+      valid: false, 
+      error: 'Invalid PAN format in GST number. PAN should be 5 letters + 4 digits + 1 letter' 
     };
   }
   

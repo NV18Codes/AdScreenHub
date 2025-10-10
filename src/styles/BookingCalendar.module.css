@@ -35,6 +35,17 @@
   max-width: 300px;
 }
 
+.datePlaceholder {
+  position: absolute;
+  left: 44px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #9ca3af;
+  pointer-events: none;
+  font-size: 1rem;
+  z-index: 2;
+}
+
 .calendarIcon {
   position: absolute;
   left: 12px;
@@ -68,6 +79,7 @@
   color: #9ca3af;
   pointer-events: none;
   font-size: 1rem;
+  z-index: 1;
 }
 
 .dateInput:not(:focus):invalid::before {
@@ -77,6 +89,12 @@
 .dateInput:focus::before,
 .dateInput:valid::before {
   display: none;
+}
+
+/* Show placeholder when input is empty */
+.dateInput:not([value]):not(:focus)::before {
+  content: attr(data-placeholder);
+  display: block;
 }
 
 .dateInput:focus {
@@ -97,6 +115,20 @@
   margin-top: 0.25rem;
   text-align: center;
   font-style: italic;
+}
+
+/* Mobile-specific format note */
+@media (max-width: 768px) {
+  .dateFormatNote {
+    color: #3b82f6;
+    font-size: 0.8rem;
+    font-weight: 600;
+    background: #eff6ff;
+    padding: 0.5rem;
+    border-radius: 8px;
+    border: 1px solid #dbeafe;
+    margin-top: 0.5rem;
+  }
 }
 
 .screensSection {
@@ -689,15 +721,35 @@
     max-width: 100%;
   }
   
+  .datePlaceholder {
+    font-size: 16px;
+    left: 44px;
+    color: #6b7280;
+    font-weight: 500;
+  }
+  
   .dateInput {
     font-size: 16px; /* Prevents zoom on iOS */
     padding: 14px 16px 14px 44px;
     min-height: 48px; /* Better touch target */
+    background: white;
+    border: 2px solid #e5e7eb;
   }
   
   .dateInput::before {
     font-size: 16px;
     left: 44px;
+    color: #6b7280;
+    font-weight: 500;
+  }
+  
+  .dateInput:not([value])::before {
+    content: "dd/mm/yyyy";
+    display: block;
+  }
+  
+  .dateInput:not([value]):focus::before {
+    display: none;
   }
   
   /* Improve mobile date picker appearance */
