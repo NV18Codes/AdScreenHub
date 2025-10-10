@@ -742,7 +742,7 @@ export default function MyOrders() {
                     <div className={styles.imageSection}>
                       <h4 className={styles.imageSectionTitle}>🖼️ Admin Preview</h4>
                       {(() => {
-                        const adminImageUrl = order.ad_desplay_url || order.admin_preview_url;
+                        const adminImageUrl = order.ad_display_url;
                         
                         return adminImageUrl ? (
                           <div className={styles.creativePreview}>

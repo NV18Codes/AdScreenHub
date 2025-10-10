@@ -408,7 +408,6 @@ export default function BookingFlow() {
     setShowScreenModal(false);
     setError(''); // Clear any previous errors
     
-    // Auto-scroll to step 3 after screen selection
     setTimeout(() => {
       const step3Element = document.querySelector('[data-step="3"]');
       if (step3Element) {
@@ -417,9 +416,7 @@ export default function BookingFlow() {
     }, 500);
   };
 
-  // Check for overlapping bookings by the same user
-  // IMPORTANT: Only checks confirmed orders, excludes pending payment orders
-  // This ensures inventory is only reserved after successful payment
+
   const checkUserBookingConflict = (locationId, startDate, durationDays) => {
     if (!orders || orders.length === 0) {
       return null;
@@ -429,15 +426,12 @@ export default function BookingFlow() {
     const newEnd = new Date(newStart);
     newEnd.setDate(newEnd.getDate() + durationDays - 1);
     
-    // Check all user's orders for the same location
     const conflicts = orders.filter(order => {
-      // Only check confirmed orders (exclude pending payment and failed orders)
       if (order.status === 'Cancelled Display' || 
           order.status === 'Payment Failed') {
         return false;
       }
       
-      // Check if it's the same location (convert both to numbers for comparison)
       const orderLocationId = Number(order.locationId || order.location_id);
       const newLocationId = Number(locationId);
       
@@ -445,14 +439,12 @@ export default function BookingFlow() {
         return false;
       }
       
-      // Get order's date range
       const orderStart = new Date(order.startDate || order.start_date);
       const orderDuration = order.planDuration || order.plans?.duration_days || order.duration_days || 
                            (order.plan?.name === 'IMPACT' ? 3 : order.plan?.name === 'THRIVE' ? 5 : 1);
       const orderEnd = new Date(orderStart);
       orderEnd.setDate(orderEnd.getDate() + orderDuration - 1);
       
-      // Check for overlap: ranges overlap if start1 <= end2 && start2 <= end1
       const hasOverlap = newStart <= orderEnd && orderStart <= newEnd;
       
       return hasOverlap;
@@ -461,9 +453,7 @@ export default function BookingFlow() {
     return conflicts.length > 0 ? conflicts[0] : null;
   };
 
-  // Handle plan selection - only allow if plan is available (no error messages)
   const handlePlanSelect = async (plan) => {
-    // Check if plan is marked as unavailable
     const isAvailable = planAvailability[plan.id] !== false;
     
     
@@ -678,7 +668,6 @@ export default function BookingFlow() {
       return;
     }
     
-    // Validate GST number format if provided
     if (gstApplicable && gstNumber.trim()) {
       const gstValidation = validateGSTNumber(gstNumber.trim());
       if (!gstValidation.valid) {
@@ -696,21 +685,19 @@ export default function BookingFlow() {
       return;
     }
     
-    // Clear incomplete step indicator
     setIncompleteStep(null);
     
 
     try {
       const orderData = {
-        // Core order fields
         planId: selectedPlan.id,
         locationId: selectedScreen.id,
-        screenId: selectedScreen.id, // Keep for backward compatibility
+        screenId: selectedScreen.id, 
         startDate: selectedDate,
-        displayDate: selectedDate, // Keep for backward compatibility
-        creativeFilePath: signedUrlResponse?.path || '', // This should be the actual file path from upload
+        displayDate: selectedDate, 
+        creativeFilePath: signedUrlResponse?.path || '', 
         creativeFileName: designFile?.name?.trim().replace(/\s+/g, '') || '',
-        designFile: designFile?.name?.trim().replace(/\s+/g, '') || '', // Keep for backward compatibility
+        designFile: designFile?.name?.trim().replace(/\s+/g, '') || '', 
         fileType: designFile?.fileType || (designFile?.type?.startsWith('video/') ? 'video' : 'image'),
         totalAmount: calculateTotal(),
         price: calculateTotal(), // Keep for backward compatibility
@@ -730,15 +717,14 @@ export default function BookingFlow() {
         duration_days: selectedPlan.duration_days || (selectedPlan.name === 'IMPACT' ? 3 : selectedPlan.name === 'THRIVE' ? 5 : 1),
         planDuration: selectedPlan.duration_days || (selectedPlan.name === 'IMPACT' ? 3 : selectedPlan.name === 'THRIVE' ? 5 : 1),
         
-        // User data
         email: user?.email || '',
         phone: user?.phoneNumber || user?.phone || '',
         userId: user?.id || user?.userId || 'unknown'
       };
 
-
-    const result = await createOrder(orderData);
-      
+    
+      const result = await createOrder(orderData);
+    
       if (result.success) {
         setNewOrder(result.order);
         
@@ -825,10 +811,8 @@ export default function BookingFlow() {
       },
       theme: RAZORPAY_CONFIG.theme,
         handler: async function (response) {
-        // Show loading immediately after payment completion
         setProcessingPayment(true);
         
-        // Call verify payment API
         try {
           const verificationData = {
             orderId: order.id.toString(),
@@ -845,10 +829,8 @@ export default function BookingFlow() {
           );
             
             if (verifyResponse.success) {
-            // Keep loading visible while redirecting
             window.location.href = `/booking-success?orderId=${order.id}&payment_id=${response.razorpay_payment_id}&verified=true`;
             } else {
-            // Use backend error message
             setProcessingPayment(false);
             const errorMessage = verifyResponse.error || verifyResponse.message || 'Payment verification failed';
             window.location.href = `/booking-failed?orderId=${order.id}&message=${encodeURIComponent(errorMessage)}`;
@@ -1057,7 +1039,7 @@ export default function BookingFlow() {
             ) : (
               <div className={styles.plansGrid}>
                 {plans.map((plan) => {
-                  const isAvailable = planAvailability[plan.id] !== false; // true or undefined = available
+                  const isAvailable = planAvailability[plan.id] !== false; 
                   const isSelected = selectedPlan?.id === plan.id;
                   
                   return (
