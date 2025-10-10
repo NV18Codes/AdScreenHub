@@ -24,13 +24,6 @@ export default function DashboardOverview() {
     )
     .reduce((sum, order) => sum + (order.totalAmount || order.total_cost || order.final_amount || 0), 0);
 
-  // Debug logging
-  console.log('📊 Dashboard Stats - Calculating from ALL orders:');
-  console.log(`   Total orders: ${totalOrders}`);
-  console.log(`   Pending: ${pendingOrders}`);
-  console.log(`   Active: ${activeOrders}`);
-  console.log(`   Completed: ${completedOrders}`);
-  console.log(`   Total spent: ₹${totalSpent.toLocaleString('en-IN')}`);
 
   // Get recent orders (last 3)
   const recentOrders = orders.slice(0, 3);

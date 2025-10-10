@@ -10,7 +10,6 @@ export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [activeSection, setActiveSection] = useState('');
   
-  // Debug: Log user object to see available fields
   
   // Get display name using utility function
   const displayName = getUserDisplayName(user);

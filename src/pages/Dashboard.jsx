@@ -85,7 +85,6 @@ export default function Dashboard() {
         setPlans([]);
       }
     } catch (error) {
-      console.error('❌ Plans API failed:', error.message);
       setPlans([]);
     } finally {
       setLoadingPlans(false);
@@ -130,11 +129,9 @@ export default function Dashboard() {
         });
         setAvailabilityData(transformedData);
       } else {
-        console.error('❌ Location availability API failed - unexpected structure:', result);
         setAvailabilityData({});
       }
     } catch (error) {
-      console.warn('⚠️ API call failed, using default availability:', error.message);
       // Don't set any availability data - let the UI handle it with defaults
       setAvailabilityData({});
     } finally {
@@ -151,11 +148,9 @@ export default function Dashboard() {
         const data = result.data?.data || result.data;
         return data || { available: false, slots: 0 };
       } else {
-        console.error('Failed to check slot availability:', result.error);
         return { available: false, slots: 0 };
       }
     } catch (error) {
-      console.error('Error checking slot availability:', error);
       return { available: false, slots: 0 };
     }
   };
@@ -309,7 +304,6 @@ export default function Dashboard() {
         showToast(result.error || 'Failed to create order. Please try again.', 'error');
       }
     } catch (error) {
-      console.error('Error creating order:', error);
       showToast('Failed to create order. Please try again.', 'error');
     } finally {
       setConfirmingBooking(false);
@@ -340,7 +334,6 @@ export default function Dashboard() {
         // API is working
       }
     } catch (error) {
-      console.warn('⚠️ Plans API test failed:', error.message);
     }
   };
 
@@ -391,7 +384,6 @@ export default function Dashboard() {
         }
       }
     } catch (error) {
-      console.error('Error processing image:', error);
       setUploadError('Error processing image. Please try again.');
     }
   };

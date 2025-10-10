@@ -767,6 +767,10 @@
 .summaryItem span:last-child {
   color: #6b7280;
   font-weight: 500;
+  text-align: right;
+  word-wrap: break-word;
+  hyphens: none;
+  max-width: 60%;
 }
 
 .summaryItem.total {
@@ -780,6 +784,15 @@
 
 .summaryItem.total span:last-child {
   color: #3b82f6;
+}
+
+.locationValue {
+  text-align: right;
+  word-wrap: break-word;
+  hyphens: none;
+  line-height: 1.4;
+  max-width: 60%;
+  display: block;
 }
 
 /* Buttons */

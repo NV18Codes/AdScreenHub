@@ -76,7 +76,7 @@ export default function Footer() {
             <ul className={styles.footerLinks}>
               <li><Link to="/terms" state={{ referrer: location.pathname }}>Terms & Conditions</Link></li>
               <li><Link to="/privacy">Privacy Policy</Link></li>
-              {/* <li><Link to="/refund-policy">Refund Policy</Link></li> */}
+              <li><Link to="/cancellation-refund">Cancellation & Refund Policy</Link></li>
             </ul>
           </div>
 

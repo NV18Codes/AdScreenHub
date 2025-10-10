@@ -2,19 +2,27 @@ import React, { useState, useEffect } from 'react';
 import { useOrders } from '../hooks/useOrders';
 import { formatDate, formatCurrency, validateFile, compressImage, manageStorageQuota } from '../utils/validation';
 import { useNavigate } from 'react-router-dom';
+import { filesAPI } from '../config/api';
 import Toast from '../components/Toast';
 import styles from '../styles/MyOrders.module.css';
 
 export default function MyOrders() {
-  const { orders, loading, reviseOrder, refreshOrders } = useOrders();
+  const { orders, loading, reviseOrder, refreshOrders, updateOrderStatus } = useOrders();
   const navigate = useNavigate();
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [showImageModal, setShowImageModal] = useState(false);
   const [showReviseModal, setShowReviseModal] = useState(false);
+  const [showReuploadModal, setShowReuploadModal] = useState(false);
   const [reviseOrderId, setReviseOrderId] = useState(null);
+  const [reuploadOrderId, setReuploadOrderId] = useState(null);
   const [newDesignFile, setNewDesignFile] = useState(null);
   const [newDesignPreview, setNewDesignPreview] = useState(null);
+  const [reuploadFile, setReuploadFile] = useState(null);
+  const [reuploadPreview, setReuploadPreview] = useState(null);
   const [uploadError, setUploadError] = useState('');
+  const [reuploadError, setReuploadError] = useState('');
+  const [reuploading, setReuploading] = useState(false);
+  const [reuploadSuccess, setReuploadSuccess] = useState(false);
   const [refreshError, setRefreshError] = useState('');
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
   const [searchTerm, setSearchTerm] = useState('');
@@ -24,7 +32,7 @@ export default function MyOrders() {
 
   const showToast = (message, type = 'success') => {
     setToast({ show: true, message, type });
-    setTimeout(() => setToast({ show: false, message: '', type: 'success' }), 4000);
+    setTimeout(() => setToast({ show: false, message: '', type: 'success' }), 5000);
   };
   const [refreshing, setRefreshing] = useState(false);
 
@@ -64,6 +72,13 @@ export default function MyOrders() {
   const canRevisePendingOrder = (order) => {
     return order.status === 'Revise Your Design';
   };
+
+
+  const canReuploadCreative = (order) => {
+    // Allow re-upload for Design Revise orders
+    return order.status === 'Design Revise';
+  };
+
 
 
   const handleReviseOrder = (orderId) => {
@@ -109,7 +124,6 @@ export default function MyOrders() {
       const compressedPreview = await compressImage(file, 800, 0.7);
       setNewDesignPreview(compressedPreview);
     } catch (error) {
-      console.error('Error processing image:', error);
       setUploadError('Error processing image. Please try again.');
     }
   };
@@ -133,6 +147,175 @@ export default function MyOrders() {
     setNewDesignFile(null);
     setNewDesignPreview(null);
     setUploadError('');
+  };
+
+  const handleReuploadCreative = (orderId) => {
+    const order = orders.find(o => o.id === orderId);
+    
+    if (!canReuploadCreative(order)) {
+      showToast('This order cannot be re-uploaded. Please check the status.', 'error');
+      return;
+    }
+
+    setReuploadOrderId(orderId);
+    setShowReuploadModal(true);
+    setReuploadFile(null);
+    setReuploadPreview(null);
+    setReuploadError('');
+  };
+
+  const handleReuploadFileUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // Manual validation for images and videos
+    const allowedImageTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+    const allowedVideoTypes = ['video/mp4', 'video/avi', 'video/mov', 'video/quicktime'];
+    const maxSize = 50 * 1024 * 1024; // 50MB
+
+    const isImage = allowedImageTypes.includes(file.type);
+    const isVideo = allowedVideoTypes.includes(file.type);
+
+    if (!isImage && !isVideo) {
+      setReuploadError('Invalid file type. Please upload JPG, PNG, MP4, AVI, or MOV files only.');
+      return;
+    }
+
+    if (file.size > maxSize) {
+      setReuploadError('File size too large. Please upload files smaller than 50MB.');
+      return;
+    }
+
+    setReuploadError('');
+    setReuploadFile(file);
+
+    // Create preview immediately for all file types
+    if (file.type.startsWith('image/')) {
+      // For images, try compression first, fallback to direct URL
+      try {
+        if (!manageStorageQuota()) {
+          setReuploadError('Storage space is full. Please clear some data and try again.');
+          return;
+        }
+        const compressedBlob = await compressImage(file, 800, 0.7);
+        
+        if (!compressedBlob) {
+          throw new Error('Compression failed - blob is null');
+        }
+        
+        const compressedPreview = URL.createObjectURL(compressedBlob);
+        setReuploadPreview(compressedPreview);
+      } catch (compressError) {
+        // If compression fails, use direct object URL
+        const directUrl = URL.createObjectURL(file);
+        setReuploadPreview(directUrl);
+      }
+    } else {
+      // For videos, create a simple preview
+      const directUrl = URL.createObjectURL(file);
+      setReuploadPreview(directUrl);
+    }
+  };
+
+  const handleSubmitReupload = async () => {
+    if (!reuploadFile) {
+      setReuploadError('Please upload a new creative file');
+      return;
+    }
+
+    setReuploading(true);
+    setReuploadError('');
+
+    try {
+      // Step 1: Get re-upload URL
+      showToast('Getting upload URL...', 'info');
+      
+      const reuploadResponse = await filesAPI.getReuploadUrl(
+        reuploadOrderId, 
+        reuploadFile.name, 
+        reuploadFile.type
+      );
+
+      // Check if the response is successful
+      if (!reuploadResponse.success) {
+        const errorMsg = reuploadResponse.error || reuploadResponse.data?.message || 'Failed to get re-upload URL';
+        throw new Error(errorMsg);
+      }
+
+      // The backend returns: { statusCode, data: { signedUrl, path }, message, success }
+      // And makeRequest wraps it as: { success: true, data: <backend_response> }
+      const backendData = reuploadResponse.data?.data || reuploadResponse.data;
+      const signedUrl = backendData?.signedUrl;
+      const path = backendData?.path;
+
+      if (!signedUrl || !path) {
+        throw new Error('Invalid response from server: missing signedUrl or path');
+      }
+
+      // Step 2: Upload file to signed URL
+      showToast('Uploading file...', 'info');
+      
+      const uploadResponse = await filesAPI.uploadFile(signedUrl, reuploadFile, reuploadFile.type);
+      
+      // Upload to Supabase storage should return a successful response
+      if (!uploadResponse || !uploadResponse.success) {
+        throw new Error('Failed to upload file to storage');
+      }
+
+      // Step 3: Finalize re-upload
+      showToast('Finalizing upload...', 'info');
+      
+      // Backend expects docType as "design" for all creative uploads
+      const docType = 'design';
+      const finalizeResponse = await filesAPI.finalizeReupload(
+        reuploadOrderId,
+        path,
+        reuploadFile.name,
+        docType
+      );
+
+      // Check if finalize was successful
+      if (!finalizeResponse.success) {
+        const errorMsg = finalizeResponse.error || finalizeResponse.data?.message || 'Failed to finalize re-upload';
+        throw new Error(errorMsg);
+      }
+
+      // Clear any previous states
+      setReuploading(false);
+      setReuploadError('');
+      
+      // Set success state FIRST for immediate visual feedback
+      setReuploadSuccess(true);
+      
+      // Show success toast IMMEDIATELY
+      setTimeout(() => {
+        showToast('🎉 Creative re-uploaded successfully! Your order status is now "Pending Approval". The admin team will review your new creative shortly.', 'success');
+      }, 100);
+      
+      // Update the order status locally to "Pending Approval" immediately
+      // This will cause the button to disappear as it only shows for "Design Revise" status
+      updateOrderStatus(reuploadOrderId, 'Pending Approval');
+      
+      // Refresh orders to get updated status and creative URL from backend
+      await refreshOrders();
+
+      // Close modal and reset after showing success state
+      setTimeout(() => {
+        setShowReuploadModal(false);
+        setReuploadOrderId(null);
+        setReuploadFile(null);
+        setReuploadPreview(null);
+        setReuploadError('');
+        setReuploadSuccess(false);
+      }, 3000);
+
+    } catch (error) {
+      const errorMessage = error.message || 'Failed to re-upload creative. Please try again.';
+      setReuploadError(errorMessage);
+      showToast(errorMessage, 'error');
+    } finally {
+      setReuploading(false);
+    }
   };
 
   // All possible statuses (matching admin module)
@@ -173,7 +356,7 @@ export default function MyOrders() {
     const displayDate = (order.start_date || order.startDate || order.displayDate || '').toLowerCase();
     
     return orderId.includes(searchLower) || 
-           orderUid.includes(searchLower) ||
+           orderUid.includes(searchLower) || 
            order_uid.includes(searchLower) ||
            locationName.includes(searchLower) ||
            displayDate.includes(searchLower);
@@ -229,19 +412,14 @@ export default function MyOrders() {
   // Ensure orders is always an array
   const safeOrders = Array.isArray(orders) ? orders : [];
   
-  // Debug: Log orders data
-  console.log('📦 MyOrders - Total orders:', orders.length);
-  console.log('📦 MyOrders - Filtered orders:', filteredOrders.length);
-  console.log('📦 MyOrders - Current page orders:', currentOrders.length);
-  console.log('📦 MyOrders - Loading state:', loading);
 
   return (
     <div className={styles.myOrders}>
       <div className={styles.container}>
         <div className={styles.header}>
           <div className={styles.headerLeft}>
-            <div className={styles.headerText}>
-              <h1>My Orders</h1>
+          <div className={styles.headerText}>
+            <h1>My Orders</h1>
               <p className={styles.headerSubtext}>Track and manage your advertising campaigns</p>
             </div>
           </div>
@@ -276,7 +454,7 @@ export default function MyOrders() {
               <div className={styles.searchInputWrapper}>
                 <input
                   type="text"
-                  placeholder="Search by Order ID, Location, or Display Date..."
+                  placeholder="Search by Order ID, Location or Display Date..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className={styles.searchInput}
@@ -346,12 +524,12 @@ export default function MyOrders() {
                     <p>No orders match your current filters.</p>
                     <div style={{display: 'flex', gap: '1rem', justifyContent: 'center', marginTop: '1rem'}}>
                       {searchTerm && (
-                        <button 
-                          onClick={() => setSearchTerm('')}
-                          className={`${styles.btn} ${styles.btnSecondary}`}
-                        >
-                          Clear Search
-                        </button>
+                    <button 
+                      onClick={() => setSearchTerm('')}
+                      className={`${styles.btn} ${styles.btnSecondary}`}
+                    >
+                      Clear Search
+                    </button>
                       )}
                       {statusFilter !== 'All' && (
                         <button 
@@ -445,6 +623,30 @@ export default function MyOrders() {
                           Upload New Design
                         </button>
                       )}
+
+                      {/* Re-upload Creative Button - Only shows for "Design Revise" status */}
+                      {canReuploadCreative(order) && !(reuploadSuccess && order.id === reuploadOrderId) && (
+                        <button
+                          onClick={() => handleReuploadCreative(order.id)}
+                          className={`${styles.btn} ${styles.btnUpload}`}
+                          title="Re-upload your creative file"
+                          disabled={reuploading && order.id === reuploadOrderId}
+                        >
+                          {reuploading && order.id === reuploadOrderId ? (
+                            <>🔄 Uploading...</>
+                          ) : (
+                            <>🎨 Re-upload Creative</>
+                          )}
+                        </button>
+                      )}
+                      
+                      {/* Success indicator - shows temporarily after successful upload */}
+                      {reuploadSuccess && order.id === reuploadOrderId && (
+                        <div className={`${styles.btn} ${styles.btnSuccess}`} style={{ cursor: 'default' }}>
+                          ✅ Upload Successful - Pending Approval
+                        </div>
+                      )}
+                      
                     </div>
                   </div>
 
@@ -733,6 +935,124 @@ export default function MyOrders() {
           </div>
         </div>
       )}
+
+      {/* Re-upload Creative Modal */}
+      {showReuploadModal && (() => {
+        const reuploadOrder = orders.find(o => o.id === reuploadOrderId);
+        return (
+          <div className={styles.modalOverlay} onClick={() => setShowReuploadModal(false)}>
+            <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+              <button
+                className={styles.modalClose}
+                onClick={() => setShowReuploadModal(false)}
+              >
+                ×
+              </button>
+              
+              <div className={styles.modalHeader}>
+                <h2>Re-upload Creative</h2>
+                <p>Upload a new creative file for Order #{reuploadOrder?.orderUid || reuploadOrder?.order_uid || `ORD-${reuploadOrderId}`}</p>
+              </div>
+
+              <div className={styles.uploadSection}>
+                {!reuploadFile ? (
+                  <>
+                    <input
+                      type="file"
+                      accept=".jpg,.jpeg,.png,.mp4,.avi,.mov"
+                      onChange={handleReuploadFileUpload}
+                      className={styles.fileInput}
+                      id="reupload-upload"
+                      disabled={reuploading}
+                    />
+                    <label htmlFor="reupload-upload" className={styles.fileInputLabel}>
+                      <div className={styles.uploadArea}>
+                        <svg className={styles.uploadIcon} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                        </svg>
+                        <p>Click to upload or drag and drop</p>
+                        <p className={styles.fileTypes}>JPG, PNG, MP4, AVI, MOV (max 50MB)</p>
+                      </div>
+                    </label>
+                  </>
+                ) : (
+                  <div className={styles.previewSection}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                      <h3 style={{ margin: 0 }}>New Creative Preview</h3>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setReuploadFile(null);
+                          setReuploadPreview(null);
+                          setReuploadError('');
+                        }}
+                        className={`${styles.btn} ${styles.btnSecondary}`}
+                        style={{ padding: '0.5rem 1rem', fontSize: '0.875rem' }}
+                        disabled={reuploading}
+                      >
+                        Change File
+                      </button>
+                    </div>
+                    <div className={styles.previewContainer}>
+                      {reuploadFile.type.startsWith('video/') ? (
+                        <video 
+                          src={reuploadPreview} 
+                          className={styles.previewImage}
+                          controls
+                          preload="metadata"
+                          style={{ width: '100%', height: 'auto', maxHeight: '300px' }}
+                        />
+                      ) : (
+                        <img 
+                          src={reuploadPreview} 
+                          alt="New Creative Preview" 
+                          className={styles.previewImage}
+                          style={{ width: '100%', height: 'auto', maxHeight: '300px' }}
+                        />
+                      )}
+                    </div>
+                    <p className={styles.fileInfo}>
+                      File: {reuploadFile.name} ({(reuploadFile.size / 1024 / 1024).toFixed(2)} MB)
+                    </p>
+                  </div>
+                )}
+
+                {reuploadError && (
+                  <div className={styles.errorMessage} style={{ marginTop: '1rem' }}>
+                    {reuploadError}
+                  </div>
+                )}
+              </div>
+
+              <div className={styles.modalActions}>
+                <button
+                  onClick={() => setShowReuploadModal(false)}
+                  className={`${styles.btn} ${styles.btnSecondary}`}
+                  disabled={reuploading}
+                >
+                  ← Cancel
+                </button>
+                <button
+                  onClick={handleSubmitReupload}
+                  disabled={!reuploadFile || reuploading}
+                  className={`${styles.btn} ${styles.btnUpload}`}
+                >
+                  {reuploading ? (
+                    <>
+                      <div className={styles.spinner}></div>
+                      Uploading...
+                    </>
+                  ) : (
+                    <>
+                      ✓ Looks Good - Re-upload Creative
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Toast Notification */}
       {toast.show && (

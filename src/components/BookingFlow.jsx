@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useOrders } from '../hooks/useOrders';
 import { useAuth } from '../contexts/AuthContext';
-import { isDateDisabled, validateFile, generateOrderId, compressImage, manageStorageQuota } from '../utils/validation';
+import { isDateDisabled, validateFile, generateOrderId, compressImage, manageStorageQuota, validateGSTNumber, validatePhoneNumber } from '../utils/validation';
 import { couponsAPI, dataAPI, filesAPI, ordersAPI } from '../config/api';
 import { RAZORPAY_KEY, RAZORPAY_CONFIG, convertToPaise } from '../config/razorpay';
 import LoadingSpinner from './LoadingSpinner';
@@ -61,6 +61,8 @@ export default function BookingFlow() {
   const [planAvailability, setPlanAvailability] = useState({}); // Track which plans are available
   const [processingPayment, setProcessingPayment] = useState(false); // Track payment verification
   const [checkingAvailability, setCheckingAvailability] = useState(false); // Track availability checking
+  const [globalAvailabilityCache, setGlobalAvailabilityCache] = useState({}); // Global cache for availability data
+  const [availabilityCheckTimeout, setAvailabilityCheckTimeout] = useState(null);
 
   // Debounced fetch plans when selectedScreen changes
   useEffect(() => {
@@ -192,8 +194,29 @@ export default function BookingFlow() {
       return;
     }
     
+    // Clear any existing timeout to debounce rapid calls
+    if (availabilityCheckTimeout) {
+      clearTimeout(availabilityCheckTimeout);
+    }
+    
+    // Debounce the availability check by 300ms
+    const timeoutId = setTimeout(async () => {
+      await performAvailabilityCheck(plans);
+    }, 300);
+    
+    setAvailabilityCheckTimeout(timeoutId);
+  };
+
+  const performAvailabilityCheck = async (plans) => {
+    if (!selectedScreen || !selectedDate) {
+      return;
+    }
+    
     setCheckingAvailability(true);
     const availabilityMap = {};
+    
+    // Use global cache to avoid duplicate API calls for the same date across sessions
+    const dateAvailabilityCache = { ...globalAvailabilityCache };
     
     // Check each plan individually for duration-based availability
     for (const plan of plans) {
@@ -207,6 +230,19 @@ export default function BookingFlow() {
         checkDate.setDate(checkDate.getDate() + i);
         const dateString = checkDate.toISOString().split('T')[0];
         
+        // Create cache key for this date and location
+        const cacheKey = `${selectedScreen.id}-${dateString}`;
+        
+        // Check if we already have availability data for this date
+        if (dateAvailabilityCache[cacheKey] !== undefined) {
+          const isAvailableFlag = dateAvailabilityCache[cacheKey];
+          if (!isAvailableFlag) {
+            isAvailable = false;
+            break;
+          }
+          continue; // Skip API call, use cached result
+        }
+        
         // Use existing availability API: /data/availability/{locationId}?planId={planId}&startDate={date}
         const result = await dataAPI.checkAvailability(
           selectedScreen.id,
@@ -214,12 +250,9 @@ export default function BookingFlow() {
           dateString
         );
         
-        console.log(`🔍 Availability check for plan ${plan.name} on ${dateString}:`, result);
-        
         if (!result.success || !result.data) {
           // Show backend error message
           const errorMessage = result.error || result.message || 'Availability check failed';
-          console.log(`❌ Availability check failed for plan ${plan.name}:`, errorMessage);
           showToast(errorMessage, 'error');
           isAvailable = false;
           break;
@@ -227,18 +260,14 @@ export default function BookingFlow() {
         
         // Check if the response indicates availability
         const availabilityData = result.data.data || result.data;
-        console.log(`📊 Availability data for plan ${plan.name}:`, availabilityData);
         
         // Check availability using the correct field name from API
         const isAvailableFlag = availabilityData.isAvailable === true;
         
-        console.log(`✅ Plan ${plan.name} availability check:`, {
-          isAvailable: availabilityData.isAvailable,
-          isAvailableFlag
-        });
+        // Cache the result for this date
+        dateAvailabilityCache[cacheKey] = isAvailableFlag;
         
         if (!isAvailableFlag) {
-          console.log(`❌ Plan ${plan.name} not available on ${dateString}`);
           isAvailable = false;
           break;
         }
@@ -249,6 +278,9 @@ export default function BookingFlow() {
     
     setPlanAvailability(availabilityMap);
     setCheckingAvailability(false);
+    
+    // Update global cache with new data
+    setGlobalAvailabilityCache(dateAvailabilityCache);
   };
 
   // Fetch location availability for selected date
@@ -498,14 +530,9 @@ export default function BookingFlow() {
             // Store file type for later use in order creation
             setDesignFile(prevFile => ({
               ...prevFile,
-              fileType: fileType
-            }));
-            
-            console.log('File uploaded successfully!', {
-              fileName: trimmedFileName,
               fileType: fileType,
               filePath: filePath
-            });
+            }));
           } else {
             throw new Error(`S3 upload failed: ${uploadResponse.status} ${uploadResponse.statusText}`);
           }
@@ -569,16 +596,7 @@ export default function BookingFlow() {
       return;
     }
 
-    // Debug: Check if selected plan is marked as unavailable
     const isPlanAvailable = planAvailability[selectedPlan.id] !== false;
-    console.log('🔍 Order confirmation check:', {
-      selectedPlan: selectedPlan.name,
-      planId: selectedPlan.id,
-      planAvailability: planAvailability[selectedPlan.id],
-      isPlanAvailable,
-      selectedScreen: selectedScreen?.name,
-      selectedScreenSlots: selectedScreen?.available_slots
-    });
 
     if (!isPlanAvailable) {
       setIncompleteStep('plan-selection');
@@ -616,10 +634,10 @@ export default function BookingFlow() {
     
     // Validate GST number format if provided
     if (gstApplicable && gstNumber.trim()) {
-      const gstRegex = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
-      if (!gstRegex.test(gstNumber.trim().toUpperCase())) {
+      const gstValidation = validateGSTNumber(gstNumber.trim());
+      if (!gstValidation.valid) {
         setIncompleteStep('order-details');
-        setError('Please enter a valid GST number (e.g., 27AAPCU1234A1Z5)');
+        setError(gstValidation.error);
         setConfirmingOrder(false);
         return;
       }
@@ -647,16 +665,16 @@ export default function BookingFlow() {
         creativeFileName: designFile?.name?.trim().replace(/\s+/g, '') || '',
         designFile: designFile?.name?.trim().replace(/\s+/g, '') || '', // Keep for backward compatibility
         fileType: designFile?.fileType || (designFile?.type?.startsWith('video/') ? 'video' : 'image'),
-        totalAmount: selectedPlan.price - (discountAmount || 0),
-        price: selectedPlan.price - (discountAmount || 0), // Keep for backward compatibility
+        totalAmount: calculateTotal(),
+        price: calculateTotal(), // Keep for backward compatibility
         address: address,
         city: '', // You might want to extract from address or add a city field
         state: '', // You might want to add a state field
         zip: '', // You might want to add a zip field
-        gstApplicable: gstApplicable,
-        companyName: companyName,
-        gstNumber: gstNumber,
-        gstInfo: gstNumber, // API expects gstInfo
+        gstApplicable: true, // Always true now since we always add GST
+        companyName: companyName || 'N/A', // Provide default if not filled
+        gstNumber: gstNumber || 'N/A', // Provide default if not filled
+        gstInfo: gstNumber || 'N/A', // API expects gstInfo
         termsAccepted: termsAccepted,
         couponCode: couponCode,
         discountAmount: discountAmount,
@@ -821,18 +839,14 @@ export default function BookingFlow() {
     const discount = discountAmount;
     const subtotal = Math.max(0, baseAmount - discount);
     
-    // Add 18% GST if applicable
-    if (gstApplicable) {
-      const gstAmount = subtotal * 0.18;
-      return subtotal + gstAmount;
-    }
-    
-    return subtotal;
+    // Always add 18% GST for all orders
+    const gstAmount = subtotal * 0.18;
+    return subtotal + gstAmount;
   };
 
   // Calculate GST amount separately
   const calculateGST = () => {
-    if (!selectedPlan || !selectedPlan.price || !gstApplicable) return 0;
+    if (!selectedPlan || !selectedPlan.price) return 0;
     const baseAmount = selectedPlan.price;
     const discount = discountAmount;
     const subtotal = Math.max(0, baseAmount - discount);
@@ -963,17 +977,7 @@ export default function BookingFlow() {
                   const isAvailable = planAvailability[plan.id] !== false; // true or undefined = available
                   const isSelected = selectedPlan?.id === plan.id;
                   
-                  // Debug: Only log when plan selection changes
-                  if (isSelected && planAvailability[plan.id] !== undefined) {
-                    console.log(`🔍 Rendering selected plan ${plan.name}:`, {
-                      planId: plan.id,
-                      planAvailability: planAvailability[plan.id],
-                      isAvailable,
-                      isSelected
-                    });
-                  }
-                  
-        return (
+                  return (
                   <div
                     key={plan.id}
                     className={`${styles.planCard} ${isSelected ? styles.selected : ''} ${!isAvailable ? styles.unavailable : ''}`}
@@ -1275,9 +1279,10 @@ export default function BookingFlow() {
                 <input
                   type="text"
                       value={gstNumber}
-                      onChange={(e) => setGstNumber(e.target.value)}
-                      placeholder="Enter GST number"
+                      onChange={(e) => setGstNumber(e.target.value.toUpperCase())}
+                      placeholder="Enter GST number (e.g., 27AAPCU1234A1Z5)"
                       className={styles.input}
+                      maxLength={15}
                 />
               </div>
                 </>
@@ -1356,7 +1361,7 @@ export default function BookingFlow() {
               </div>
                   <div className={styles.summaryItem}>
                     <span>Location:</span>
-                <span>{selectedScreen?.name}</span>
+                    <span className={styles.locationValue}>{selectedScreen?.name}</span>
                   </div>
                   <div className={styles.summaryItem}>
                     <span>Plan:</span>
@@ -1376,12 +1381,10 @@ export default function BookingFlow() {
                   <span>-₹{discountAmount.toLocaleString('en-IN')}</span>
                   </div>
               )}
-              {gstApplicable && (
-                  <div className={styles.summaryItem}>
+              <div className={styles.summaryItem}>
                 <span>GST (18%):</span>
-                  <span>₹{calculateGST().toLocaleString('en-IN')}</span>
-                  </div>
-              )}
+                <span>₹{calculateGST().toLocaleString('en-IN')}</span>
+              </div>
               <div className={`${styles.summaryItem} ${styles.total}`}>
                 <span>Total:</span>
                 <span>₹{calculateTotal().toLocaleString('en-IN')}</span>
@@ -1390,22 +1393,9 @@ export default function BookingFlow() {
 
                     <button
               onClick={handleConfirmOrder}
-              disabled={confirmingOrder || !designFile || !fileUploaded || !address.trim() || (gstApplicable && (!companyName.trim() || !gstNumber.trim())) || !termsAccepted}
+              disabled={confirmingOrder || !designFile || !fileUploaded || !address.trim() || !termsAccepted}
               className={styles.confirmButton}
-              onMouseEnter={() => {
-                console.log('🔍 Button hover - disabled state:', {
-                  confirmingOrder,
-                  designFile: !!designFile,
-                  fileUploaded,
-                  address: address.trim(),
-                  gstApplicable,
-                  companyName: companyName.trim(),
-                  gstNumber: gstNumber.trim(),
-                  termsAccepted,
-                  disabled: confirmingOrder || !designFile || !fileUploaded || !address.trim() || (gstApplicable && (!companyName.trim() || !gstNumber.trim())) || !termsAccepted
-                });
-              }}
-                    >
+            >
               {confirmingOrder ? (
                 <>
                   <LoadingSpinner size="small" text="" className="inlineSpinner" />

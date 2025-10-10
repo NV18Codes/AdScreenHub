@@ -7,29 +7,20 @@ import { useAuth } from '../contexts/AuthContext';
 const processOrdersData = (data) => {
   let ordersArray = [];
   
-  console.log('🔍 Processing orders data:', data);
-  console.log('🔍 Checking data.data:', data.data);
-  console.log('🔍 Checking data.data.orders:', data.data?.orders);
   
   if (Array.isArray(data)) {
     // Direct array response
     ordersArray = data;
-    console.log('✅ Data is direct array');
   } else if (data.data?.orders && Array.isArray(data.data.orders)) {
     // Nested structure: response.data.data.orders (YOUR ACTUAL BACKEND FORMAT)
     ordersArray = data.data.orders;
-    console.log('✅ Found in data.data.orders');
   } else if (data.orders && Array.isArray(data.orders)) {
     // Alternative nested structure: response.data.orders
     ordersArray = data.orders;
-    console.log('✅ Found in data.orders');
   } else if (data.data && Array.isArray(data.data)) {
     // Nested data structure: response.data.data
     ordersArray = data.data;
-    console.log('✅ Found in data.data');
   } else {
-    console.log('❌ Could not find orders array in response');
-    console.log('❌ Data keys:', Object.keys(data));
     return [];
   }
   
@@ -123,18 +114,13 @@ export const useOrders = () => {
         
         // Get user ID from various possible fields
         const currentUserId = user.id || user.user_id || user.sub || user.userId;
-        console.log('👤 Current user ID:', currentUserId);
-        console.log('👤 Full user object:', user);
         
         // Use main endpoint only (the one that works: /orders)
         try {
           const response = await ordersAPI.getOrders();
-          console.log('📦 Orders API response:', response);
           
           if (response.success && response.data) {
             const allOrders = processOrdersData(response.data);
-            console.log('📦 All orders from API:', allOrders.length);
-            console.log('📦 Sample order user_id:', allOrders[0]?.userId);
             
             // Filter orders by current user - check multiple ID fields
             ordersData = allOrders.filter(order => 
@@ -144,7 +130,6 @@ export const useOrders = () => {
               order.user_id === user.id
             );
             
-            console.log('📦 Filtered orders for current user:', ordersData.length);
             
             if (ordersData.length >= 0) {
               apiSuccess = true;
@@ -154,7 +139,6 @@ export const useOrders = () => {
             }
           }
         } catch (apiError) {
-          console.error('❌ API Error:', apiError);
         }
         
         // Fallback to localStorage
@@ -174,18 +158,15 @@ export const useOrders = () => {
             order.user_id === user.id
           );
           
-          console.log('💾 Orders from localStorage:', userOrders.length);
           
           // If no orders found for this user, clear localStorage to prevent showing other users' data
           if (userOrders.length === 0 && safeOrders.length > 0) {
-            console.log('🔍 No orders found for current user, clearing localStorage');
             localStorage.removeItem('adscreenhub_orders');
           }
           
           setOrders(userOrders);
         } else {
           // Initialize with empty orders
-          console.log('📭 No orders in localStorage');
           setOrders([]);
         }
       } catch (error) {
@@ -244,9 +225,7 @@ export const useOrders = () => {
 
       // Call the API to initiate the order
       // NOTE: Inventory should NOT be decreased here - only after successful payment verification
-      console.log('🔍 Creating order with payload:', apiPayload);
       const response = await ordersAPI.initiateOrder(apiPayload);
-      console.log('🔍 API response:', response);
       
       if (response.success && response.data) {
 
@@ -255,8 +234,6 @@ export const useOrders = () => {
         const orderData_from_api = response.data.data?.order || response.data.order || response.data;
         const razorpayOrderData = response.data.data?.razorpayOrder || response.data.razorpayOrder;
         
-        console.log('🔍 Extracted order data:', orderData_from_api);
-        console.log('🔍 Razorpay order data:', razorpayOrderData);
         
 
 
@@ -312,10 +289,8 @@ export const useOrders = () => {
           }
         }
 
-        console.log('✅ Order created successfully:', newOrder);
         return { success: true, order: newOrder, apiResponse: response.data };
       } else {
-        console.log('❌ API response not successful:', response);
         
         // Create a local order as fallback when API fails
 
