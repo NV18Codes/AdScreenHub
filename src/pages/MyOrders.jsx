@@ -742,17 +742,8 @@ export default function MyOrders() {
                     <div className={styles.imageSection}>
                       <h4 className={styles.imageSectionTitle}>🖼️ Admin Preview</h4>
                       {(() => {
-                        // Debug: Log all available fields to see what's actually in the order
-                        console.log('Order fields for admin preview:', {
-                          id: order.id,
-                          ad_desplay_url: order.ad_desplay_url,
-                          ad_display_url: order.ad_display_url,
-                          admin_preview_url: order.admin_preview_url,
-                          adDisplayPath: order.adDisplayPath,
-                          allFields: Object.keys(order)
-                        });
-                        
-                        const adminImageUrl = order.ad_desplay_url || order.ad_display_url || order.admin_preview_url || order.adDisplayPath;
+                        // Check multiple possible field names for admin preview
+                        const adminImageUrl = order.ad_display_url || order.ad_desplay_url || order.admin_preview_url || order.adDisplayPath;
                         
                         return adminImageUrl ? (
                           <div className={styles.creativePreview}>
