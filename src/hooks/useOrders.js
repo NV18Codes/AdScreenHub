@@ -86,7 +86,13 @@ const processOrdersData = (data) => {
     
     // Payment verification status
     paymentVerified: !!order.razorpay_payment_id,
-    paymentId: order.razorpay_payment_id
+    paymentId: order.razorpay_payment_id,
+    
+    // Admin preview image
+    adDisplayPath: order.adDisplayPath,
+    ad_desplay_url: order.ad_desplay_url,
+    ad_display_url: order.ad_display_url,
+    admin_preview_url: order.admin_preview_url
   }));
 };
 

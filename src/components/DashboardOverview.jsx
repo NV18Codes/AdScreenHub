@@ -15,13 +15,10 @@ export default function DashboardOverview() {
   const pendingOrders = orders.filter(order => order.status === 'Pending Approval').length;
   const activeOrders = orders.filter(order => order.status === 'In Display').length;
   const completedOrders = orders.filter(order => order.status === 'Completed Display' || order.status === 'Completed').length;
+  // Calculate total spent from PAID orders only
+  const paidStatuses = ['Pending Approval', 'In Display', 'Completed', 'Design Revise'];
   const totalSpent = orders
-    .filter(order => 
-      order.status !== 'Cancelled Display' && 
-      order.status !== 'Cancelled' &&
-      order.status !== 'Payment Failed' &&
-      order.status !== 'Pending Payment'
-    )
+    .filter(order => paidStatuses.includes(order.status))
     .reduce((sum, order) => sum + (order.totalAmount || order.total_cost || order.final_amount || 0), 0);
 
 

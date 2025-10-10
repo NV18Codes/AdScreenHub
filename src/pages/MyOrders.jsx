@@ -454,7 +454,7 @@ export default function MyOrders() {
               <div className={styles.searchInputWrapper}>
                 <input
                   type="text"
-                  placeholder="Search by Order ID, Location or Display Date..."
+                  placeholder="Search by Order ID Location or Display Date..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className={styles.searchInput}
@@ -742,7 +742,17 @@ export default function MyOrders() {
                     <div className={styles.imageSection}>
                       <h4 className={styles.imageSectionTitle}>🖼️ Admin Preview</h4>
                       {(() => {
-                        const adminImageUrl = order.ad_desplay_url || order.admin_preview_url;
+                        // Debug: Log all available fields to see what's actually in the order
+                        console.log('Order fields for admin preview:', {
+                          id: order.id,
+                          ad_desplay_url: order.ad_desplay_url,
+                          ad_display_url: order.ad_display_url,
+                          admin_preview_url: order.admin_preview_url,
+                          adDisplayPath: order.adDisplayPath,
+                          allFields: Object.keys(order)
+                        });
+                        
+                        const adminImageUrl = order.ad_desplay_url || order.ad_display_url || order.admin_preview_url || order.adDisplayPath;
                         
                         return adminImageUrl ? (
                           <div className={styles.creativePreview}>

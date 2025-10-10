@@ -30,8 +30,9 @@ export const validateFile = (file) => {
 
 // Generate order ID
 export const generateOrderId = () => {
-  const random = Math.random().toString(36).substr(2, 6).toUpperCase();
-  return `ORD-${random}`;
+  // Generate a simple 6-digit number
+  const random = Math.floor(100000 + Math.random() * 900000);
+  return `${random}`;
 };
 
 // Image compression

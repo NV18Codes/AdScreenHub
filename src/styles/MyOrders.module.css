@@ -500,6 +500,11 @@
   font-weight: 500;
   text-align: right;
   flex: 1;
+  word-wrap: break-word;
+  hyphens: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .orderStatus {
@@ -543,10 +548,10 @@
 }
 
 .statusRevision {
-  background: linear-gradient(135deg, #fef3c7, #fde68a);
-  color: #92400e;
-  border: 1px solid #f59e0b;
-  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.2);
+  background: linear-gradient(135deg, #fed7aa, #fdba74);
+  color: #ea580c;
+  border: 1px solid #f97316;
+  box-shadow: 0 2px 8px rgba(249, 115, 22, 0.2);
 }
 
 .statusRefund {
@@ -1036,6 +1041,13 @@
   .filterSection {
     max-width: 100%;
     justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+  
+  .filterLabel {
+    font-size: 0.85rem;
+    margin-bottom: 0.25rem;
   }
   
   .statusFilterDropdown {
@@ -1208,6 +1220,14 @@
   .infoValue {
     text-align: left;
     font-size: 0.8rem;
+  }
+  
+  .infoValue {
+    word-wrap: break-word;
+    hyphens: none;
+    white-space: normal;
+    overflow: visible;
+    text-overflow: initial;
   }
   
   .orderRight {

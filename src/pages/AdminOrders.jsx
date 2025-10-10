@@ -114,7 +114,7 @@ export default function AdminOrders() {
     needsRevision: allOrders.filter(o => o.status === 'Design Revise').length,
     paymentFailed: allOrders.filter(o => o.status === 'Payment Failed').length,
     totalRevenue: allOrders
-      .filter(o => o.status !== 'Payment Failed' && o.status !== 'Cancelled')
+      .filter(o => ['Pending Approval', 'In Display', 'Completed', 'Design Revise'].includes(o.status))
       .reduce((sum, o) => sum + (o.total_cost || 0), 0)
   };
 
@@ -311,7 +311,7 @@ export default function AdminOrders() {
           <div className={styles.searchContainer}>
             <input
               type="text"
-              placeholder="Search by Order ID, Email, Name, or Location..."
+              placeholder="Search by Order ID Email Name or Location..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className={styles.searchInput}
