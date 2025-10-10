@@ -145,8 +145,14 @@ export default function BookingFlow() {
     setError(''); // Clear previous errors
     
     try {
-      // Use the location-specific plans API
-      const result = await dataAPI.getPlansByLocation(selectedScreen.id);
+      // First, try location-specific plans API
+      let result = await dataAPI.getPlansByLocation(selectedScreen.id);
+      
+      // If location-specific API fails or returns no data, fallback to general plans API
+      if (!result.success || !result.data) {
+        console.warn('Location-specific plans API failed, falling back to general plans API');
+        result = await dataAPI.getPlans();
+      }
       
       // Handle different possible response structures
       let plansData = null;
@@ -164,10 +170,6 @@ export default function BookingFlow() {
         else if (result.data.plans && Array.isArray(result.data.plans)) {
           plansData = result.data.plans;
         }
-        // Check if data has an array property
-        else if (Array.isArray(result.data)) {
-          plansData = result.data;
-        }
       }
       
       if (plansData && Array.isArray(plansData) && plansData.length > 0) {
@@ -182,14 +184,18 @@ export default function BookingFlow() {
         // Clear any error state since we successfully loaded plans
         setError('');
       } else {
-        // No plans available - use backend error message
-        const errorMessage = result.message || result.error || 'No plans available for this location';
+        // No plans available - use fallback message
+        const errorMessage = 'Unable to load plans. Please refresh the page or try again later.';
         setError(errorMessage);
         setPlans([]);
+        showToast(errorMessage, 'error');
       }
     } catch (error) {
-      setError('Network error. Please try again.');
+      console.error('Error fetching plans:', error);
+      const errorMessage = error.message || 'Network error. Please check your connection and try again.';
+      setError(errorMessage);
       setPlans([]);
+      showToast(errorMessage, 'error');
     } finally {
       setLoadingPlans(false);
     }
@@ -1003,15 +1009,8 @@ export default function BookingFlow() {
                       <p>{location.location}</p>
                       <p>Size: {location.size} ft</p>
                       <p>Orientation: {location.orientation}</p>
-                      <p>Resolution: {location.pixels}</p>
+                      <p>Resolution: {location.pixels} px</p>
                       <p>Aspect Ratio: {location.aspect_ratio}</p>
-                      <p className={styles.slotsInfo}>
-                        {location.available_slots > 0 ? (
-                          <>Available slots: <span className={styles.availableSlots}>{location.available_slots}</span></>
-                        ) : (
-                          <span className={styles.noSlots}>No slots available</span>
-                        )}
-                      </p>
                   </div>
                   </div>
                   );

@@ -143,23 +143,55 @@ export const authAPI = {
 };
 
 export const dataAPI = {
-  getPlans: () => makeRequest(API_ENDPOINTS.DATA.GET_PLANS, null, 'GET'),
+  getPlans: async () => {
+    try {
+      return await makeRequest(API_ENDPOINTS.DATA.GET_PLANS, null, 'GET');
+    } catch (error) {
+      console.error('Error in getPlans:', error);
+      return { success: false, error: error.message, data: null };
+    }
+  },
   
-  getLocationAvailability: (date) => 
-    makeRequest(`${API_ENDPOINTS.DATA.GET_LOCATIONS_BY_DATE}/${date}`, null, 'GET'),
+  getLocationAvailability: async (date) => {
+    try {
+      return await makeRequest(`${API_ENDPOINTS.DATA.GET_LOCATIONS_BY_DATE}/${date}`, null, 'GET');
+    } catch (error) {
+      console.error('Error in getLocationAvailability:', error);
+      return { success: false, error: error.message, data: null };
+    }
+  },
   
-  getPlansByLocation: (locationId) => 
-    makeRequest(`${API_ENDPOINTS.DATA.GET_PLANS_BY_LOCATION}/${locationId}`, null, 'GET'),
+  getPlansByLocation: async (locationId) => {
+    try {
+      return await makeRequest(`${API_ENDPOINTS.DATA.GET_PLANS_BY_LOCATION}/${locationId}`, null, 'GET');
+    } catch (error) {
+      console.error('Error in getPlansByLocation:', error);
+      // Return empty array instead of throwing to allow fallback
+      return { success: false, error: error.message, data: null };
+    }
+  },
   
-  checkAvailability: (locationId, planId, startDate) => 
-    makeRequest(`${API_ENDPOINTS.DATA.CHECK_AVAILABILITY}/${locationId}?planId=${planId}&startDate=${startDate}`, null, 'GET'),
+  checkAvailability: async (locationId, planId, startDate) => {
+    try {
+      return await makeRequest(`${API_ENDPOINTS.DATA.CHECK_AVAILABILITY}/${locationId}?planId=${planId}&startDate=${startDate}`, null, 'GET');
+    } catch (error) {
+      console.error('Error in checkAvailability:', error);
+      return { success: false, error: error.message, data: null };
+    }
+  },
   
-  precheckPlanAvailability: (locationId, startDate, durationDays) => 
-    makeRequest(API_ENDPOINTS.DATA.PRECHECK_PLAN_AVAILABILITY, { 
-      locationId, 
-      startDate, 
-      durationDays 
-    })
+  precheckPlanAvailability: async (locationId, startDate, durationDays) => {
+    try {
+      return await makeRequest(API_ENDPOINTS.DATA.PRECHECK_PLAN_AVAILABILITY, { 
+        locationId, 
+        startDate, 
+        durationDays 
+      });
+    } catch (error) {
+      console.error('Error in precheckPlanAvailability:', error);
+      return { success: false, error: error.message, data: null };
+    }
+  }
 };
 
 export const filesAPI = {

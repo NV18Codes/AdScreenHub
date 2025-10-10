@@ -77,6 +77,14 @@ export default function Profile() {
         ...prev,
         [name]: cleanedValue
       }));
+    } else if (name === 'gstNumber') {
+      // Convert to uppercase and limit to 15 characters
+      const cleanedValue = value.toUpperCase().slice(0, 15);
+      
+      setFormData(prev => ({
+        ...prev,
+        [name]: cleanedValue
+      }));
     } else {
       setFormData(prev => ({
         ...prev,
@@ -681,6 +689,7 @@ export default function Profile() {
                     onChange={handleInputChange}
                     className={styles.input}
                     placeholder="Enter GST number (if applicable)"
+                    maxLength="15"
                   />
                 ) : (
                   <span className={styles.fieldValue}>{formData.gstNumber || 'Not provided'}</span>

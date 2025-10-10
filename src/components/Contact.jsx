@@ -125,14 +125,29 @@ export default function Contact() {
               <label htmlFor="phone" className="block text-sm font-semibold text-gray-700 mb-2">
                 Phone Number *
               </label>
-              <input 
-                type="tel" 
-                id="phone"
-                name="phone"
-                required
-                placeholder="Enter your phone number"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-              />
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 font-medium">
+                  +91
+                </span>
+                <input 
+                  type="tel" 
+                  id="phone"
+                  name="phone"
+                  required
+                  placeholder="Enter 10-digit mobile number"
+                  maxLength="10"
+                  pattern="[6-9][0-9]{9}"
+                  className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                  onChange={(e) => {
+                    // Remove any non-digit characters
+                    const cleanedValue = e.target.value.replace(/\D/g, '');
+                    // Limit to 10 digits
+                    if (cleanedValue.length <= 10) {
+                      e.target.value = cleanedValue;
+                    }
+                  }}
+                />
+              </div>
             </div>
             
             <div>
