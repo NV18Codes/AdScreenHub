@@ -27,6 +27,7 @@ export default function BookingFlow() {
 
   // New form fields
   const [address, setAddress] = useState('');
+  const [state, setState] = useState('Karnataka'); // Default to Karnataka
   const [gstApplicable, setGstApplicable] = useState(false);
   const [companyName, setCompanyName] = useState('');
   const [gstNumber, setGstNumber] = useState('');
@@ -76,12 +77,16 @@ export default function BookingFlow() {
     }
   }, [selectedScreen]);
 
-  // Re-check plan availability when selectedDate changes (if we already have plans)
+  // Re-check plan availability when selectedDate or selectedScreen changes (if we already have plans)
   useEffect(() => {
     if (selectedDate && selectedScreen && plans.length > 0) {
-      checkPlanAvailability(plans);
+      // Only check if we don't already have availability data for this combination
+      const hasAvailabilityData = Object.keys(planAvailability).length > 0;
+      if (!hasAvailabilityData) {
+        checkPlanAvailability(plans);
+      }
     }
-  }, [selectedDate, selectedScreen, plans]);
+  }, [selectedDate, selectedScreen]); // Removed 'plans' from dependencies to prevent unnecessary calls
 
   // Transform API plan data to match frontend format
   const transformPlanData = (apiPlans) => {
@@ -169,8 +174,10 @@ export default function BookingFlow() {
         const transformedPlans = transformPlanData(plansData);
         setPlans(transformedPlans);
         
-        // Check availability for each plan
-        checkPlanAvailability(transformedPlans);
+        // Only check availability if we have a selected screen and date
+        if (selectedScreen && selectedDate) {
+          checkPlanAvailability(transformedPlans);
+        }
         
         // Clear any error state since we successfully loaded plans
         setError('');
@@ -190,7 +197,14 @@ export default function BookingFlow() {
 
   // Enhanced plan availability checking with duration-based logic
   const checkPlanAvailability = async (plans) => {
-    if (!selectedScreen || !selectedDate) {
+    if (!selectedScreen || !selectedDate || !plans || plans.length === 0) {
+      return;
+    }
+    
+    // Check if we already have availability data for this exact combination
+    const cacheKey = `${selectedScreen.id}-${selectedDate}`;
+    if (globalAvailabilityCache[cacheKey]) {
+      console.log('🚀 Using cached availability data for', cacheKey);
       return;
     }
     
@@ -199,10 +213,10 @@ export default function BookingFlow() {
       clearTimeout(availabilityCheckTimeout);
     }
     
-    // Debounce the availability check by 300ms
+    // Debounce the availability check by 500ms to reduce rapid calls
     const timeoutId = setTimeout(async () => {
       await performAvailabilityCheck(plans);
-    }, 300);
+    }, 500);
     
     setAvailabilityCheckTimeout(timeoutId);
   };
@@ -218,11 +232,71 @@ export default function BookingFlow() {
     // Use global cache to avoid duplicate API calls for the same date across sessions
     const dateAvailabilityCache = { ...globalAvailabilityCache };
     
-    // Check each plan individually for duration-based availability
+    // Get all unique dates we need to check
+    const datesToCheck = new Set();
+    const planDurations = {};
+    
     for (const plan of plans) {
       const durationDays = plan.duration_days || (plan.name === 'IMPACT' ? 3 : plan.name === 'THRIVE' ? 5 : 1);
+      planDurations[plan.id] = durationDays;
       
-      // Use existing availability API for duration-based checking
+      // Add all dates for this plan's duration
+      for (let i = 0; i < durationDays; i++) {
+        const checkDate = new Date(selectedDate);
+        checkDate.setDate(checkDate.getDate() + i);
+        const dateString = checkDate.toISOString().split('T')[0];
+        datesToCheck.add(dateString);
+      }
+    }
+    
+    // Check availability for all dates at once
+    const availabilityPromises = Array.from(datesToCheck).map(async (dateString) => {
+      const cacheKey = `${selectedScreen.id}-${dateString}`;
+      
+      // Check if we already have availability data for this date
+      if (dateAvailabilityCache[cacheKey] !== undefined) {
+        return { date: dateString, isAvailable: dateAvailabilityCache[cacheKey] };
+      }
+      
+      // Make a single API call for this date (checking all plans at once)
+      try {
+        const result = await dataAPI.checkAvailability(
+          selectedScreen.id,
+          null, // No specific plan - get availability for all plans
+          dateString
+        );
+        
+        if (!result.success || !result.data) {
+          console.warn(`Availability check failed for ${dateString}:`, result.error || result.message);
+          return { date: dateString, isAvailable: false };
+        }
+        
+        // Check if the response indicates availability
+        const availabilityData = result.data.data || result.data;
+        const isAvailableFlag = availabilityData.isAvailable === true;
+        
+        // Cache the result for this date
+        dateAvailabilityCache[cacheKey] = isAvailableFlag;
+        
+        return { date: dateString, isAvailable: isAvailableFlag };
+      } catch (error) {
+        console.warn(`Error checking availability for ${dateString}:`, error);
+        return { date: dateString, isAvailable: false };
+      }
+    });
+    
+    // Wait for all availability checks to complete
+    const availabilityResults = await Promise.all(availabilityPromises);
+    
+    // Create a map of date to availability
+    const dateAvailabilityMap = {};
+    availabilityResults.forEach(({ date, isAvailable }) => {
+      dateAvailabilityMap[date] = isAvailable;
+    });
+    
+    // Now check each plan's availability based on its duration
+    for (const plan of plans) {
+      const durationDays = planDurations[plan.id];
       let isAvailable = true;
       
       for (let i = 0; i < durationDays; i++) {
@@ -230,44 +304,7 @@ export default function BookingFlow() {
         checkDate.setDate(checkDate.getDate() + i);
         const dateString = checkDate.toISOString().split('T')[0];
         
-        // Create cache key for this date and location
-        const cacheKey = `${selectedScreen.id}-${dateString}`;
-        
-        // Check if we already have availability data for this date
-        if (dateAvailabilityCache[cacheKey] !== undefined) {
-          const isAvailableFlag = dateAvailabilityCache[cacheKey];
-          if (!isAvailableFlag) {
-            isAvailable = false;
-            break;
-          }
-          continue; // Skip API call, use cached result
-        }
-        
-        // Use existing availability API: /data/availability/{locationId}?planId={planId}&startDate={date}
-        const result = await dataAPI.checkAvailability(
-          selectedScreen.id,
-          plan.id,
-          dateString
-        );
-        
-        if (!result.success || !result.data) {
-          // Show backend error message
-          const errorMessage = result.error || result.message || 'Availability check failed';
-          showToast(errorMessage, 'error');
-          isAvailable = false;
-          break;
-        }
-        
-        // Check if the response indicates availability
-        const availabilityData = result.data.data || result.data;
-        
-        // Check availability using the correct field name from API
-        const isAvailableFlag = availabilityData.isAvailable === true;
-        
-        // Cache the result for this date
-        dateAvailabilityCache[cacheKey] = isAvailableFlag;
-        
-        if (!isAvailableFlag) {
+        if (!dateAvailabilityMap[dateString]) {
           isAvailable = false;
           break;
         }
@@ -281,6 +318,15 @@ export default function BookingFlow() {
     
     // Update global cache with new data
     setGlobalAvailabilityCache(dateAvailabilityCache);
+    
+    // Cache the overall availability check result
+    const overallCacheKey = `${selectedScreen.id}-${selectedDate}`;
+    setGlobalAvailabilityCache(prev => ({
+      ...prev,
+      [overallCacheKey]: true // Mark as checked
+    }));
+    
+    console.log('✅ Plan availability check completed for', overallCacheKey, 'with', availabilityResults.length, 'API calls');
   };
 
   // Fetch location availability for selected date
@@ -656,6 +702,7 @@ export default function BookingFlow() {
 
     try {
       const orderData = {
+        // Core order fields
         planId: selectedPlan.id,
         locationId: selectedScreen.id,
         screenId: selectedScreen.id, // Keep for backward compatibility
@@ -669,7 +716,7 @@ export default function BookingFlow() {
         price: calculateTotal(), // Keep for backward compatibility
         address: address,
         city: '', // You might want to extract from address or add a city field
-        state: '', // You might want to add a state field
+        state: state, // State selection for GST calculation
         zip: '', // You might want to add a zip field
         gstApplicable: true, // Always true now since we always add GST
         companyName: companyName || 'N/A', // Provide default if not filled
@@ -681,7 +728,12 @@ export default function BookingFlow() {
         screenName: selectedScreen.name,
         location: selectedScreen.location,
         duration_days: selectedPlan.duration_days || (selectedPlan.name === 'IMPACT' ? 3 : selectedPlan.name === 'THRIVE' ? 5 : 1),
-        planDuration: selectedPlan.duration_days || (selectedPlan.name === 'IMPACT' ? 3 : selectedPlan.name === 'THRIVE' ? 5 : 1)
+        planDuration: selectedPlan.duration_days || (selectedPlan.name === 'IMPACT' ? 3 : selectedPlan.name === 'THRIVE' ? 5 : 1),
+        
+        // User data
+        email: user?.email || '',
+        phone: user?.phoneNumber || user?.phone || '',
+        userId: user?.id || user?.userId || 'unknown'
       };
 
 
@@ -698,11 +750,19 @@ export default function BookingFlow() {
                                 result.order?.razorpay_order_id || 
                                 result.order?.razorpayOrderId;
         
+        // Debug logging
+        console.log('💳 Order creation result:', result);
+        console.log('💳 API Response:', result.apiResponse);
+        console.log('💳 Razorpay Order ID found:', razorpayOrderId);
         
         if (razorpayOrderId) {
           // Show Razorpay payment modal
+          console.log('💳 Initiating Razorpay payment for order:', result.order);
           handlePayment(result.order, razorpayOrderId);
         } else {
+          console.error('❌ No Razorpay Order ID found in API response');
+          console.error('❌ Expected structure: response.data.data.order.razorpay_order_id');
+          console.error('❌ Actual response structure:', result.apiResponse);
           showToast('Payment gateway not available. Please contact support.', 'error');
         }
       } else {
@@ -717,28 +777,39 @@ export default function BookingFlow() {
 
   // Handle Razorpay payment
   const handlePayment = (order, razorpayOrderId) => {
+    console.log('💳 Starting payment process for order:', order.id);
+    console.log('💳 Razorpay Order ID:', razorpayOrderId);
+    
     // Load Razorpay script if not already loaded
     if (!window.Razorpay) {
+      console.log('💳 Loading Razorpay script...');
       const script = document.createElement('script');
       script.src = 'https://checkout.razorpay.com/v1/checkout.js';
       script.async = true;
       script.onload = () => {
+        console.log('✅ Razorpay script loaded');
         openRazorpay(order, razorpayOrderId);
       };
       script.onerror = () => {
+        console.error('❌ Failed to load Razorpay script');
         showToast('Failed to load payment gateway. Please try again.', 'error');
       };
       document.body.appendChild(script);
     } else {
+      console.log('✅ Razorpay script already loaded');
       openRazorpay(order, razorpayOrderId);
     }
   };
 
   const openRazorpay = (order, razorpayOrderId) => {
+    console.log('💳 Opening Razorpay with order:', order);
+    console.log('💳 Razorpay Order ID:', razorpayOrderId);
+    console.log('💳 Razorpay Key:', RAZORPAY_KEY);
     
     const user = JSON.parse(localStorage.getItem('user') || '{}');
     
     const amount = convertToPaise(order.totalAmount || order.amount || order.total_cost || 0);
+    console.log('💳 Amount in paise:', amount);
     
       const options = {
       key: RAZORPAY_KEY,
@@ -796,9 +867,13 @@ export default function BookingFlow() {
     };
     
     try {
+      console.log('💳 Opening Razorpay with options:', options);
       const razorpay = new window.Razorpay(options);
+      console.log('💳 Razorpay instance created, opening modal...');
       razorpay.open();
+      console.log('✅ Razorpay modal opened successfully');
     } catch (error) {
+      console.error('❌ Failed to open Razorpay modal:', error);
       showToast('Failed to open payment gateway. Please try again.', 'error');
     }
   };
@@ -839,8 +914,8 @@ export default function BookingFlow() {
     const discount = discountAmount;
     const subtotal = Math.max(0, baseAmount - discount);
     
-    // Always add 18% GST for all orders
-    const gstAmount = subtotal * 0.18;
+    // Add GST based on state selection
+    const gstAmount = calculateGST();
     return subtotal + gstAmount;
   };
 
@@ -850,7 +925,15 @@ export default function BookingFlow() {
     const baseAmount = selectedPlan.price;
     const discount = discountAmount;
     const subtotal = Math.max(0, baseAmount - discount);
-    return subtotal * 0.18;
+    
+    // GST calculation based on state
+    if (state === 'Karnataka') {
+      // Intra-state: CGST + SGST (9% + 9% = 18%)
+      return subtotal * 0.18;
+    } else {
+      // Inter-state: IGST (18%)
+      return subtotal * 0.18;
+    }
   };
 
         return (
@@ -1252,6 +1335,46 @@ export default function BookingFlow() {
               </div>
 
               <div className={styles.formGroup}>
+                <label>State <span className={styles.required}>*</span></label>
+                <select
+                  value={state}
+                  onChange={(e) => setState(e.target.value)}
+                  className={styles.select}
+                >
+                  <option value="Karnataka">Karnataka</option>
+                  <option value="Andhra Pradesh">Andhra Pradesh</option>
+                  <option value="Arunachal Pradesh">Arunachal Pradesh</option>
+                  <option value="Assam">Assam</option>
+                  <option value="Bihar">Bihar</option>
+                  <option value="Chhattisgarh">Chhattisgarh</option>
+                  <option value="Goa">Goa</option>
+                  <option value="Gujarat">Gujarat</option>
+                  <option value="Haryana">Haryana</option>
+                  <option value="Himachal Pradesh">Himachal Pradesh</option>
+                  <option value="Jharkhand">Jharkhand</option>
+                  <option value="Kerala">Kerala</option>
+                  <option value="Madhya Pradesh">Madhya Pradesh</option>
+                  <option value="Maharashtra">Maharashtra</option>
+                  <option value="Manipur">Manipur</option>
+                  <option value="Meghalaya">Meghalaya</option>
+                  <option value="Mizoram">Mizoram</option>
+                  <option value="Nagaland">Nagaland</option>
+                  <option value="Odisha">Odisha</option>
+                  <option value="Punjab">Punjab</option>
+                  <option value="Rajasthan">Rajasthan</option>
+                  <option value="Sikkim">Sikkim</option>
+                  <option value="Tamil Nadu">Tamil Nadu</option>
+                  <option value="Telangana">Telangana</option>
+                  <option value="Tripura">Tripura</option>
+                  <option value="Uttar Pradesh">Uttar Pradesh</option>
+                  <option value="Uttarakhand">Uttarakhand</option>
+                  <option value="West Bengal">West Bengal</option>
+                  <option value="Delhi">Delhi</option>
+                  <option value="Puducherry">Puducherry</option>
+                </select>
+              </div>
+
+              <div className={styles.formGroup}>
                 <label className={styles.checkboxLabel}>
                 <input
                     type="checkbox"
@@ -1382,7 +1505,9 @@ export default function BookingFlow() {
                   </div>
               )}
               <div className={styles.summaryItem}>
-                <span>GST (18%):</span>
+                <span>
+                  {state === 'Karnataka' ? 'GST (CGST 9% + SGST 9%):' : 'GST (IGST 18%):'}
+                </span>
                 <span>₹{calculateGST().toLocaleString('en-IN')}</span>
               </div>
               <div className={`${styles.summaryItem} ${styles.total}`}>

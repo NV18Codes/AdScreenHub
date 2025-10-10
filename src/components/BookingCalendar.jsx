@@ -480,10 +480,15 @@ export default function BookingCalendar() {
               min={minDateString}
               max={maxDateString}
               className={styles.dateInput}
+              placeholder="dd/mm/yyyy"
+              data-placeholder="dd/mm/yyyy"
             />
           </div>
           <p className={styles.dateNote}>
             Note: Bookings must be made at least 2 days in advance
+          </p>
+          <p className={styles.dateFormatNote}>
+            Format: dd/mm/yyyy
           </p>
         </div>
 
