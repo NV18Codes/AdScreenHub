@@ -357,9 +357,10 @@
 }
 
 .statusCompletedDisplay {
-  background: linear-gradient(135deg, #dbeafe, #bfdbfe);
-  color: #1e40af;
-  border: 1px solid #3b82f6;
+  background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+  color: #065f46;
+  border: 1px solid #10b981;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.2);
 }
 
 .statusCancelledDisplay {
@@ -369,9 +370,24 @@
 }
 
 .statusReviseYourDesign {
-  background: linear-gradient(135deg, #fce7f3, #fbcfe8);
-  color: #831843;
-  border: 1px solid #ec4899;
+  background: linear-gradient(135deg, #fed7aa, #fdba74);
+  color: #ea580c;
+  border: 1px solid #f97316;
+  box-shadow: 0 2px 8px rgba(249, 115, 22, 0.2);
+}
+
+.statusDesignRevise {
+  background: linear-gradient(135deg, #fed7aa, #fdba74);
+  color: #ea580c;
+  border: 1px solid #f97316;
+  box-shadow: 0 2px 8px rgba(249, 115, 22, 0.2);
+}
+
+.statusCompleted {
+  background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+  color: #065f46;
+  border: 1px solid #10b981;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.2);
 }
 
 .statusPaymentFailed {

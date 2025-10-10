@@ -155,19 +155,6 @@ export default function BookingCalendar() {
   const handleDateChange = async (e) => {
     const newDate = e.target.value;
     
-    // Validate date is at least +2 days from today
-    if (newDate) {
-      const selectedDateObj = new Date(newDate);
-      const today = new Date();
-      const minDate = new Date(today);
-      minDate.setDate(today.getDate() + 2);
-      
-      if (selectedDateObj < minDate) {
-        showToast('Please select a date at least 2 days from today', 'error');
-        return;
-      }
-    }
-    
     setSelectedDate(newDate);
     setSelectedScreen(null);
     setSelectedPlan(null);
@@ -400,13 +387,16 @@ export default function BookingCalendar() {
 
   // Get minimum date (today + 2 days)
   const today = new Date();
+  today.setHours(0, 0, 0, 0); // Reset time to start of day
   const minDate = new Date(today);
   minDate.setDate(today.getDate() + 2);
+  minDate.setHours(0, 0, 0, 0); // Reset time to start of day
   const minDateString = minDate.toISOString().split('T')[0];
   
   // Get maximum date (today + 30 days)
   const maxDate = new Date(today);
   maxDate.setDate(today.getDate() + 30);
+  maxDate.setHours(0, 0, 0, 0); // Reset time to start of day
   const maxDateString = maxDate.toISOString().split('T')[0];
 
   // Format date to dd-mm-yyyy
@@ -459,7 +449,7 @@ export default function BookingCalendar() {
               title="Select date in dd/mm/yyyy format"
             />
             {!selectedDate && (
-              <div className={styles.datePlaceholder}>
+              <div className={styles.datePlaceholderOverlay}>
                 dd/mm/yyyy
               </div>
             )}
