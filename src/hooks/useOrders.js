@@ -216,242 +216,161 @@ export const useOrders = () => {
     }
   };
 
-  // Create new order - Call API to initiate order
-  const createOrder = async (orderData) => {
-    try {
-      // Get current user ID
-      const userId = user?.id || user?.userId || 'unknown';
+// Create new order - Call API to initiate order
+const createOrder = async (orderData) => {
+  try {
+    // Get current user ID
+    const userId = user?.id || user?.userId || 'unknown';
+    console.log("Order Data:", orderData);
+    // Determine the final, user-facing amount for the order
+    const finalAmount = orderData.baseAmount ;// Use baseAmount as the final amount to send to backend
+
+    // Prepare the API payload with all required fields
+    const apiPayload = {
+      // Core order fields
+      planId: (orderData.planId || orderData.plan?.id || '').toString(),
+      locationId: (orderData.locationId || orderData.screenId || '').toString(),
+      screenId: (orderData.locationId || orderData.screenId || '').toString(), // Keep for compatibility
+      startDate: orderData.startDate || orderData.displayDate || '',
+      displayDate: orderData.startDate || orderData.displayDate || '', // Keep for compatibility
       
-      // Prepare the API payload with all required fields
-      const apiPayload = {
-        // Core order fields
-        planId: (orderData.planId || orderData.plan?.id || '').toString(),
-        locationId: (orderData.locationId || orderData.screenId || '').toString(),
-        screenId: (orderData.locationId || orderData.screenId || '').toString(), // Keep for compatibility
-        startDate: orderData.startDate || orderData.displayDate || '',
-        displayDate: orderData.startDate || orderData.displayDate || '', // Keep for compatibility
-        
-        // Price fields - send both base amount and total amount
-        baseAmount: (orderData.totalAmount || orderData.price || 0) - calculateGSTAmount(orderData), // Amount without GST
-        price: orderData.totalAmount || orderData.price || 0, // Total amount with GST
-        totalAmount: orderData.totalAmount || orderData.price || 0, // Keep for compatibility
-        duration_days: orderData.duration_days || orderData.planDuration || 1,
-        planDuration: orderData.duration_days || orderData.planDuration || 1, // Keep for compatibility
-        
-        // File fields
-        creativeFilePath: orderData.creativeFilePath || orderData.designFile || '',
-        creativeFileName: orderData.creativeFileName || orderData.designFile || '',
-        designFile: orderData.creativeFileName || orderData.designFile || '', // Keep for compatibility
-        fileType: orderData.fileType || 'image',
-        
-        // User fields
-        userId: userId,
-        user_id: userId, // Keep for compatibility
-        email: orderData.email || user?.email || '',
-        phone: orderData.phone || user?.phoneNumber || user?.phone || '',
-        
-        // Address fields
-        address: orderData.address || orderData.deliveryAddress?.street || '',
+      // Price fields - Send the final, user-facing amount.
+      // The backend is responsible for any tax breakdown (e.g., calculating base amount from total).
+      // This avoids frontend/backend calculation mismatches and passes the original amount to the payment gateway.
+      baseAmount: finalAmount,
+      price: finalAmount,
+      totalAmount: finalAmount,
+      duration_days: orderData.duration_days || orderData.planDuration || 1,
+      planDuration: orderData.duration_days || orderData.planDuration || 1, // Keep for compatibility
+      
+      // File fields
+      creativeFilePath: orderData.creativeFilePath || orderData.designFile || '',
+      creativeFileName: orderData.creativeFileName || orderData.designFile || '',
+      designFile: orderData.creativeFileName || orderData.designFile || '', // Keep for compatibility
+      fileType: orderData.fileType || 'image',
+      
+      // User fields
+      userId: userId,
+      user_id: userId, // Keep for compatibility
+      email: orderData.email || user?.email || '',
+      phone: orderData.phone || user?.phoneNumber || user?.phone || '',
+      
+      // Address fields
+      address: orderData.address || orderData.deliveryAddress?.street || '',
+      city: orderData.city || orderData.deliveryAddress?.city || '',
+      state: orderData.state || orderData.deliveryAddress?.state || 'Karnataka',
+      zip: orderData.zip || orderData.deliveryAddress?.zip || '',
+      deliveryAddress: {
+        street: orderData.address || orderData.deliveryAddress?.street || '',
         city: orderData.city || orderData.deliveryAddress?.city || '',
-        state: orderData.state || orderData.deliveryAddress?.state || 'Karnataka',
-        zip: orderData.zip || orderData.deliveryAddress?.zip || '',
-        deliveryAddress: {
-          street: orderData.address || orderData.deliveryAddress?.street || '',
-          city: orderData.city || orderData.deliveryAddress?.city || '',
-          state: orderData.state || orderData.deliveryAddress?.state || '',
-          zip: orderData.zip || orderData.deliveryAddress?.zip || ''
-        },
-        
-        // GST fields
-        gstApplicable: orderData.gstApplicable || false,
-        gstInfo: orderData.gstInfo || orderData.gstNumber || '',
-        gstNumber: orderData.gstNumber || orderData.gstInfo || '',
-        companyName: orderData.companyName || '',
-        
-        // Additional fields
-        screenName: orderData.screenName || '',
-        location: orderData.location || '',
-        termsAccepted: orderData.termsAccepted || false,
-        couponCode: orderData.couponCode || '',
-        discountAmount: orderData.discountAmount || 0,
-        
-        // Status
-        status: 'Payment Pending'
+        state: orderData.state || orderData.deliveryAddress?.state || '',
+        zip: orderData.zip || orderData.deliveryAddress?.zip || ''
+      },
+      
+      // GST fields
+      gstApplicable: orderData.gstApplicable || false,
+      gstInfo: orderData.gstInfo || orderData.gstNumber || '',
+      gstNumber: orderData.gstNumber || orderData.gstInfo || '',
+      companyName: orderData.companyName || '',
+      
+      // Additional fields
+      screenName: orderData.screenName || '',
+      location: orderData.location || '',
+      termsAccepted: orderData.termsAccepted || false,
+      couponCode: orderData.couponCode || '',
+      discountAmount: orderData.discountAmount || 0,
+      
+      // Status
+      status: 'Payment Pending'
+    };
+
+    // Debug: Log the exact payload being sent
+    console.log('📤 Sending order data to API:', apiPayload);
+    console.log('📤 API endpoint:', '/orders/initiate');
+    
+    // Keep this log for frontend debugging to verify its own calculations
+    console.log('Frontend Price Breakdown (for debugging):', {
+      originalTotal: orderData.totalAmount || orderData.price || 0,
+      discount: orderData.discountAmount || 0,
+      // Note: These values are for frontend reference and NOT sent to the API payload directly
+      subtotal: (orderData.totalAmount || orderData.price || 0) - calculateGSTAmount(orderData),
+      gstAmount: calculateGSTAmount(orderData),
+      totalAmount: finalAmount,
+      state: orderData.state || 'Karnataka',
+      gstType: (orderData.state || 'Karnataka') === 'Karnataka' ? 'CGST+SGST (9%+9%)' : 'IGST (18%)'
+    });
+    
+    console.log('📤 API Price fields being sent:', {
+      baseAmount: apiPayload.baseAmount,
+      price: apiPayload.price,
+      totalAmount: apiPayload.totalAmount
+    });
+    
+    // Call the API to initiate the order
+    // NOTE: Inventory should NOT be decreased here - only after successful payment verification
+    const response = await ordersAPI.initiateOrder(apiPayload);
+    
+    console.log('📥 API response:', response);
+    
+    if (response.success && response.data) {
+      // Extract order data from nested structure
+      const orderData_from_api = response.data.data?.order || response.data.order || response.data;
+      const razorpayOrderData = response.data.data?.razorpayOrder || response.data.razorpayOrder;
+      
+      const apiOrderId = orderData_from_api.id || orderData_from_api.orderId || response.data.id;
+      const newOrder = {
+        id: apiOrderId || generateOrderId(),
+        userId: userId,
+        orderDate: new Date().toISOString().split('T')[0],
+        status: 'Payment Failed',
+        screenName: orderData.screenName || 'Unknown Screen',
+        location: orderData.location || 'Unknown Location',
+        adminProofImage: null,
+        ...orderData,
+        // API response data - EXTRACT FROM CORRECT LOCATION
+        razorpayOrderId: orderData_from_api.razorpay_order_id || razorpayOrderData?.id,
+        razorpay_order_id: orderData_from_api.razorpay_order_id || razorpayOrderData?.id,
+        totalAmount: orderData_from_api.total_cost || orderData_from_api.final_amount || finalAmount,
+        amount: orderData_from_api.total_cost || orderData_from_api.final_amount || finalAmount,
+        price: orderData_from_api.total_cost || orderData_from_api.final_amount || finalAmount,
+        orderUid: orderData_from_api.order_uid || orderData_from_api.orderUid,
+        order_uid: orderData_from_api.order_uid || orderData_from_api.orderUid,
+        createdAt: new Date().toISOString(),
+        apiSyncPending: false,
+        // Store full API response for reference
+        apiResponse: response.data
       };
 
-
-
-
-
-
-      // Debug: Log the exact payload being sent
-      console.log('📤 Sending order data to API:', apiPayload);
-      console.log('📤 API endpoint:', '/orders/initiate');
-      const baseAmount = (orderData.totalAmount || orderData.price || 0) - calculateGSTAmount(orderData);
-      const gstAmount = calculateGSTAmount(orderData);
-      const totalAmount = orderData.totalAmount || orderData.price || 0;
+      // Update local state
+      const updatedOrders = [...orders, newOrder];
+      setOrders(updatedOrders);
       
-      console.log('📤 Price breakdown:', {
-        originalTotal: orderData.totalAmount || orderData.price || 0,
-        discount: orderData.discountAmount || 0,
-        subtotal: baseAmount,
-        gstAmount: gstAmount,
-        totalAmount: totalAmount,
-        state: orderData.state || 'Karnataka',
-        gstType: (orderData.state || 'Karnataka') === 'Karnataka' ? 'CGST+SGST (9%+9%)' : 'IGST (18%)'
-      });
-      
-      console.log('📤 API Price fields:', {
-        baseAmount: baseAmount,
-        price: totalAmount,
-        totalAmount: totalAmount
-      });
-      
-      // Call the API to initiate the order
-      // NOTE: Inventory should NOT be decreased here - only after successful payment verification
-      const response = await ordersAPI.initiateOrder(apiPayload);
-      
-      console.log('📥 API response:', response);
-      
-      if (response.success && response.data) {
-
+      try {
+        // Check storage quota before saving
+        if (!manageStorageQuota()) {
+          throw new Error('Storage quota exceeded');
+        }
         
-        // Extract order data from nested structure
-        const orderData_from_api = response.data.data?.order || response.data.order || response.data;
-        const razorpayOrderData = response.data.data?.razorpayOrder || response.data.razorpayOrder;
-        
-        
-
-
-        
-        // Create local order object with API response
-        // IMPORTANT: Use the API's order ID, not a generated one
-        const apiOrderId = orderData_from_api.id || orderData_from_api.orderId || response.data.id;
-        const newOrder = {
-          id: apiOrderId || generateOrderId(),
-          userId: userId,
-          orderDate: new Date().toISOString().split('T')[0],
-          status: 'Payment Failed',
-          screenName: orderData.screenName || 'Unknown Screen',
-          location: orderData.location || 'Unknown Location',
-          adminProofImage: null,
-          ...orderData,
-          // API response data - EXTRACT FROM CORRECT LOCATION
-          razorpayOrderId: orderData_from_api.razorpay_order_id || razorpayOrderData?.id,
-          razorpay_order_id: orderData_from_api.razorpay_order_id || razorpayOrderData?.id,
-          totalAmount: orderData_from_api.total_cost || orderData_from_api.final_amount || orderData.totalAmount,
-          amount: orderData_from_api.total_cost || orderData_from_api.final_amount || orderData.totalAmount,
-          price: orderData_from_api.total_cost || orderData_from_api.final_amount || orderData.totalAmount,
-          orderUid: orderData_from_api.order_uid || orderData_from_api.orderUid,
-          order_uid: orderData_from_api.order_uid || orderData_from_api.orderUid,
-          createdAt: new Date().toISOString(),
-          apiSyncPending: false,
-          // Store full API response for reference
-          apiResponse: response.data
-        };
-        
-
-
-
-        // Update local state
-        const updatedOrders = [...orders, newOrder];
-        setOrders(updatedOrders);
-        
-        try {
-          // Check storage quota before saving
-          if (!manageStorageQuota()) {
-            throw new Error('Storage quota exceeded');
-          }
-          
+        localStorage.setItem('adscreenhub_orders', JSON.stringify(updatedOrders));
+      } catch (error) {
+        if (error.name === 'QuotaExceededError' || error.message === 'Storage quota exceeded') {
+          // Clean up and try again
+          manageStorageQuota();
           localStorage.setItem('adscreenhub_orders', JSON.stringify(updatedOrders));
-        } catch (error) {
-          if (error.name === 'QuotaExceededError' || error.message === 'Storage quota exceeded') {
-            // Clean up and try again
-            manageStorageQuota();
-            localStorage.setItem('adscreenhub_orders', JSON.stringify(updatedOrders));
-          } else {
-
-            return { success: false, error: 'Failed to save order. Please try again.' };
-          }
+        } else {
+          return { success: false, error: 'Failed to save order. Please try again.' };
         }
-
-        return { success: true, order: newOrder, apiResponse: response.data };
-      } else {
-        
-        // Create a local order as fallback when API fails
-
-        const fallbackOrderId = generateOrderId();
-        const fallbackOrder = {
-          id: fallbackOrderId,
-          userId: userId,
-          orderDate: new Date().toISOString().split('T')[0],
-          status: 'Payment Failed',
-          orderUid: fallbackOrderId,
-          order_uid: fallbackOrderId,
-          screenName: orderData.screenName || 'Unknown Screen',
-          location: orderData.location || 'Unknown Location',
-          adminProofImage: null,
-          ...orderData,
-          // Use original data for fallback
-          totalAmount: orderData.totalAmount || orderData.price || 0,
-          amount: orderData.totalAmount || orderData.price || 0,
-          price: orderData.totalAmount || orderData.price || 0,
-          createdAt: new Date().toISOString(),
-          apiSyncPending: true, // Mark for later sync
-          apiError: response.error || 'API call failed'
-        };
-
-        // Update local state
-        const updatedOrders = [...orders, fallbackOrder];
-        setOrders(updatedOrders);
-        
-        try {
-          localStorage.setItem('adscreenhub_orders', JSON.stringify(updatedOrders));
-        } catch (error) {
-
-        }
-
-        return { success: true, order: fallbackOrder, apiResponse: null, isFallback: true };
       }
-    } catch (error) {
-      console.error('❌ Error creating order:', error);
-      console.error('❌ Error details:', {
-        message: error.message,
-        status: error.status,
-        statusCode: error.statusCode,
-        response: error.response
-      });
-      
-      // Handle specific error types
-      if (error.status === 400 || error.statusCode === 400) {
-        console.error('❌ 400 Bad Request - Invalid data sent to API');
-        console.error('❌ Check the API payload structure and required fields');
-        console.error('❌ API Error Message:', error.error || error.message);
-        console.error('❌ Full API Error Response:', error);
-        
-        // Check if it's a price mismatch error
-        if (error.error && error.error.includes('Price mismatch')) {
-          console.error('💰 PRICE MISMATCH ERROR DETECTED');
-          console.error('💰 Frontend calculated total:', orderData.totalAmount || orderData.price);
-          console.error('💰 Backend expected different amount');
-          console.error('💰 This suggests backend has different GST calculation logic');
-        }
-        
-        return { 
-          success: false, 
-          error: `Invalid order data: ${error.error || error.message || 'Bad Request'}. Please check all required fields and try again.`,
-          details: error.error || error.message || 'Bad Request'
-        };
-      }
-      
-      // Create a local order as fallback when there's an error
 
+      return { success: true, order: newOrder, apiResponse: response.data };
+    } else {
+      // Create a local order as fallback when API fails
       const fallbackOrderId = generateOrderId();
       const fallbackOrder = {
         id: fallbackOrderId,
         userId: userId,
         orderDate: new Date().toISOString().split('T')[0],
-        status: 'Payment Pending',
+        status: 'Payment Failed',
         orderUid: fallbackOrderId,
         order_uid: fallbackOrderId,
         screenName: orderData.screenName || 'Unknown Screen',
@@ -459,12 +378,12 @@ export const useOrders = () => {
         adminProofImage: null,
         ...orderData,
         // Use original data for fallback
-        totalAmount: orderData.totalAmount || orderData.price || 0,
-        amount: orderData.totalAmount || orderData.price || 0,
-        price: orderData.totalAmount || orderData.price || 0,
+        totalAmount: finalAmount,
+        amount: finalAmount,
+        price: finalAmount,
         createdAt: new Date().toISOString(),
         apiSyncPending: true, // Mark for later sync
-        apiError: error.message || 'Network error'
+        apiError: response.error || 'API call failed'
       };
 
       // Update local state
@@ -473,14 +392,76 @@ export const useOrders = () => {
       
       try {
         localStorage.setItem('adscreenhub_orders', JSON.stringify(updatedOrders));
-      } catch (storageError) {
-
+      } catch (error) {
+        // Silently fail if storage is not available for fallback
       }
 
       return { success: true, order: fallbackOrder, apiResponse: null, isFallback: true };
     }
-  };
+  } catch (error) {
+    console.error('❌ Error creating order:', error);
+    console.error('❌ Error details:', {
+      message: error.message,
+      status: error.status,
+      statusCode: error.statusCode,
+      response: error.response
+    });
+    
+    // Handle specific error types
+    if (error.status === 400 || error.statusCode === 400) {
+      console.error('❌ 400 Bad Request - Invalid data sent to API');
+      console.error('❌ Check the API payload structure and required fields');
+      console.error('❌ API Error Message:', error.error || error.message);
+      console.error('❌ Full API Error Response:', error);
+      
+      if (error.error && error.error.includes('Price mismatch')) {
+        console.error('💰 PRICE MISMATCH ERROR DETECTED');
+        console.error('💰 Frontend total:', orderData.totalAmount || orderData.price);
+        console.error('💰 Backend rejected this amount.');
+      }
+      
+      return { 
+        success: false, 
+        error: `Invalid order data: ${error.error || error.message || 'Bad Request'}. Please check all required fields and try again.`,
+        details: error.error || error.message || 'Bad Request'
+      };
+    }
+    
+    // Create a local order as fallback when there's an error
+    const fallbackOrderId = generateOrderId();
+    const fallbackOrder = {
+      id: fallbackOrderId,
+      userId: userId,
+      orderDate: new Date().toISOString().split('T')[0],
+      status: 'Payment Pending',
+      orderUid: fallbackOrderId,
+      order_uid: fallbackOrderId,
+      screenName: orderData.screenName || 'Unknown Screen',
+      location: orderData.location || 'Unknown Location',
+      adminProofImage: null,
+      ...orderData,
+      // Use original data for fallback
+      totalAmount: orderData.totalAmount || orderData.price || 0,
+      amount: orderData.totalAmount || orderData.price || 0,
+      price: orderData.totalAmount || orderData.price || 0,
+      createdAt: new Date().toISOString(),
+      apiSyncPending: true, // Mark for later sync
+      apiError: error.message || 'Network error'
+    };
 
+    // Update local state
+    const updatedOrders = [...orders, fallbackOrder];
+    setOrders(updatedOrders);
+    
+    try {
+      localStorage.setItem('adscreenhub_orders', JSON.stringify(updatedOrders));
+    } catch (storageError) {
+      // Silently fail if storage is not available for fallback
+    }
+
+    return { success: true, order: fallbackOrder, apiResponse: null, isFallback: true };
+  }
+};
   // Update order status
   const updateOrderStatus = (orderId, newStatus) => {
     const updatedOrders = orders.map(order => 
