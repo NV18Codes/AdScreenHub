@@ -444,29 +444,34 @@ export default function BookingCalendar() {
               min={minDateString}
               max={maxDateString}
               className={styles.dateInput}
-              placeholder="DD/MM/YYYY"
-              title="Select booking date - minimum 2 days from today"
               style={{
-                fontSize: '16px',
-                padding: '14px 16px 14px 44px',
+                fontSize: '18px',
+                padding: '16px 16px 16px 50px',
                 width: '100%',
-                minHeight: '48px',
-                border: '2px solid #e5e7eb',
-                borderRadius: '8px'
+                height: '56px',
+                border: '2px solid #3b82f6',
+                borderRadius: '12px',
+                backgroundColor: '#f8fafc',
+                color: selectedDate ? '#1e293b' : '#6b7280',
+                fontWeight: '600'
               }}
             />
             {!selectedDate && (
               <div style={{
                 position: 'absolute',
-                left: '44px',
+                left: '50px',
                 top: '50%',
                 transform: 'translateY(-50%)',
-                color: '#6b7280',
+                color: '#3b82f6',
                 pointerEvents: 'none',
-                fontSize: '16px',
-                fontWeight: '600'
+                fontSize: '18px',
+                fontWeight: '700',
+                backgroundColor: '#dbeafe',
+                padding: '4px 8px',
+                borderRadius: '6px',
+                border: '1px solid #93c5fd'
               }}>
-                DD/MM/YYYY
+                📅 DD/MM/YYYY
               </div>
             )}
           </div>
