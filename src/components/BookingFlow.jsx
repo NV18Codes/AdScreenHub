@@ -655,6 +655,7 @@ export default function BookingFlow() {
         fileType: designFile?.fileType || (designFile?.type?.startsWith('video/') ? 'video' : 'image'),
         totalAmount: calculateTotal(),
         price: calculateTotal(), // Keep for backward compatibility
+        baseAmount: selectedPlan.price || 0,
         address: address,
         city: '', // You might want to extract from address or add a city field
         state: state, // State selection for GST calculation
