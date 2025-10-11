@@ -434,46 +434,69 @@ export default function BookingCalendar() {
         <div className={styles.dateSection}>
           <h2>Select Display Start Date</h2>
           <div className={styles.dateInputWrapper}>
-            <svg className={styles.calendarIcon} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
-            <input
-              type="date"
-              value={selectedDate}
-              onChange={handleDateChange}
-              min={minDateString}
-              max={maxDateString}
-              className={styles.dateInput}
+            <div 
+              onClick={() => document.getElementById('dateInput').showPicker && document.getElementById('dateInput').showPicker()}
               style={{
-                fontSize: '18px',
-                padding: '16px 16px 16px 50px',
-                width: '100%',
-                height: '56px',
-                border: '2px solid #3b82f6',
-                borderRadius: '12px',
-                backgroundColor: '#f8fafc',
-                color: selectedDate ? '#1e293b' : '#6b7280',
-                fontWeight: '600'
+                position: 'relative',
+                cursor: 'pointer',
+                width: '100%'
               }}
-            />
-            {!selectedDate && (
-              <div style={{
-                position: 'absolute',
-                left: '50px',
-                top: '50%',
-                transform: 'translateY(-50%)',
-                color: '#3b82f6',
-                pointerEvents: 'none',
-                fontSize: '18px',
-                fontWeight: '700',
-                backgroundColor: '#dbeafe',
-                padding: '4px 8px',
-                borderRadius: '6px',
-                border: '1px solid #93c5fd'
-              }}>
-                📅 DD/MM/YYYY
-              </div>
-            )}
+            >
+              <svg className={styles.calendarIcon} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              <input
+                id="dateInput"
+                type="date"
+                value={selectedDate}
+                onChange={handleDateChange}
+                min={minDateString}
+                max={maxDateString}
+                style={{
+                  fontSize: '18px',
+                  padding: '16px 16px 16px 50px',
+                  width: '100%',
+                  height: '56px',
+                  border: '2px solid #3b82f6',
+                  borderRadius: '12px',
+                  backgroundColor: selectedDate ? '#ffffff' : '#f8fafc',
+                  color: selectedDate ? '#1e293b' : 'transparent',
+                  fontWeight: '600',
+                  position: 'relative',
+                  zIndex: 1
+                }}
+              />
+              {!selectedDate && (
+                <div style={{
+                  position: 'absolute',
+                  left: '50px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  color: '#3b82f6',
+                  pointerEvents: 'none',
+                  fontSize: '18px',
+                  fontWeight: '700',
+                  zIndex: 2
+                }}>
+                  📅 DD/MM/YYYY
+                </div>
+              )}
+              {selectedDate && (
+                <div style={{
+                  position: 'absolute',
+                  left: '50px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  color: '#1e293b',
+                  pointerEvents: 'none',
+                  fontSize: '18px',
+                  fontWeight: '600',
+                  zIndex: 2
+                }}>
+                  📅 {formatDate(selectedDate)}
+                </div>
+              )}
+            </div>
           </div>
           <p className={styles.dateNote}>
             ⚠️ Select a date at least 2 days from today
