@@ -30,9 +30,8 @@
 
 .dateInputWrapper {
   position: relative;
-  display: inline-block;
+  display: block;
   width: 100%;
-  max-width: 300px;
 }
 
 .datePlaceholder {
@@ -90,12 +89,6 @@
 
 .dateInput {
   width: 100%;
-  padding: 12px 16px 12px 44px;
-  border: 2px solid #e5e7eb;
-  border-radius: 8px;
-  font-size: 1rem;
-  background: white;
-  color: #1f2937;
   transition: all 0.2s ease;
   position: relative;
 }
