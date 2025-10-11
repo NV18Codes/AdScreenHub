@@ -730,37 +730,8 @@
   
   .dateInputWrapper {
     max-width: 100%;
-  }
-  
-  .datePlaceholder {
-    font-size: 16px;
-    left: 44px;
-    color: #6b7280;
-    font-weight: 500;
-  }
-  
-  .datePlaceholderOverlay {
-    font-size: 16px;
-    left: 44px;
-    color: #3b82f6;
-    font-weight: 600;
-    background: #eff6ff;
-    border: 1px solid #dbeafe;
-    border-radius: 4px;
-    padding: 2px 6px;
-  }
-  
-  .mobileDatePlaceholder {
-    font-size: 18px;
-    left: 48px;
-    color: #1e40af;
-    font-weight: 800;
-    background: linear-gradient(135deg, #fef3c7, #fde68a);
-    padding: 10px 16px;
-    border-radius: 8px;
-    border: 3px solid #f59e0b;
-    letter-spacing: 2px;
-    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+    width: 100%;
+    margin: 0 auto;
   }
   
   .dateInput {
@@ -769,6 +740,19 @@
     min-height: 48px; /* Better touch target */
     background: white;
     border: 2px solid #e5e7eb;
+    width: 100%;
+    max-width: 100%;
+  }
+  
+  .mobileDatePlaceholder {
+    font-size: 16px;
+    left: 44px;
+    color: #6b7280;
+    font-weight: 600;
+    background: transparent;
+    padding: 0;
+    border: none;
+    letter-spacing: 1px;
   }
   
   .dateInput::before {
