@@ -437,11 +437,6 @@ export default function BookingCalendar() {
             <svg className={styles.calendarIcon} fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
-            {!selectedDate && (
-              <div className={styles.mobileDatePlaceholder}>
-                📅 DD/MM/YYYY
-              </div>
-            )}
             <input
               type="date"
               value={selectedDate}
@@ -451,7 +446,29 @@ export default function BookingCalendar() {
               className={styles.dateInput}
               placeholder="DD/MM/YYYY"
               title="Select booking date - minimum 2 days from today"
+              style={{
+                fontSize: '16px',
+                padding: '14px 16px 14px 44px',
+                width: '100%',
+                minHeight: '48px',
+                border: '2px solid #e5e7eb',
+                borderRadius: '8px'
+              }}
             />
+            {!selectedDate && (
+              <div style={{
+                position: 'absolute',
+                left: '44px',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                color: '#6b7280',
+                pointerEvents: 'none',
+                fontSize: '16px',
+                fontWeight: '600'
+              }}>
+                DD/MM/YYYY
+              </div>
+            )}
           </div>
           <p className={styles.dateNote}>
             ⚠️ Select a date at least 2 days from today
