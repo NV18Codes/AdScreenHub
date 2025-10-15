@@ -222,8 +222,8 @@ const createOrder = async (orderData) => {
   try {
     // Get current user ID
     const userId = user?.id || user?.userId || 'unknown';
-    // Determine the final, user-facing amount for the order (GST-inclusive)
-    const finalAmount = orderData.totalAmount || orderData.total_cost || orderData.final_amount || orderData.baseAmount;
+    // Get the base amount (before GST) - let backend calculate final amount
+    const baseAmount = orderData.baseAmount || orderData.price || orderData.totalAmount || 0;
 
     // Prepare the API payload with all required fields
     const apiPayload = {
@@ -234,12 +234,10 @@ const createOrder = async (orderData) => {
       startDate: orderData.startDate || orderData.displayDate || '',
       displayDate: orderData.startDate || orderData.displayDate || '', // Keep for compatibility
       
-      // Price fields - Send the GST-inclusive amount.
-      // The backend receives the total amount including GST for payment processing.
-      // This ensures the payment gateway gets the correct total amount the customer pays.
-      baseAmount: finalAmount,
-      price: finalAmount,
-      totalAmount: finalAmount,
+      // Price fields - Send base amount as totalAmount (without GST), let backend calculate final amount
+      totalAmount: baseAmount,
+      baseAmount: baseAmount,
+      price: baseAmount,
       duration_days: orderData.duration_days || orderData.planDuration || 1,
       planDuration: orderData.duration_days || orderData.planDuration || 1, // Keep for compatibility
       
@@ -333,9 +331,9 @@ const createOrder = async (orderData) => {
         // API response data - EXTRACT FROM CORRECT LOCATION
         razorpayOrderId: orderData_from_api.razorpay_order_id || razorpayOrderData?.id,
         razorpay_order_id: orderData_from_api.razorpay_order_id || razorpayOrderData?.id,
-        totalAmount: orderData_from_api.total_cost || orderData_from_api.final_amount || finalAmount,
-        amount: orderData_from_api.total_cost || orderData_from_api.final_amount || finalAmount,
-        price: orderData_from_api.total_cost || orderData_from_api.final_amount || finalAmount,
+        totalAmount: orderData_from_api.total_cost || orderData_from_api.final_amount || orderData_from_api.totalAmount || baseAmount,
+        amount: orderData_from_api.total_cost || orderData_from_api.final_amount || orderData_from_api.totalAmount || baseAmount,
+        price: orderData_from_api.total_cost || orderData_from_api.final_amount || orderData_from_api.totalAmount || baseAmount,
         orderUid: orderData_from_api.order_uid || orderData_from_api.orderUid,
         order_uid: orderData_from_api.order_uid || orderData_from_api.orderUid,
         createdAt: new Date().toISOString(),

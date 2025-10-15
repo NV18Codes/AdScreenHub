@@ -653,9 +653,9 @@ export default function BookingFlow() {
         creativeFileName: designFile?.name?.trim().replace(/\s+/g, '') || '',
         designFile: designFile?.name?.trim().replace(/\s+/g, '') || '', 
         fileType: designFile?.fileType || (designFile?.type?.startsWith('video/') ? 'video' : 'image'),
-        totalAmount: calculateTotal(),
-        price: calculateTotal(), // Keep for backward compatibility
+        totalAmount: selectedPlan.price || 0, // Send base price as totalAmount (without GST)
         baseAmount: selectedPlan.price || 0,
+        price: selectedPlan.price || 0, // Send base price, let backend calculate GST
         address: address,
         city: '', // You might want to extract from address or add a city field
         state: state, // State selection for GST calculation
