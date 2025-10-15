@@ -72,7 +72,7 @@
 /* Analytics */
 .analytics {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   gap: 1.25rem;
   margin-bottom: 2.5rem;
 }
@@ -88,7 +88,9 @@
   gap: 1.25rem;
   transition: all 0.3s ease;
   position: relative;
-  overflow: hidden;
+  overflow: visible;
+  min-width: 0;
+  flex: 1;
 }
 
 .analyticsCard::before {
@@ -121,6 +123,8 @@
 
 .analyticsContent {
   flex: 1;
+  min-width: 0;
+  overflow: visible;
 }
 
 .analyticsLabel {
@@ -141,6 +145,9 @@
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+  white-space: nowrap;
+  overflow: visible;
+  min-width: fit-content;
 }
 
 /* Search and Filter */

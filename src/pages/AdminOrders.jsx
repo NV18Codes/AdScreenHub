@@ -332,7 +332,7 @@ export default function AdminOrders() {
   // Open update modal
   const openUpdateModal = (order) => {
     setSelectedOrder(order);
-    setUpdateStatus(order.status);
+    setUpdateStatus('Design Revise'); // Set default to Design Revise
     setRemarks(order.remarks || '');
     setUploadFile(null);
     setUploadPreview(null);
