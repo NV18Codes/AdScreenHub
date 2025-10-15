@@ -236,7 +236,9 @@ export default function Dashboard() {
       creativeFileName: designFile.name,
       designFile: designFile.name, // Keep for backward compatibility
       supportingDoc: null,
-      totalAmount: selectedPlan.price - finalDiscount,
+      totalAmount: selectedPlan.price, // Send base price as totalAmount (without GST)
+      baseAmount: selectedPlan.price,
+      price: selectedPlan.price, // Send base price, let backend calculate GST and apply discount
       thumbnail: designPreview,
       address: address,
       city: '', // You might want to extract from address or add a city field

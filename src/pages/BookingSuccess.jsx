@@ -97,6 +97,9 @@ const BookingSuccess = () => {
             },
             startDate: foundOrder.start_date || foundOrder.startDate,
             totalAmount: foundOrder.total_cost || foundOrder.final_amount || foundOrder.totalAmount,
+            baseAmount: foundOrder.base_amount || foundOrder.price || foundOrder.totalAmount,
+            price: foundOrder.price || foundOrder.totalAmount,
+            gstAmount: foundOrder.gst_amount || 0,
             status: foundOrder.status || ORDER_STATUS.PENDING_APPROVAL,
             createdAt: foundOrder.created_at || foundOrder.createdAt
           };
@@ -125,6 +128,9 @@ const BookingSuccess = () => {
               },
               startDate: localOrder.start_date || localOrder.startDate || localOrder.displayDate,
               totalAmount: localOrder.total_cost || localOrder.final_amount || localOrder.totalAmount || localOrder.amount,
+              baseAmount: localOrder.baseAmount || localOrder.price || localOrder.totalAmount || localOrder.amount,
+              price: localOrder.price || localOrder.totalAmount || localOrder.amount,
+              gstAmount: localOrder.gstAmount || 0,
               status: localOrder.status || ORDER_STATUS.PENDING_APPROVAL,
               createdAt: localOrder.created_at || localOrder.createdAt
             };
@@ -147,6 +153,9 @@ const BookingSuccess = () => {
                 plan: { name: 'Processing...', duration: '...' },
                 startDate: 'Processing...',
                 totalAmount: 0,
+                baseAmount: 0,
+                price: 0,
+                gstAmount: 0,
                 status: ORDER_STATUS.PENDING_APPROVAL,
                 createdAt: new Date().toISOString()
               });
@@ -247,13 +256,13 @@ const BookingSuccess = () => {
               <div className={styles.detailItem}>
                 <span className={styles.label}>Base Price:</span>
                 <span className={styles.value}>
-                  ₹{order.baseAmount.toLocaleString('en-IN')}
+                  ₹{(order.baseAmount || order.price || order.totalAmount || 0).toLocaleString('en-IN')}
                 </span>
               </div>
               <div className={styles.detailItem}>
                 <span className={styles.label}>GST (18%):</span>
                 <span className={styles.value}>
-                  ₹{order.gstAmount.toLocaleString('en-IN')}
+                  ₹{(order.gstAmount || 0).toLocaleString('en-IN')}
                 </span>
               </div>
               <div className={styles.detailItem}>
