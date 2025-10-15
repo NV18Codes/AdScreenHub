@@ -11,6 +11,35 @@ export default function DashboardOverview() {
   const { user } = useAuth();
   const displayName = getUserDisplayName(user);
 
+  const getStatusClass = (status) => {
+    const trimmedStatus = status ? status.trim() : '';
+    
+    switch (trimmedStatus) {
+      case 'Pending Payment':
+        return styles.statusPendingApproval;
+      case 'Payment Failed':
+        return styles.statusCancelledDisplay;
+      case 'Pending Approval':
+        return styles.statusPendingApproval;
+      case 'Design Revise':
+        return styles.statusReviseYourDesign;
+      case 'Pending Display Approval':
+        return styles.statusPendingApproval;
+      case 'In Display':
+        return styles.statusInDisplay;
+      case 'Completed':
+        return styles.statusCompletedDisplay;
+      case 'Cancelled - Forfeited':
+        return styles.statusCancelledDisplay;
+      case 'Cancelled':
+        return styles.statusCancelledDisplay;
+      case 'Cancelled - Refunded':
+        return styles.statusCancelledDisplay;
+      default:
+        return styles.statusPendingApproval;
+    }
+  };
+
   // Calculate stats from ALL orders - exclude cancelled orders from total spent
   const totalOrders = orders.length;
   const pendingOrders = orders.filter(order => order.status === ORDER_STATUS.PENDING_APPROVAL).length;
@@ -21,7 +50,7 @@ export default function DashboardOverview() {
   const paidStatuses = [ORDER_STATUS.PENDING_APPROVAL, ORDER_STATUS.IN_DISPLAY, ORDER_STATUS.COMPLETED, ORDER_STATUS.DESIGN_REVISE];
   const totalSpent = orders
     .filter(order => paidStatuses.includes(order.status))
-    .reduce((sum, order) => sum + (order.total_cost || order.final_amount || order.totalAmount || 0), 0);
+    .reduce((sum, order) => sum + (order.final_amount || order.total_cost || order.totalAmount || 0), 0);
 
 
   // Get recent orders (last 3)
@@ -154,13 +183,13 @@ export default function DashboardOverview() {
                       {new Date(order.orderDate).toLocaleDateString()}
                     </p>
                     <div className={styles.priceBreakdown}>
-                      <p className={styles.basePrice}>Base: ₹{(order.baseAmount || order.price || order.plans?.price || 7999).toLocaleString('en-IN')}</p>
-                      <p className={styles.gstPrice}>GST: ₹{Math.round((order.baseAmount || order.price || order.plans?.price || 7999) * 0.18).toLocaleString('en-IN')}</p>
-                      <p className={styles.orderAmount}>Total: ₹{(order.total_cost || order.final_amount || order.totalAmount || 0).toLocaleString('en-IN')}</p>
+                      <p className={styles.basePrice}>Base: ₹{(order.baseAmount || order.total_cost || 0).toLocaleString('en-IN')}</p>
+                      <p className={styles.gstPrice}>GST: ₹{(order.gstAmount || 0).toLocaleString('en-IN')}</p>
+                      <p className={styles.orderAmount}>Total: ₹{(order.final_amount || order.totalAmount || 0).toLocaleString('en-IN')}</p>
                     </div>
                   </div>
                   <div className={styles.orderStatus}>
-                    <span className={`${styles.status} ${styles[`status${order.status.replace(/\s+/g, '')}`]}`}>
+                    <span className={`${styles.status} ${getStatusClass(order.status)}`}>
                       {order.status}
                     </span>
                   </div>

@@ -1,27 +1,13 @@
 import React from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import styles from '../styles/Terms.module.css';
+import StandardPageLayout from '../components/StandardPageLayout';
+import styles from '../styles/StandardPageLayout.module.css';
 
 export default function Terms() {
-  const navigate = useNavigate();
-  const location = useLocation();
-
-  const handleGoBack = () => {
-    // Go back to the previous page (registration form)
-    navigate(-1);
-  };
-
   return (
-    <div className={styles.container}>
-      <div className={styles.header}>
-        <button onClick={handleGoBack} className={styles.backButton}>
-          ← Back
-        </button>
-        <h1 className={styles.title}>Terms of Service</h1>
-        <p className={styles.subtitle}>Please read these terms carefully before using AdScreenHub's services</p>
-      </div>
-      
-      <div className={styles.scrollableContent}>
+    <StandardPageLayout
+      title="Terms of Service"
+      subtitle="Please read these terms carefully before using AdScreenHub's services"
+    >
         <section className={styles.section}>
           <h2>Introduction</h2>
           <p>1.1 Thank you for choosing AdScreenHub.com (hereinafter referred to as "AdScreenHub") operated by
@@ -371,7 +357,25 @@ export default function Terms() {
           <p>By using AdScreenHub's services, the Advertiser acknowledges that it has read, understood, and
           agreed to be bound by these Terms in their entirety.</p>
         </section>
-      </div>
-    </div>
+
+        <section className={styles.section} style={{ 
+          backgroundColor: '#f0fdf4', 
+          border: '1px solid #bbf7d0', 
+          borderRadius: '0.75rem',
+          marginTop: '2rem'
+        }}>
+          <h2 style={{ color: '#166534', marginBottom: '1rem' }}>Still Have Questions?</h2>
+          <p style={{ color: '#15803d', margin: 0 }}>
+            If you have any questions about these Terms of Service, please contact us at{' '}
+            <a href="mailto:info@adscreenhub.com" style={{ 
+              color: '#1319B3', 
+              textDecoration: 'underline',
+              fontWeight: '600'
+            }}>
+              info@adscreenhub.com
+            </a>
+          </p>
+        </section>
+    </StandardPageLayout>
   );
 }

@@ -250,28 +250,28 @@
 }
 
 .statusPendingApproval {
-  background-color: #fef3c7;
-  color: #d97706;
+  background-color: #DBEAFE;
+  color: #1D4ED8;
 }
 
 .statusInDisplay {
-  background-color: #d1fae5;
-  color: #059669;
+  background-color: #CFFAFE;
+  color: #0E7490;
 }
 
 .statusCompletedDisplay {
-  background-color: #dbeafe;
-  color: #2563eb;
+  background-color: #DCFCE7;
+  color: #15803D;
 }
 
 .statusCancelledDisplay {
-  background-color: #fee2e2;
-  color: #dc2626;
+  background-color: #F3F4F6;
+  color: #374151;
 }
 
 .statusReviseYourDesign {
-  background-color: #f3e8ff;
-  color: #7c3aed;
+  background-color: #EDE9FE;
+  color: #6D28D9;
 }
 
 /* Empty State */

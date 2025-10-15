@@ -56,7 +56,7 @@ export default function ResetPassword() {
         // Clear reset email from localStorage
         localStorage.removeItem('resetEmail');
         setTimeout(() => {
-          navigate('/login');
+          navigate('/auth');
         }, 2000);
       } else {
         setError(response.error || "Failed to reset password. Please try again.");

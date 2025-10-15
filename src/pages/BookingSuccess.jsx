@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { ordersAPI } from '../config/api';
+import { useOrders } from '../hooks/useOrders';
 import { ORDER_STATUS } from '../config/orderStatuses';
 import styles from '../styles/BookingSuccess.module.css';
 
@@ -10,171 +11,41 @@ const BookingSuccess = () => {
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const { orders, loading: ordersLoading } = useOrders();
 
   const orderId = searchParams.get('orderId');
 
   useEffect(() => {
-    if (orderId) {
-      fetchOrderDetails();
-    } else {
-      // Try to get the most recent order from localStorage
-      const localOrders = JSON.parse(localStorage.getItem('adscreenhub_orders') || '[]');
-      if (localOrders.length > 0) {
-        // Get the most recent order
-        const mostRecentOrder = localOrders.sort((a, b) => 
-          new Date(b.createdAt || b.created_at || 0) - new Date(a.createdAt || a.created_at || 0)
-        )[0];
-        
-        // Transform to match expected format
-        const baseAmount = mostRecentOrder.baseAmount || mostRecentOrder.price || mostRecentOrder.plans?.price || 7999;
-        const gstAmount = Math.round(baseAmount * 0.18);
-        const totalAmount = mostRecentOrder.total_cost || mostRecentOrder.final_amount || mostRecentOrder.totalAmount || mostRecentOrder.amount;
-        
-        const transformedOrder = {
-          id: mostRecentOrder.id,
-          orderId: mostRecentOrder.id,
-          orderUid: mostRecentOrder.orderUid || mostRecentOrder.order_uid,
-          location: {
-            name: mostRecentOrder.locations?.name || mostRecentOrder.location?.name || mostRecentOrder.screenName || 'N/A'
-          },
-          plan: {
-            name: mostRecentOrder.plans?.name || mostRecentOrder.plan?.name || 'N/A',
-            duration: mostRecentOrder.plans?.duration_days || mostRecentOrder.plan?.duration_days || 'N/A'
-          },
-          startDate: mostRecentOrder.start_date || mostRecentOrder.startDate || mostRecentOrder.displayDate,
-          baseAmount: baseAmount,
-          gstAmount: gstAmount,
-          totalAmount: totalAmount,
-          status: mostRecentOrder.status,
-          createdAt: mostRecentOrder.created_at || mostRecentOrder.createdAt
-        };
-        
-        setOrder(transformedOrder);
-        setLoading(false);
-      } else {
-        setError('No order ID provided');
-        setLoading(false);
-      }
+    if (ordersLoading) {
+      setLoading(true);
+      return;
     }
-  }, [orderId]);
 
-  const fetchOrderDetails = async () => {
-    setLoading(true);
-    
-    try {
-      const response = await ordersAPI.getOrders();
-      
-      if (response.success || response.statusCode === 200) {
-        // Handle different response structures
-        let ordersData = [];
-        
-        // Try different possible structures
-        if (Array.isArray(response.data)) {
-          ordersData = response.data;
-        } else if (response.data?.data?.orders && Array.isArray(response.data.data.orders)) {
-          ordersData = response.data.data.orders;
-        } else if (response.data?.orders && Array.isArray(response.data.orders)) {
-          ordersData = response.data.orders;
-        } else if (response.data?.data && Array.isArray(response.data.data)) {
-          ordersData = response.data.data;
-        }
-        
-        
-        const foundOrder = ordersData.find(o => o.id.toString() === orderId.toString());
-        
-        if (foundOrder) {
-          // Transform backend order data to frontend format
-          const transformedOrder = {
-            id: foundOrder.id,
-            orderId: foundOrder.id,
-            orderUid: foundOrder.order_uid,
-            location: {
-              name: foundOrder.locations?.name || foundOrder.location?.name || 'N/A'
-            },
-            plan: {
-              name: foundOrder.plans?.name || foundOrder.plan?.name || 'N/A',
-              duration: foundOrder.plans?.duration_days || foundOrder.plan?.duration_days || 1
-            },
-            startDate: foundOrder.start_date || foundOrder.startDate,
-            totalAmount: foundOrder.total_cost || foundOrder.final_amount || foundOrder.totalAmount,
-            baseAmount: foundOrder.base_amount || foundOrder.price || foundOrder.totalAmount,
-            price: foundOrder.price || foundOrder.totalAmount,
-            gstAmount: foundOrder.gst_amount || 0,
-            status: foundOrder.status || ORDER_STATUS.PENDING_APPROVAL,
-            createdAt: foundOrder.created_at || foundOrder.createdAt
-          };
-          
-          setOrder(transformedOrder);
-          setError('');
-          setLoading(false);
-        } else {
-          // Check localStorage as fallback
-          const localOrders = JSON.parse(localStorage.getItem('adscreenhub_orders') || '[]');
-          const localOrder = localOrders.find(o => o.id.toString() === orderId.toString());
-          
-          if (localOrder) {
-            
-            // Transform localStorage order
-            const transformedOrder = {
-              id: localOrder.id,
-              orderId: localOrder.id,
-              orderUid: localOrder.orderUid || localOrder.order_uid,
-              location: {
-                name: localOrder.locations?.name || localOrder.location?.name || localOrder.locationName || localOrder.screenName || 'N/A'
-              },
-              plan: {
-                name: localOrder.plans?.name || localOrder.plan?.name || localOrder.planName || 'N/A',
-                duration: localOrder.plans?.duration_days || localOrder.plan?.duration_days || localOrder.planDuration || localOrder.duration_days || 1
-              },
-              startDate: localOrder.start_date || localOrder.startDate || localOrder.displayDate,
-              totalAmount: localOrder.total_cost || localOrder.final_amount || localOrder.totalAmount || localOrder.amount,
-              baseAmount: localOrder.baseAmount || localOrder.price || localOrder.totalAmount || localOrder.amount,
-              price: localOrder.price || localOrder.totalAmount || localOrder.amount,
-              gstAmount: localOrder.gstAmount || 0,
-              status: localOrder.status || ORDER_STATUS.PENDING_APPROVAL,
-              createdAt: localOrder.created_at || localOrder.createdAt
-            };
-            
-            setOrder(transformedOrder);
-            setError('');
-            setLoading(false);
-          } else {
-            // Show success even if order details not found - payment was successful!
-            const paymentId = searchParams.get('payment_id');
-            const verified = searchParams.get('verified');
-            
-            if (verified === 'true' && paymentId) {
-              // Payment was successful, just show basic success
-              setOrder({
-                id: orderId,
-                orderId: orderId,
-                orderUid: `ORD-${orderId}`,
-                location: { name: 'Processing...' },
-                plan: { name: 'Processing...', duration: '...' },
-                startDate: 'Processing...',
-                totalAmount: 0,
-                baseAmount: 0,
-                price: 0,
-                gstAmount: 0,
-                status: ORDER_STATUS.PENDING_APPROVAL,
-                createdAt: new Date().toISOString()
-              });
-              setLoading(false);
-            } else {
-              setError('Order not found');
-              setLoading(false);
-            }
-          }
-        }
+    if (orderId) {
+      // Find order by ID from useOrders hook
+      const foundOrder = orders.find(o => o.id.toString() === orderId.toString());
+      if (foundOrder) {
+        setOrder(foundOrder);
+        setError('');
+        setLoading(false);
       } else {
-        setError(response.error || 'Failed to fetch order details');
+        setError('Order not found');
         setLoading(false);
       }
-    } catch (err) {
-      setError('Network error. Please try again.');
-      setLoading(false);
+    } else {
+      // Try to get the most recent order from useOrders hook
+      if (orders && orders.length > 0) {
+        const mostRecentOrder = orders[orders.length - 1];
+        setOrder(mostRecentOrder);
+        setError('');
+        setLoading(false);
+      } else {
+        setError('No order found');
+        setLoading(false);
+      }
     }
-  };
+  }, [orderId, orders, ordersLoading]);
+
 
   if (loading) {
     return (
@@ -254,9 +125,9 @@ const BookingSuccess = () => {
                 <span className={styles.value}>{order.plan?.duration || order.duration_days || order.planDuration || 'N/A'} day{(order.plan?.duration || order.duration_days || order.planDuration || 1) > 1 ? 's' : ''}</span>
               </div>
               <div className={styles.detailItem}>
-                <span className={styles.label}>Base Price:</span>
+                <span className={styles.label}>Total Cost:</span>
                 <span className={styles.value}>
-                  ₹{(order.baseAmount || order.price || order.totalAmount || 0).toLocaleString('en-IN')}
+                  ₹{(order.baseAmount || 0).toLocaleString('en-IN')}
                 </span>
               </div>
               <div className={styles.detailItem}>
@@ -266,11 +137,9 @@ const BookingSuccess = () => {
                 </span>
               </div>
               <div className={styles.detailItem}>
-                <span className={styles.label}>Total Amount:</span>
+                <span className={styles.label}>Final Amount:</span>
                 <span className={styles.value}>
-                  {(order.total_cost || order.final_amount || order.totalAmount || 0) > 0 ? 
-                    `₹${(order.total_cost || order.final_amount || order.totalAmount || 0).toLocaleString('en-IN')}` : 
-                    'Processing...'}
+                  ₹{((order.baseAmount || 0) + (order.gstAmount || 0)).toLocaleString('en-IN')}
                 </span>
               </div>
               <div className={styles.detailItem}>

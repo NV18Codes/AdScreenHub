@@ -2,18 +2,14 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import LoadingSpinner from './LoadingSpinner';
 import { contactAPI } from '../config/api';
-import styles from '../styles/Contact.module.css';
+import StandardPageLayout from './StandardPageLayout';
+import styles from '../styles/StandardPageLayout.module.css';
 
 export default function Contact() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
-
-  const handleGoBack = () => {
-    // Go back to the previous page
-    navigate(-1);
-  };
   const handleSubmit = async (e) => {
     e.preventDefault();
     
@@ -64,125 +60,96 @@ export default function Contact() {
   };
 
   return (
-    <div className={styles.container}>
-      <div className={styles.header}>
-        <button onClick={handleGoBack} className={styles.backButton}>
-          ← Back
-        </button>
-        <h1 className={styles.title}>Contact Us</h1>
-        <p className={styles.subtitle}>Get in touch with us using the form or send us an e-mail to : <a href="mailto:info@adscreenhub.com" className={styles.emailLink}>info@adscreenhub.com</a></p>
-      </div>
-      
-      <div className={styles.scrollableContent}>
-        
+    <StandardPageLayout
+      title="Contact Us"
+      subtitle="Get in touch with us using the form or send us an e-mail to: info@adscreenhub.com"
+    >
+      <div className={styles.contactForm}>
         {/* Success Message */}
         {successMessage && (
-          <div className={styles.successMessage}>
+          <div className={`${styles.message} ${styles.successMessage}`}>
             ✓ {successMessage}
           </div>
         )}
         
         {/* Error Message */}
         {errorMessage && (
-          <div className={styles.errorMessage}>
+          <div className={`${styles.message} ${styles.errorMessage}`}>
             ✗ {errorMessage}
           </div>
         )}
         
-        <div className="bg-gray-50 rounded-2xl p-8 shadow-lg">
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="grid md:grid-cols-2 gap-6">
-              <div>
-                <label htmlFor="name" className="block text-sm font-semibold text-gray-700 mb-2">
-                  Full Name *
-                </label>
-                <input 
-                  type="text" 
-                  id="name"
-                  name="name"
-                  required
-                  placeholder="Enter your full name"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                />
-              </div>
-              
-              <div>
-                <label htmlFor="email" className="block text-sm font-semibold text-gray-700 mb-2">
-                  Email Address *
-                </label>
-                <input 
-                  type="email" 
-                  id="email"
-                  name="email"
-                  required
-                  placeholder="Enter your email address"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                />
-              </div>
-            </div>
-            
-            <div>
-              <label htmlFor="phone" className="block text-sm font-semibold text-gray-700 mb-2">
-                Phone Number *
+        <form onSubmit={handleSubmit}>
+          <div className="grid md:grid-cols-2 gap-6">
+            <div className={styles.formGroup}>
+              <label htmlFor="name">
+                Full Name *
               </label>
-              <div className="relative">
-                <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 font-medium">
-                  +91
-                </span>
-                <input 
-                  type="tel" 
-                  id="phone"
-                  name="phone"
-                  required
-                  placeholder="Enter 10-digit mobile number"
-                  maxLength="10"
-                  pattern="[6-9][0-9]{9}"
-                  className="w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                  onChange={(e) => {
-                    // Remove any non-digit characters
-                    const cleanedValue = e.target.value.replace(/\D/g, '');
-                    // Limit to 10 digits
-                    if (cleanedValue.length <= 10) {
-                      e.target.value = cleanedValue;
-                    }
-                  }}
-                />
-              </div>
-            </div>
-            
-            <div>
-              <label htmlFor="message" className="block text-sm font-semibold text-gray-700 mb-2">
-                Message *
-              </label>
-              <textarea 
-                id="message"
-                name="message"
+              <input 
+                type="text" 
+                id="name"
+                name="name"
                 required
-                rows="6"
-                placeholder="Tell us about your inquiry or how we can help you"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-none"
-              ></textarea>
+                placeholder="Enter your full name"
+              />
             </div>
             
-            <div className="text-center">
-              <button 
-                type="submit"
-                disabled={loading}
-                className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-12 py-4 rounded-full font-semibold text-lg hover:from-blue-700 hover:to-blue-800 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-1 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 mx-auto"
-              >
-                {loading ? (
-                  <>
-                    <LoadingSpinner size="small" text="" className="inlineSpinner" />
-                    Sending...
-                  </>
-                ) : (
-                  "Send Message"
-                )}
-              </button>
+            <div className={styles.formGroup}>
+              <label htmlFor="email">
+                Email Address *
+              </label>
+              <input 
+                type="email" 
+                id="email"
+                name="email"
+                required
+                placeholder="Enter your email address"
+              />
             </div>
-          </form>
-        </div>
+          </div>
+            
+          <div className={styles.formGroup}>
+            <label htmlFor="phone">
+              Phone Number
+            </label>
+            <input 
+              type="tel" 
+              id="phone"
+              name="phone"
+              placeholder="Enter your phone number"
+            />
+          </div>
+            
+          <div className={styles.formGroup}>
+            <label htmlFor="message">
+              Message *
+            </label>
+            <textarea 
+              id="message"
+              name="message"
+              required
+              placeholder="Tell us how we can help you..."
+            ></textarea>
+          </div>
+          
+          <div style={{ textAlign: 'center' }}>
+            <button 
+              type="submit" 
+              disabled={loading}
+              className={styles.submitButton}
+            >
+              {loading ? (
+                <>
+                  <LoadingSpinner size="small" text="" className="inlineSpinner" />
+                  Sending...
+                </>
+              ) : (
+                "Send Message"
+              )}
+            </button>
+          </div>
+        </form>
       </div>
-    </div>
+    </StandardPageLayout>
   );
 }

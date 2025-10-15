@@ -1,3 +1,5 @@
+import React, { useRef, useEffect, useState } from 'react';
+
 // Using inline SVG icons for better customization
 const MapPinIcon = () => (
   <svg className="w-7 h-7" fill="currentColor" viewBox="0 0 24 24">
@@ -58,6 +60,36 @@ const steps = [
 ];
 
 export default function Steps() {
+  const videoRef = useRef(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (videoRef.current) {
+            if (entry.isIntersecting) {
+              // Video is visible - don't autoplay, let user control
+            } else {
+              // Video is not visible - pause it
+              videoRef.current.pause();
+            }
+          }
+        });
+      },
+      { threshold: 0.5 }
+    );
+
+    if (videoRef.current) {
+      observer.observe(videoRef.current);
+    }
+
+    return () => {
+      if (videoRef.current) {
+        observer.unobserve(videoRef.current);
+      }
+    };
+  }, []);
+
   return (
     <section className="px-8 py-16 bg-white">
       <div className="max-w-7xl mx-auto">
@@ -80,31 +112,23 @@ export default function Steps() {
             </div>
           </div>
 
-          {/* Right Side - Video Placeholder */}
+          {/* Right Side - Video */}
           <div className="lg:pl-8 flex flex-col justify-center h-full">
             <p className="text-gray-700 text-xl mb-10 font-medium italic text-center lg:text-left">
               AS EASY AS ADDING A PRODUCT TO CART — RENT OUR LED SCREENS IN MINUTES.
             </p>
-            <div className="bg-gray-200 rounded-xl p-16 text-center relative overflow-hidden" style={{ minHeight: '500px' }}>
-              <div className="absolute inset-0">
-                <img 
-                  src="/Banner.png" 
-                  alt="Video Background" 
-                  className="w-full h-full object-cover opacity-20"
-                  onError={(e) => {
-                    e.target.style.display = 'none';
-                  }}
-                />
-                <div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-blue-100 opacity-50"></div>
-              </div>
-              <div className="relative z-10 flex flex-col justify-center h-full">
-                <div className="w-32 h-32 bg-white rounded-full flex items-center justify-center mx-auto mb-8 shadow-xl">
-                  <svg className="w-16 h-16 text-blue-600 ml-2" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M8 5v14l11-7z"/>
-                  </svg>
-                </div>
-                <p className="text-gray-700 font-medium text-xl">Watch a quick video to understand how it works and get started instantly.</p>
-              </div>
+            <div className="relative rounded-xl overflow-hidden shadow-2xl" style={{ minHeight: '500px' }}>
+              <video
+                ref={videoRef}
+                className="w-full h-full object-cover"
+                controls
+                playsInline
+                poster="/Banner.png"
+                style={{ minHeight: '500px' }}
+              >
+                <source src="/About AdScreenHub.mp4" type="video/mp4" />
+                Your browser does not support the video tag.
+              </video>
             </div>
           </div>
         </div>

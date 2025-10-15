@@ -1,12 +1,16 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import styles from '../styles/FAQ.module.css';
+import React, { useState } from 'react';
+import StandardPageLayout from '../components/StandardPageLayout';
+import styles from '../styles/StandardPageLayout.module.css';
 
 export default function FAQ() {
-  const navigate = useNavigate();
+  const [openItems, setOpenItems] = useState({});
 
-  const handleGoBack = () => {
-    navigate(-1);
+  const toggleItem = (categoryIndex, questionIndex) => {
+    const key = `${categoryIndex}-${questionIndex}`;
+    setOpenItems(prev => ({
+      ...prev,
+      [key]: !prev[key]
+    }));
   };
 
   const faqData = [
@@ -69,7 +73,7 @@ export default function FAQ() {
       questions: [
         {
           q: "What are the different packages?",
-          a: "AdScreenHub offers three packages based on the level of exposure you want:\n\n• Spark (1 day):\n  - Quick Visibility: Ideal low-cost choice for small and medium businesses to reach a large targeted audience\n  - Tactical/Moment Centric: Optimal to coincide with a trending moment (Ex: World Environment Day/Festivals)\n  - Occasion Focussed: Suitable for celebrating special occasions, birthdays, recognitions, and other personal or community milestones\n  - 700 ads\n\n• Impact (3 days):\n  - Cost Effective/Awareness Booster: Perfect to promote flash sales, limited-time offers, or grand openings\n  - Weekend Blitz: Flawless idea to drive last-minute attendance or awareness\n  - Momentum Gainer: Helps maintain campaign energy with consistent ad exposure\n  - 2100 ads\n\n• Thrive (5 days):\n  - Increased Exposure: Apt for multi-day campaigns synced with other media channels\n  - Behavioural reinforcement/Lasting Recall: Boost awareness as frequent repetition in a short period helps build recall and urgency\n  - Brand Amplification: Strengthen your brand's presence in the intended region\n  - 3500 ads\n\nTailored to support your campaign objectives, each plan offers varying levels of ad repetition, with advanced plans enabling more ad runs to drive stronger results."
+          a: "AdScreenHub offers three packages based on the level of exposure you want:\n\n• Spark (1 day): Features and benefits are dynamically loaded from our system\n\n• Impact (3 days): Features and benefits are dynamically loaded from our system\n\n• Thrive (5 days): Features and benefits are dynamically loaded from our system\n\nPlease check our booking page for the most up-to-date plan features and pricing."
         },
         {
           q: "Are there any additional costs or fees?",
@@ -143,16 +147,11 @@ export default function FAQ() {
   ];
 
   return (
-    <div className={styles.container}>
-      <div className={styles.header}>
-        <button onClick={handleGoBack} className={styles.backButton}>
-          ← Back
-        </button>
-        <h1 className={styles.title}>Frequently Asked Questions</h1>
-        <p className={styles.subtitle}>Find answers to common questions about AdScreenHub</p>
-      </div>
-
-      <div className={styles.intro}>
+    <StandardPageLayout
+      title="Frequently Asked Questions"
+      subtitle="Find answers to common questions about AdScreenHub"
+    >
+      <div className={styles.section}>
         <p>
           AdScreenHub.com ("AdScreenHub") is an AI-powered online advertising technology ("AdTech") platform based in 
           Bengaluru, India, revolutionizing the digital out-of-home (DOOH) advertising landscape by streamlining creative 
@@ -164,35 +163,54 @@ export default function FAQ() {
         </p>
       </div>
 
-      <div className={styles.scrollableContent}>
-        {faqData.map((category, categoryIndex) => (
-          <section key={categoryIndex} className={styles.categorySection}>
-            <h2 className={styles.categoryTitle}>{category.category}</h2>
-            {category.questions.map((item, qIndex) => (
+      {faqData.map((category, categoryIndex) => (
+        <div key={categoryIndex} className={styles.faqCategory}>
+          <h2 className={styles.faqCategory}>{category.category}</h2>
+          {category.questions.map((item, qIndex) => {
+            const key = `${categoryIndex}-${qIndex}`;
+            const isOpen = openItems[key];
+            return (
               <div key={qIndex} className={styles.faqItem}>
-                <h3 className={styles.question}>
-                  {categoryIndex * 10 + qIndex + 1}. {item.q}
-                </h3>
-                <div className={styles.answer}>
-                  {item.a.split('\n').map((line, lineIndex) => (
-                    <p key={lineIndex}>{line}</p>
-                  ))}
-                </div>
+                <button 
+                  className={styles.faqQuestion}
+                  onClick={() => toggleItem(categoryIndex, qIndex)}
+                >
+                  <span>{categoryIndex + 1}.{qIndex + 1} {item.q}</span>
+                  <span style={{ transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.3s ease' }}>
+                    ▼
+                  </span>
+                </button>
+                {isOpen && (
+                  <div className={styles.faqAnswer}>
+                    {item.a.split('\n').map((line, lineIndex) => (
+                      <p key={lineIndex}>{line}</p>
+                    ))}
+                  </div>
+                )}
               </div>
-            ))}
-          </section>
-        ))}
+            );
+          })}
+        </div>
+      ))}
 
-        <section className={styles.contactSection}>
-          <h2>Still Have Questions?</h2>
-          <p>
-            If you have any further questions, please feel free to contact us at{' '}
-            <a href="mailto:info@adscreenhub.com" className={styles.emailLink}>
-              info@adscreenhub.com
-            </a>
-          </p>
-        </section>
+      <div className={styles.section} style={{ 
+        backgroundColor: '#f0fdf4', 
+        border: '1px solid #bbf7d0', 
+        borderRadius: '0.75rem',
+        marginTop: '2rem'
+      }}>
+        <h2 style={{ color: '#166534', marginBottom: '1rem' }}>Still Have Questions?</h2>
+        <p style={{ color: '#15803d', margin: 0 }}>
+          If you have any further questions, please feel free to contact us at{' '}
+          <a href="mailto:info@adscreenhub.com" style={{ 
+            color: '#1319B3', 
+            textDecoration: 'underline',
+            fontWeight: '600'
+          }}>
+            info@adscreenhub.com
+          </a>
+        </p>
       </div>
-    </div>
+    </StandardPageLayout>
   );
 }

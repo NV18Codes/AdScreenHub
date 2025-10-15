@@ -27,7 +27,9 @@ export default function BookingFlow() {
 
   // New form fields
   const [address, setAddress] = useState('');
+  const [city, setCity] = useState('');
   const [state, setState] = useState('Karnataka'); // Default to Karnataka
+  const [zip, setZip] = useState('');
   const [gstApplicable, setGstApplicable] = useState(false);
   const [companyName, setCompanyName] = useState('');
   const [gstNumber, setGstNumber] = useState('');
@@ -90,6 +92,53 @@ export default function BookingFlow() {
       const durationDays = plan.duration_days || plan.duration || plan.days || 
                           (plan.name === 'IMPACT' ? 3 : plan.name === 'THRIVE' ? 5 : 1);
       
+      // Handle the specific API response structure: plan.features.features
+      let features = [];
+      if (plan.features && plan.features.features && Array.isArray(plan.features.features)) {
+        features = plan.features.features;
+      } else if (Array.isArray(plan.features)) {
+        features = plan.features;
+      } else if (typeof plan.features === 'string') {
+        features = [plan.features];
+      }
+      
+      // If no features from API, provide fallback features based on plan name
+      if (features.length === 0) {
+        const planName = (plan.name || '').toUpperCase();
+        if (planName === 'SPARK') {
+          features = [
+            "700 ad slots (10 sec/slot)",
+            "1 day power play",
+            "Quick visibility",
+            "Occasion Focussed",
+            "Moment Centric"
+          ];
+        } else if (planName === 'IMPACT') {
+          features = [
+            "2100 ad slots (10 sec/slot)",
+            "3 day rapid reach",
+            "Awareness Booster",
+            "Momentum Gainer",
+            "Weekend Blitz"
+          ];
+        } else if (planName === 'THRIVE') {
+          features = [
+            "3500 ad slots (10 sec/slot)",
+            "5 day peak push",
+            "Increased Exposure",
+            "Lasting Recall",
+            "Brand Amplification"
+          ];
+        } else {
+          // Generic fallback
+          features = [
+            `${durationDays} day display duration`,
+            "High-quality LED display",
+            "Professional ad placement"
+          ];
+        }
+      }
+      
       return {
         id: plan.id || '',
         name: (plan.name || '').toUpperCase(),
@@ -97,12 +146,8 @@ export default function BookingFlow() {
         duration: `${durationDays} day${durationDays > 1 ? 's' : ''}`,
         duration_days: durationDays, // Keep numeric value for calculations
         description: plan.description || '',
-        adSlots: 1, // Default to 1 slot per plan
-        features: plan.features?.features || [
-          `${durationDays} day display duration`,
-          `High-quality LED display`,
-          `Professional ad placement`
-        ]
+        adSlots: plan.features?.slots || 1, // Use slots from API response
+        features: features
       };
     });
   };
@@ -615,6 +660,20 @@ export default function BookingFlow() {
       return;
     }
     
+    if (!city.trim()) {
+      setIncompleteStep('order-details');
+      setError('Please enter your city');
+      setConfirmingOrder(false);
+      return;
+    }
+    
+    if (!zip.trim() || zip.length !== 6) {
+      setIncompleteStep('order-details');
+      setError('Please enter a valid 6-digit pincode');
+      setConfirmingOrder(false);
+      return;
+    }
+    
     if (gstApplicable && (!companyName.trim() || !gstNumber.trim())) {
       setIncompleteStep('order-details');
       setError('Please fill in all GST details');
@@ -657,9 +716,15 @@ export default function BookingFlow() {
         baseAmount: selectedPlan.price || 0,
         price: selectedPlan.price || 0, // Send base price, let backend calculate GST
         address: address,
-        city: '', // You might want to extract from address or add a city field
+        city: city,
         state: state, // State selection for GST calculation
-        zip: '', // You might want to add a zip field
+        zip: zip,
+        deliveryAddress: {
+          street: address,
+          city: city,
+          state: state,
+          zip: zip
+        },
         gstApplicable: true, // Always true now since we always add GST
         companyName: companyName || 'N/A', // Provide default if not filled
         gstNumber: gstNumber || 'N/A', // Provide default if not filled
@@ -897,15 +962,24 @@ export default function BookingFlow() {
         <div className={`${styles.step} ${incompleteStep === 'date-selection' ? styles.incompleteStep : ''}`} data-step="1">
           <h2>Step1: Select Start Date</h2>
           <div className={styles.dateSelection}>
+            <div className={styles.dateInputContainer}>
               <input
                 type="date"
                 value={selectedDate}
-              onChange={(e) => handleDateSelect(e.target.value)}
+                onChange={(e) => handleDateSelect(e.target.value)}
                 min={new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]}
                 className={styles.dateInput}
+                placeholder="Select Date"
               />
+              <div className={styles.calendarIcon}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M8 2V5M16 2V5M3.5 9.09H20.5M21 8.5V17C21 20 19.5 22 16 22H8C4.5 22 3 20 3 17V8.5C3 5.5 4.5 3.5 8 3.5H16C19.5 3.5 21 5.5 21 8.5Z" stroke="#6B7280" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M15.6947 13.7H15.7037M15.6947 16.7H15.7037M11.9955 13.7H12.0045M11.9955 16.7H12.0045M8.29431 13.7H8.30329M8.29431 16.7H8.30329" stroke="#6B7280" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </div>
             </div>
           </div>
+        </div>
 
         {/* Step 2: Location Selection */}
         {selectedDate && (
@@ -1264,6 +1338,17 @@ export default function BookingFlow() {
               </div>
 
               <div className={styles.formGroup}>
+                <label>City <span className={styles.required}>*</span></label>
+                <input
+                  type="text"
+                  value={city}
+                  onChange={(e) => setCity(e.target.value)}
+                  placeholder="Enter your city"
+                  className={styles.input}
+                />
+              </div>
+
+              <div className={styles.formGroup}>
                 <label>State <span className={styles.required}>*</span></label>
                 <select
                   value={state}
@@ -1301,6 +1386,21 @@ export default function BookingFlow() {
                   <option value="Delhi">Delhi</option>
                   <option value="Puducherry">Puducherry</option>
                 </select>
+              </div>
+
+              <div className={styles.formGroup}>
+                <label>Zip Code (Pincode) <span className={styles.required}>*</span></label>
+                <input
+                  type="text"
+                  value={zip}
+                  onChange={(e) => {
+                    // Only allow numbers and limit to 6 digits
+                    const cleanedValue = e.target.value.replace(/\D/g, '').slice(0, 6);
+                    setZip(cleanedValue);
+                  }}
+                  placeholder="Enter your pincode"
+                  className={styles.input}
+                />
               </div>
 
               <div className={styles.formGroup}>
@@ -1470,7 +1570,7 @@ export default function BookingFlow() {
 
                     <button
               onClick={handleConfirmOrder}
-              disabled={confirmingOrder || !designFile || !fileUploaded || !address.trim() || !termsAccepted}
+              disabled={confirmingOrder || !designFile || !fileUploaded || !address.trim() || !city.trim() || !zip.trim() || zip.length !== 6 || !termsAccepted}
               className={styles.confirmButton}
             >
               {confirmingOrder ? (

@@ -1,26 +1,13 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import styles from '../styles/CancellationRefund.module.css';
+import StandardPageLayout from '../components/StandardPageLayout';
+import styles from '../styles/StandardPageLayout.module.css';
 
 export default function CancellationRefund() {
-  const navigate = useNavigate();
-
-  const handleGoBack = () => {
-    // Go back to the previous page
-    navigate(-1);
-  };
-
   return (
-    <div className={styles.container}>
-      <div className={styles.header}>
-        <button onClick={handleGoBack} className={styles.backButton}>
-          ← Back
-        </button>
-        <h1 className={styles.title}>Cancellation and Refund Policy</h1>
-        <p className={styles.subtitle}>Transparent and fair advertising process for all clients</p>
-      </div>
-      
-      <div className={styles.scrollableContent}>
+    <StandardPageLayout
+      title="Cancellation and Refund Policy"
+      subtitle="Transparent and fair advertising process for all clients"
+    >
         <section className={styles.section}>
           <h2>Advertisement Review and Rejection</h2>
           <p>
@@ -79,19 +66,27 @@ export default function CancellationRefund() {
           </p>
         </section>
 
-        <section className={styles.section}>
-          <h2>Still Have Questions?</h2>
-          <p>
+        <section className={styles.section} style={{ 
+          backgroundColor: '#f0fdf4', 
+          border: '1px solid #bbf7d0', 
+          borderRadius: '0.75rem',
+          marginTop: '2rem'
+        }}>
+          <h2 style={{ color: '#166534', marginBottom: '1rem' }}>Still Have Questions?</h2>
+          <p style={{ color: '#15803d', margin: 0 }}>
             For questions regarding cancellations, refunds, or ad revisions, please feel free to contact us at{' '}
-            <a href="mailto:info@adscreenhub.com" className={styles.emailLink}>
+            <a href="mailto:info@adscreenhub.com" style={{ 
+              color: '#1319B3', 
+              textDecoration: 'underline',
+              fontWeight: '600'
+            }}>
               info@adscreenhub.com
             </a>
           </p>
-          <p className={styles.lastUpdated}>
+          <p style={{ color: '#15803d', fontSize: '0.875rem', marginTop: '1rem', marginBottom: 0 }}>
             Last updated: October 2025
           </p>
         </section>
-      </div>
-    </div>
+    </StandardPageLayout>
   );
 }

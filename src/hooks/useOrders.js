@@ -36,11 +36,15 @@ const processOrdersData = (data) => {
     endDate: order.end_date,
     end_date: order.end_date, // Keep original for compatibility
     displayDate: order.start_date, // For backward compatibility
-    totalAmount: order.total_cost || order.final_amount,
+    totalAmount: order.final_amount || order.total_cost,
     total_cost: order.total_cost, // Keep original for compatibility
     final_amount: order.final_amount, // Keep original for compatibility
-    amount: order.total_cost || order.final_amount, // For backward compatibility
-    price: order.total_cost || order.final_amount, // For backward compatibility
+    amount: order.final_amount || order.total_cost, // For backward compatibility
+    price: order.final_amount || order.total_cost, // For backward compatibility
+    
+    // Backend pricing - calculate base amount from total_cost (which includes GST)
+    baseAmount: order.total_cost ? Math.round(order.total_cost / 1.18) : 0, // Calculate base price by removing GST
+    gstAmount: order.total_cost ? Math.round(order.total_cost - (order.total_cost / 1.18)) : 0, // Calculate GST amount
     status: order.status,
     razorpayOrderId: order.razorpay_order_id,
     razorpay_order_id: order.razorpay_order_id, // For backward compatibility
@@ -67,7 +71,8 @@ const processOrdersData = (data) => {
     
     // NEW: Image URLs and remarks
     creative_image_url: order.creative_image_url,
-    ad_desplay_url: order.ad_desplay_url,
+    ad_display_url: order.ad_display_url,
+    ad_desplay_url: order.ad_desplay_url, // Keep typo for backward compatibility
     remarks: order.remarks,
     
     // Plan information (for backward compatibility)
@@ -93,7 +98,24 @@ const processOrdersData = (data) => {
     adDisplayPath: order.adDisplayPath,
     ad_desplay_url: order.ad_desplay_url,
     ad_display_url: order.ad_display_url,
-    admin_preview_url: order.admin_preview_url
+    admin_preview_url: order.admin_preview_url,
+    
+    // Additional fields from API response
+    screenName: order.locations?.name || `Location ${order.location_id}`,
+    locationDescription: order.locations?.description || '',
+    locationSize: order.locations?.size || '',
+    locationPixels: order.locations?.pixels || '',
+    locationOrientation: order.locations?.orientation || '',
+    locationAspectRatio: order.locations?.aspect_ratio || '',
+    locationDisplayImageUrl: order.locations?.display_image_url || '',
+    locationTotalSlots: order.locations?.total_slots || 0,
+    
+    // Creative information
+    creativeFileName: order.creatives?.[0]?.file_name || '',
+    creativeFilePath: order.creatives?.[0]?.file_path || '',
+    creativeImageUrl: order.creatives?.[0]?.image_url || order.creative_image_url,
+    creativeUploadedAt: order.creatives?.[0]?.uploaded_at || '',
+    creativeDocType: order.creatives?.[0]?.doc_type || 'design'
   }));
 };
 
@@ -323,7 +345,7 @@ const createOrder = async (orderData) => {
         id: apiOrderId || generateOrderId(),
         userId: userId,
         orderDate: new Date().toISOString().split('T')[0],
-        status: ORDER_STATUS.PAYMENT_FAILED,
+        status: orderData_from_api.status || ORDER_STATUS.PENDING_PAYMENT,
         screenName: orderData.screenName || 'Unknown Screen',
         location: orderData.location || 'Unknown Location',
         adminProofImage: null,
@@ -331,13 +353,29 @@ const createOrder = async (orderData) => {
         // API response data - EXTRACT FROM CORRECT LOCATION
         razorpayOrderId: orderData_from_api.razorpay_order_id || razorpayOrderData?.id,
         razorpay_order_id: orderData_from_api.razorpay_order_id || razorpayOrderData?.id,
-        totalAmount: orderData_from_api.total_cost || orderData_from_api.final_amount || orderData_from_api.totalAmount || baseAmount,
-        amount: orderData_from_api.total_cost || orderData_from_api.final_amount || orderData_from_api.totalAmount || baseAmount,
-        price: orderData_from_api.total_cost || orderData_from_api.final_amount || orderData_from_api.totalAmount || baseAmount,
+        totalAmount: orderData_from_api.final_amount || orderData_from_api.total_cost || orderData_from_api.totalAmount || baseAmount,
+        amount: orderData_from_api.final_amount || orderData_from_api.total_cost || orderData_from_api.totalAmount || baseAmount,
+        price: orderData_from_api.final_amount || orderData_from_api.total_cost || orderData_from_api.totalAmount || baseAmount,
         orderUid: orderData_from_api.order_uid || orderData_from_api.orderUid,
         order_uid: orderData_from_api.order_uid || orderData_from_api.orderUid,
-        createdAt: new Date().toISOString(),
+        createdAt: orderData_from_api.created_at || new Date().toISOString(),
+        updatedAt: orderData_from_api.updated_at || new Date().toISOString(),
         apiSyncPending: false,
+        
+        // Additional fields from API response
+        location_id: orderData_from_api.location_id,
+        plan_id: orderData_from_api.plan_id,
+        start_date: orderData_from_api.start_date,
+        end_date: orderData_from_api.end_date,
+        total_cost: orderData_from_api.total_cost,
+        final_amount: orderData_from_api.final_amount,
+        delivery_address: orderData_from_api.delivery_address,
+        gst_info: orderData_from_api.gst_info,
+        coupon_code: orderData_from_api.coupon_code,
+        creative_image_url: orderData_from_api.creative_image_url,
+        ad_display_url: orderData_from_api.ad_display_url,
+        remarks: orderData_from_api.remarks,
+        
         // Store full API response for reference
         apiResponse: response.data
       };

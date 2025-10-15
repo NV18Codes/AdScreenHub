@@ -23,6 +23,35 @@ export default function AdminOrders() {
   const [uploading, setUploading] = useState(false);
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
 
+  const getStatusClass = (status) => {
+    const trimmedStatus = status ? status.trim() : '';
+    
+    switch (trimmedStatus) {
+      case 'Pending Payment':
+        return styles.statusPendingPayment;
+      case 'Payment Failed':
+        return styles.statusPaymentFailed;
+      case 'Pending Approval':
+        return styles.statusPendingApproval;
+      case 'Design Revise':
+        return styles.statusDesignRevise;
+      case 'Pending Display Approval':
+        return styles.statusPendingDisplay;
+      case 'In Display':
+        return styles.statusInDisplay;
+      case 'Completed':
+        return styles.statusCompleted;
+      case 'Cancelled - Forfeited':
+        return styles.statusCancelledDisplay;
+      case 'Cancelled':
+        return styles.statusCancelledDisplay;
+      case 'Cancelled - Refunded':
+        return styles['statusCancelled-Refunded'];
+      default:
+        return styles.statusPendingPayment;
+    }
+  };
+
   const showToast = (message, type = 'success') => {
     setToast({ show: true, message, type });
     setTimeout(() => setToast({ show: false, message: '', type: 'success' }), 4000);
@@ -196,7 +225,7 @@ export default function AdminOrders() {
     needsRevision: allOrders.filter(o => o.status === ORDER_STATUS.DESIGN_REVISE).length,
     totalRevenue: allOrders
       .filter(o => [ORDER_STATUS.IN_DISPLAY, ORDER_STATUS.COMPLETED, ORDER_STATUS.DESIGN_REVISE].includes(o.status))
-      .reduce((sum, o) => sum + (o.total_cost || o.final_amount || o.totalAmount || 0), 0)
+      .reduce((sum, o) => sum + (o.final_amount || o.total_cost || o.totalAmount || 0), 0)
   };
 
   // All possible statuses
@@ -432,7 +461,7 @@ export default function AdminOrders() {
                       {formatDate(order.created_at)}
                     </p>
                   </div>
-                  <span className={`${styles.status} ${styles[`status${order.status?.replace(/\s+/g, '')}`]}`}>
+                  <span className={`${styles.status} ${getStatusClass(order.status)}`}>
                     {order.status}
                   </span>
                 </div>
@@ -455,17 +484,72 @@ export default function AdminOrders() {
                     <span className={styles.value}>{order.plans?.name || 'N/A'}</span>
                   </div>
                   <div className={styles.detailRow}>
-                    <span className={styles.label}>📅 Display Date:</span>
-                    <span className={styles.value}>{formatDate(order.start_date)}</span>
+                    <span className={styles.label}>📅 Start Date:</span>
+                    <span className={styles.value}>{order.start_date || 'N/A'}</span>
                   </div>
                   <div className={styles.detailRow}>
-                    <span className={styles.label}>Amount:</span>
+                    <span className={styles.label}>📅 End Date:</span>
+                    <span className={styles.value}>{order.end_date || 'N/A'}</span>
+                  </div>
+                  <div className={styles.detailRow}>
+                    <span className={styles.label}>₹ Total Cost:</span>
                     <span className={styles.valueAmount}>₹{(order.total_cost || 0).toLocaleString('en-IN')}</span>
                   </div>
+                  <div className={styles.detailRow}>
+                    <span className={styles.label}>💳 Final Amount:</span>
+                    <span className={styles.valueAmount}>₹{(order.final_amount || 0).toLocaleString('en-IN')}</span>
+                  </div>
+                  <div className={styles.detailRow}>
+                    <span className={styles.label}>💳 Payment ID:</span>
+                    <span className={styles.value}>{order.razorpay_payment_id || 'N/A'}</span>
+                  </div>
+                  <div className={styles.detailRow}>
+                    <span className={styles.label}>🏠 Delivery Address:</span>
+                    <span className={styles.value}>
+                      {order.delivery_address ? 
+                        (typeof order.delivery_address === 'string' ? 
+                          JSON.parse(order.delivery_address) : 
+                          order.delivery_address
+                        )?.street + ', ' + 
+                        (typeof order.delivery_address === 'string' ? 
+                          JSON.parse(order.delivery_address) : 
+                          order.delivery_address
+                        )?.city + ', ' + 
+                        (typeof order.delivery_address === 'string' ? 
+                          JSON.parse(order.delivery_address) : 
+                          order.delivery_address
+                        )?.state + ' - ' + 
+                        (typeof order.delivery_address === 'string' ? 
+                          JSON.parse(order.delivery_address) : 
+                          order.delivery_address
+                        )?.zip : 'N/A'
+                      }
+                    </span>
+                  </div>
+                  <div className={styles.detailRow}>
+                    <span className={styles.label}>🏢 GST Info:</span>
+                    <span className={styles.value}>{order.gst_info || 'N/A'}</span>
+                  </div>
+                  {order.coupon_code && (
+                    <div className={styles.detailRow}>
+                      <span className={styles.label}>🎟️ Coupon:</span>
+                      <span className={styles.value}>{order.coupon_code}</span>
+                    </div>
+                  )}
                   {order.remarks && (
                     <div className={styles.detailRow}>
                       <span className={styles.label}>💬 Remarks:</span>
                       <span className={styles.value}>{order.remarks}</span>
+                    </div>
+                  )}
+                  {order.creative_image_url && (
+                    <div className={styles.detailRow}>
+                      <span className={styles.label}>🎨 Creative:</span>
+                      <span className={styles.value}>
+                        <a href={order.creative_image_url} target="_blank" rel="noopener noreferrer" className={styles.creativeLink}>
+                          View Creative
+                        </a>
+                      </span>
                     </div>
                   )}
                 </div>
@@ -556,9 +640,9 @@ export default function AdminOrders() {
                     onChange={(e) => setUpdateStatus(e.target.value)}
                     className={styles.select}
                   >
-                    {ALL_ORDER_STATUSES.map(status => (
-                      <option key={status} value={status}>{status}</option>
-                    ))}
+                    <option value="Design Revise">Design Revise</option>
+                    <option value="Pending Display Approval">Pending Display Approval</option>
+                    <option value="Cancelled - Refunded">Cancelled - Refunded</option>
                   </select>
                 </div>
 

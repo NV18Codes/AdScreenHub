@@ -244,6 +244,12 @@ export default function Dashboard() {
       city: '', // You might want to extract from address or add a city field
       state: '', // You might want to add a state field
       zip: '', // You might want to add a zip field
+      deliveryAddress: {
+        street: address,
+        city: '', // Will be empty for Dashboard orders
+        state: '', // Will be empty for Dashboard orders
+        zip: '' // Will be empty for Dashboard orders
+      },
       gstApplicable: gstApplicable,
       companyName: companyName,
       gstNumber: gstNumber,
@@ -556,7 +562,7 @@ export default function Dashboard() {
                     <span className={`${styles.statusBadge} ${getStatusClass(order.status)}`}>
                       {order.status}
                     </span>
-                    <p className={styles.orderAmount}>₹{(order.total_cost || order.final_amount || order.totalAmount || order.amount || 0).toLocaleString('en-IN')}</p>
+                    <p className={styles.orderAmount}>₹{(order.final_amount || order.total_cost || order.totalAmount || order.amount || 0).toLocaleString('en-IN')}</p>
                   </div>
                 </div>
               ))
@@ -1040,15 +1046,15 @@ export default function Dashboard() {
                   </div>
                   <div className={styles.orderItem}>
                     <span>Base Price:</span>
-                    <span className={styles.orderAmount}>₹{(newOrder.baseAmount || newOrder.price || 7999).toLocaleString('en-IN')}</span>
+                    <span className={styles.orderAmount}>₹{(newOrder.baseAmount || newOrder.total_cost || 0).toLocaleString('en-IN')}</span>
                   </div>
                   <div className={styles.orderItem}>
                     <span>GST (18%):</span>
-                    <span className={styles.orderAmount}>₹{Math.round((newOrder.baseAmount || newOrder.price || 7999) * 0.18).toLocaleString('en-IN')}</span>
+                    <span className={styles.orderAmount}>₹{(newOrder.gstAmount || 0).toLocaleString('en-IN')}</span>
                   </div>
                   <div className={styles.orderItem}>
                     <span>Total Amount:</span>
-                    <span className={styles.orderAmount}>₹{(newOrder.total_cost || newOrder.final_amount || newOrder.totalAmount || 0).toLocaleString('en-IN')}</span>
+                    <span className={styles.orderAmount}>₹{(newOrder.final_amount || newOrder.totalAmount || 0).toLocaleString('en-IN')}</span>
                   </div>
                   <div className={styles.orderItem}>
                     <span>Status:</span>

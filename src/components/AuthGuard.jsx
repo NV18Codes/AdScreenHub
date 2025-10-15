@@ -24,7 +24,7 @@ export const ProtectedRoute = ({ children, adminOnly = false }) => {
 
   // If user is not authenticated and trying to access protected pages, redirect to login
   if (!isAuthenticated()) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
+    return <Navigate to="/auth" state={{ from: location }} replace />;
   }
 
   // If route is admin-only and user is not admin, redirect to dashboard

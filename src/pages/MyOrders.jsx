@@ -386,26 +386,29 @@ export default function MyOrders() {
 
 
   const getStatusColorClass = (status) => {
-    switch (status) {
-      case ORDER_STATUS.PENDING_PAYMENT:
+    // Handle both exact matches and trimmed matches
+    const trimmedStatus = status ? status.trim() : '';
+    
+    switch (trimmedStatus) {
+      case 'Pending Payment':
         return styles.statusPending;
-      case ORDER_STATUS.PAYMENT_FAILED:
+      case 'Payment Failed':
         return styles.statusPaymentFailed;
-      case ORDER_STATUS.PENDING_APPROVAL:
-        return styles.statusPending;
-      case ORDER_STATUS.DESIGN_REVISE:
-        return styles.statusRevision;
-      case ORDER_STATUS.PENDING_DISPLAY_APPROVAL:
+      case 'Pending Approval':
+        return styles.statusPendingApproval;
+      case 'Design Revise':
+        return styles.statusDesignRevise;
+      case 'Pending Display Approval':
         return styles.statusPendingDisplayApproval;
-      case ORDER_STATUS.IN_DISPLAY:
+      case 'In Display':
         return styles.statusActive;
-      case ORDER_STATUS.COMPLETED:
+      case 'Completed':
         return styles.statusCompleted;
-      case ORDER_STATUS.CANCELLED_FORFEITED:
+      case 'Cancelled - Forfeited':
         return styles.statusCancelledForfeited;
-      case ORDER_STATUS.CANCELLED:
+      case 'Cancelled':
         return styles.statusCancelled;
-      case ORDER_STATUS.CANCELLED_REFUNDED:
+      case 'Cancelled - Refunded':
         return styles.statusRefund;
       default:
         return styles.statusPending;
@@ -604,15 +607,15 @@ export default function MyOrders() {
                       </div>
                       <div className={styles.infoRow}>
                         <span className={styles.infoLabel}>Base Price:</span>
-                        <span className={styles.infoValue}>{formatCurrency(order.baseAmount || order.price || order.plans?.price || 7999)}</span>
+                        <span className={styles.infoValue}>{formatCurrency(order.baseAmount || order.total_cost || 0)}</span>
                       </div>
                       <div className={styles.infoRow}>
                         <span className={styles.infoLabel}>GST (18%):</span>
-                        <span className={styles.infoValue}>{formatCurrency(Math.round((order.baseAmount || order.price || order.plans?.price || 7999) * 0.18))}</span>
+                        <span className={styles.infoValue}>{formatCurrency(order.gstAmount || 0)}</span>
                       </div>
                       <div className={styles.infoRow}>
                         <span className={styles.infoLabel}>Total Amount:</span>
-                        <span className={styles.infoValue}><strong>{formatCurrency(order.total_cost || order.final_amount || order.totalAmount || order.amount || 0)}</strong></span>
+                        <span className={styles.infoValue}><strong>{formatCurrency(order.final_amount || order.totalAmount || 0)}</strong></span>
                       </div>
                       <div className={styles.infoRow}>
                         <span className={styles.infoLabel}>Ordered:</span>
@@ -1072,7 +1075,7 @@ export default function MyOrders() {
             </div>
           </div>
         );
-      })()}
+                })}
 
       {/* Toast Notification */}
       {toast.show && (

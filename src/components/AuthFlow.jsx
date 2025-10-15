@@ -406,11 +406,11 @@ export default function AuthFlow() {
         localStorage.setItem('authToken', token);
         localStorage.setItem('token', token);
       
-      // Clear verification tokens
-      localStorage.removeItem('emailToken');
-      localStorage.removeItem('phoneToken');
-      localStorage.removeItem('pendingEmail');
-      
+        // Clear verification tokens
+        localStorage.removeItem('emailToken');
+        localStorage.removeItem('phoneToken');
+        localStorage.removeItem('pendingEmail');
+        
         // Use the login function from AuthContext with API response data
         const loginSuccess = login(userData, token);
         if (!loginSuccess) {
@@ -418,6 +418,9 @@ export default function AuthFlow() {
           setLoading(false);
           return;
         }
+        
+        // Force a small delay to ensure state updates
+        await new Promise(resolve => setTimeout(resolve, 100));
       } else {
         setError("Registration failed. Please try again.");
         setLoading(false);
@@ -436,8 +439,9 @@ export default function AuthFlow() {
         const storedUserData = JSON.parse(localStorage.getItem('user') || '{}');
         const isAdmin = storedUserData.user_role === 'admin' || storedUserData.role === 'admin' || storedUserData.is_admin === true;
         
-        navigate(isAdmin ? '/admin/orders' : '/dashboard', { replace: true });
-      }, 100);
+        // Force reload to ensure fresh state
+        window.location.href = isAdmin ? '/admin/orders' : '/dashboard';
+      }, 200);
       
       // Clear password fields for security
       setPassword("");

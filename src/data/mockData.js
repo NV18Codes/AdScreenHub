@@ -82,13 +82,7 @@ export const mockPlans = [
     price: 4999,
     duration: "1 day",
     adSlots: 700,
-    features: [
-      "700 ad slots (10 sec/slot)",
-      "1 day power play",
-      "Quick visibility",
-      "Occasion Focussed",
-      "Moment Centric"
-    ]
+    features: []
   },
   {
     id: 2,
@@ -96,13 +90,7 @@ export const mockPlans = [
     price: 13999,
     duration: "3 days",
     adSlots: 2100,
-    features: [
-      "2100 ad slots (10 sec/slot)",
-      "3 day rapid reach",
-      "Awareness Booster",
-      "Momentum Gainer",
-      "Weekend Blitz"
-    ]
+    features: []
   },
   {
     id: 3,
@@ -110,13 +98,7 @@ export const mockPlans = [
     price: 22999,
     duration: "5 days",
     adSlots: 3500,
-    features: [
-      "3500 ad slots (10 sec/slot)",
-      "5 day peak push",
-      "Increased Exposure",
-      "Lasting Recall",
-      "Brand Amplification"
-    ]
+    features: []
   }
 ];
 

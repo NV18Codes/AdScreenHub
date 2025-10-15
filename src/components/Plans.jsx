@@ -4,19 +4,37 @@ const plans = [
     name: "SPARK",
     price: "₹4,999",
     duration: "1 day",
-    features: ["700 ad slots (10 sec/slot)", "1 day power play", "Quick visibility", "Occasion Focussed", "Moment Centric"],
+    features: [
+      "700 ad slots (10 sec/slot)",
+      "1 day power play",
+      "Quick visibility",
+      "Occasion Focussed",
+      "Moment Centric"
+    ],
   },
   {
     name: "IMPACT",
     price: "₹13,999",
     duration: "3 days",
-    features: ["2100 ad slots (10 sec/slot)", "3 day rapid reach", "Awareness Booster", "Momentum Gainer", "Weekend Blitz"],
+    features: [
+      "2100 ad slots (10 sec/slot)",
+      "3 day rapid reach",
+      "Awareness Booster",
+      "Momentum Gainer",
+      "Weekend Blitz"
+    ],
   },
   {
     name: "THRIVE",
     price: "₹22,999",
     duration: "5 days",
-    features: ["3500 ad slots (10 sec/slot)", "5 day peak push", "Increased Exposure", "Lasting Recall", "Brand Amplification"],
+    features: [
+      "3500 ad slots (10 sec/slot)",
+      "5 day peak push",
+      "Increased Exposure",
+      "Lasting Recall",
+      "Brand Amplification"
+    ],
   },
 ];
 

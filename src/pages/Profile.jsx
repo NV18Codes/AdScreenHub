@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { API_BASE_URL, authAPI } from '../config/api';
-import { validateGSTNumber } from '../utils/validation';
 import Toast from '../components/Toast';
 import styles from '../styles/Profile.module.css';
 
@@ -33,16 +32,14 @@ export default function Profile() {
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
-    phoneNumber: '',
-    gstNumber: ''
+    phoneNumber: ''
   });
   
   // Track original values to detect changes
   const [originalFormData, setOriginalFormData] = useState({
     fullName: '',
     email: '',
-    phoneNumber: '',
-    gstNumber: ''
+    phoneNumber: ''
   });
   
   // Password change states
@@ -78,14 +75,6 @@ export default function Profile() {
         ...prev,
         [name]: cleanedValue
       }));
-    } else if (name === 'gstNumber') {
-      // Convert to uppercase and limit to 15 characters
-      const cleanedValue = value.toUpperCase().slice(0, 15);
-      
-      setFormData(prev => ({
-        ...prev,
-        [name]: cleanedValue
-      }));
     } else {
       setFormData(prev => ({
         ...prev,
@@ -111,7 +100,7 @@ export default function Profile() {
     }));
   };
 
-  // Fetch complete profile data from backend (includes phone_number and gst_info)
+  // Fetch complete profile data from backend (includes phone_number)
   useEffect(() => {
     const fetchProfile = async () => {
       try {
@@ -130,7 +119,6 @@ export default function Profile() {
               fullName: user.full_name || user.fullName || '',
               email: user.email || '',
               phoneNumber: user.phone_number || user.phoneNumber || '',
-              gstNumber: user.gst_info || user.gstInfo || ''
             };
             setFormData(updatedData);
             setOriginalFormData(updatedData);
@@ -147,7 +135,6 @@ export default function Profile() {
             fullName: profileData.full_name || '',
             email: profileData.email || '',
             phoneNumber: profileData.phone_number || '',
-            gstNumber: profileData.gst_info || ''
           };
           
           setFormData(updatedData);
@@ -162,8 +149,6 @@ export default function Profile() {
               email: profileData.email,
               phoneNumber: profileData.phone_number,
               phone_number: profileData.phone_number,
-              gstInfo: profileData.gst_info,
-              gst_info: profileData.gst_info
             });
           }
         } else {
@@ -173,7 +158,6 @@ export default function Profile() {
               fullName: user.full_name || user.fullName || '',
               email: user.email || '',
               phoneNumber: user.phone_number || user.phoneNumber || '',
-              gstNumber: user.gst_info || user.gstInfo || ''
             };
             setFormData(updatedData);
             setOriginalFormData(updatedData);
@@ -186,7 +170,6 @@ export default function Profile() {
             fullName: user.full_name || user.fullName || '',
             email: user.email || '',
             phoneNumber: user.phone_number || user.phoneNumber || '',
-            gstNumber: user.gst_info || user.gstInfo || ''
           };
           setFormData(updatedData);
           setOriginalFormData(updatedData);
@@ -211,10 +194,9 @@ export default function Profile() {
       const emailChanged = formData.email !== originalFormData.email;
       const phoneChanged = formData.phoneNumber !== originalFormData.phoneNumber;
       const nameChanged = formData.fullName !== originalFormData.fullName;
-      const gstChanged = formData.gstNumber !== originalFormData.gstNumber;
       
       // If no changes were made
-      if (!emailChanged && !phoneChanged && !nameChanged && !gstChanged) {
+      if (!emailChanged && !phoneChanged && !nameChanged) {
         setErrorMessage('No changes detected');
         setIsEditing(false);
         return;
@@ -235,7 +217,7 @@ export default function Profile() {
         }
       }
       
-      // If email changed (with or without name/GST), start email OTP process
+      // If email changed (with or without name), start email OTP process
       if (emailChanged) {
         const emailResponse = await fetch(`${API_BASE_URL}/auth/start-email-update`, {
           method: 'POST',
@@ -257,7 +239,7 @@ export default function Profile() {
         }
       }
       
-      // If phone changed (with or without name/GST), start phone OTP process
+      // If phone changed (with or without name), start phone OTP process
       if (phoneChanged) {
         const phoneResponse = await fetch(`${API_BASE_URL}/auth/start-phone-update`, {
           method: 'POST',
@@ -286,11 +268,10 @@ export default function Profile() {
         }
       }
       
-      // Update name and/or GST (no OTP required)
-      if (nameChanged || gstChanged) {
+      // Update name (no OTP required)
+      if (nameChanged) {
         const updatePayload = {
           fullName: formData.fullName,
-          gstInfo: formData.gstNumber
         };
         
         const response = await fetch(`${API_BASE_URL}/auth/profile`, {
@@ -312,9 +293,6 @@ export default function Profile() {
               ...user, 
               fullName: formData.fullName, 
               full_name: formData.fullName,
-              gstInfo: formData.gstNumber, 
-              gst_info: formData.gstNumber,
-              gstNumber: formData.gstNumber 
             });
           }
         } else {
@@ -351,11 +329,10 @@ export default function Profile() {
       
       const data = await response.json();
       if (data.success) {
-        // Step 2: If name or GST also changed, update those
+        // Step 2: If name also changed, update that
         const nameChanged = formData.fullName !== originalFormData.fullName;
-        const gstChanged = formData.gstNumber !== originalFormData.gstNumber;
         
-        if (nameChanged || gstChanged) {
+        if (nameChanged) {
           const profileResponse = await fetch(`${API_BASE_URL}/auth/profile`, {
             method: 'PUT',
             headers: {
@@ -364,7 +341,6 @@ export default function Profile() {
             },
             body: JSON.stringify({
               fullName: formData.fullName,
-              gstInfo: formData.gstNumber
             })
           });
           
@@ -380,7 +356,7 @@ export default function Profile() {
         setIsEditing(false);
         setOriginalFormData(formData); // Update original data after successful save
         if (updateUser) {
-          updateUser({ ...user, phoneNumber: newPhone, phone_number: newPhone, fullName: formData.fullName, full_name: formData.fullName, gstInfo: formData.gstNumber, gst_info: formData.gstNumber });
+          updateUser({ ...user, phoneNumber: newPhone, phone_number: newPhone, fullName: formData.fullName, full_name: formData.fullName });
         }
       } else {
         throw new Error(data.message || 'Invalid OTP');
@@ -415,11 +391,10 @@ export default function Profile() {
       
       const data = await response.json();
       if (data.success) {
-        // Step 2: If name or GST also changed, update those
+        // Step 2: If name also changed, update that
         const nameChanged = formData.fullName !== originalFormData.fullName;
-        const gstChanged = formData.gstNumber !== originalFormData.gstNumber;
         
-        if (nameChanged || gstChanged) {
+        if (nameChanged) {
           const profileResponse = await fetch(`${API_BASE_URL}/auth/profile`, {
             method: 'PUT',
             headers: {
@@ -428,7 +403,6 @@ export default function Profile() {
             },
             body: JSON.stringify({
               fullName: formData.fullName,
-              gstInfo: formData.gstNumber
             })
           });
           
@@ -444,7 +418,7 @@ export default function Profile() {
         setIsEditing(false);
         setOriginalFormData(formData); // Update original data after successful save
         if (updateUser) {
-          updateUser({ ...user, email: newEmail, fullName: formData.fullName, full_name: formData.fullName, gstInfo: formData.gstNumber, gst_info: formData.gstNumber });
+          updateUser({ ...user, email: newEmail, fullName: formData.fullName, full_name: formData.fullName });
         }
       } else {
         throw new Error(data.message || 'Invalid OTP');
@@ -680,45 +654,6 @@ export default function Profile() {
                 )}
               </div>
 
-              <div className={styles.field}>
-                <label>GST Number <span className={styles.optionalBadge}>Optional</span></label>
-                {isEditing ? (
-                  <>
-                    <input
-                      type="text"
-                      name="gstNumber"
-                      value={formData.gstNumber}
-                      onChange={(e) => {
-                        // Convert to uppercase, remove special characters, and limit to 15 characters
-                        const cleanedValue = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 15);
-                        setFormData(prev => ({ ...prev, gstNumber: cleanedValue }));
-                        
-                        // Real-time validation
-                        if (cleanedValue.length > 0) {
-                          const validation = validateGSTNumber(cleanedValue);
-                          if (!validation.valid) {
-                            setErrorMessage(validation.error);
-                          } else {
-                            setErrorMessage('');
-                          }
-                        }
-                      }}
-                      className={styles.input}
-                      placeholder="Enter GST number (e.g., 27AAPCU1234A1Z5)"
-                      maxLength="15"
-                      pattern="[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}[Z]{1}[0-9A-Z]{1}"
-                      title="GST number format: 2 digits (state) + 5 letters + 4 digits + 1 letter + 1 digit/letter + Z + 1 digit/letter"
-                    />
-                    {formData.gstNumber && (
-                      <div className={styles.gstHelpText}>
-                        Format: State Code (2 digits) + PAN (10 chars) + Entity (1) + Z + Checksum (1)
-                      </div>
-                    )}
-                  </>
-                ) : (
-                  <span className={styles.fieldValue}>{formData.gstNumber || 'Not provided'}</span>
-                )}
-              </div>
             </div>
           </div>
 

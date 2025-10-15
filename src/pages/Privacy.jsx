@@ -1,26 +1,13 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import styles from '../styles/Privacy.module.css';
+import StandardPageLayout from '../components/StandardPageLayout';
+import styles from '../styles/StandardPageLayout.module.css';
 
 export default function Privacy() {
-  const navigate = useNavigate();
-
-  const handleGoBack = () => {
-    // Go back to the previous page (registration form)
-    navigate(-1);
-  };
-
   return (
-    <div className={styles.container}>
-      <div className={styles.header}>
-        <button onClick={handleGoBack} className={styles.backButton}>
-          ← Back
-        </button>
-        <h1 className={styles.title}>Privacy Policy</h1>
-        <p className={styles.subtitle}>How we collect, use, and protect your information</p>
-      </div>
-      
-      <div className={styles.scrollableContent}>
+    <StandardPageLayout
+      title="Privacy Policy"
+      subtitle="How we collect, use, and protect your information"
+    >
         <section className={styles.section}>
           <h2>Information We Collect</h2>
           <p>
@@ -121,17 +108,27 @@ export default function Privacy() {
           </p>
         </section>
 
-        <section className={styles.contactSection}>
-          <h2>Contact Us</h2>
-          <p>
+        <section className={styles.section} style={{ 
+          backgroundColor: '#f0fdf4', 
+          border: '1px solid #bbf7d0', 
+          borderRadius: '0.75rem',
+          marginTop: '2rem'
+        }}>
+          <h2 style={{ color: '#166534', marginBottom: '1rem' }}>Contact Us</h2>
+          <p style={{ color: '#15803d', margin: 0 }}>
             If you have any questions about this Privacy Policy, please contact us at{' '}
-            <a href="mailto:info@adscreenhub.com" className={styles.contactEmail}>
+            <a href="mailto:info@adscreenhub.com" style={{ 
+              color: '#1319B3', 
+              textDecoration: 'underline',
+              fontWeight: '600'
+            }}>
               info@adscreenhub.com
             </a>
           </p>
-          <p className={styles.lastUpdated}>Last Updated: {new Date().toLocaleDateString()}</p>
+          <p style={{ color: '#15803d', fontSize: '0.875rem', marginTop: '1rem', marginBottom: 0 }}>
+            Last Updated: {new Date().toLocaleDateString()}
+          </p>
         </section>
-      </div>
-    </div>
+    </StandardPageLayout>
   );
 }

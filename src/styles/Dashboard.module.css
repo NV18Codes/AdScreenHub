@@ -259,66 +259,80 @@
 }
 
 .statusPending {
-  background: linear-gradient(135deg, #fef3c7, #fde68a);
-  color: #92400e;
-  border: 1px solid #f59e0b;
+  background: #FEF3C7;
+  color: #92400E;
+  border: 1px solid #F59E0B;
   box-shadow: 0 2px 8px rgba(245, 158, 11, 0.2);
 }
 
 .statusActive {
-  background: linear-gradient(135deg, #d1fae5, #a7f3d0);
-  color: #065f46;
-  border: 1px solid #10b981;
-  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.2);
+  background: #CFFAFE;
+  color: #0E7490;
+  border: 1px solid #06B6D4;
+  box-shadow: 0 2px 8px rgba(6, 182, 212, 0.2);
 }
 
 .statusCompleted {
-  background: linear-gradient(135deg, #dbeafe, #bfdbfe);
-  color: #1e40af;
-  border: 1px solid #3b82f6;
-  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
+  background: #DCFCE7;
+  color: #15803D;
+  border: 1px solid #22C55E;
+  box-shadow: 0 2px 8px rgba(34, 197, 94, 0.2);
 }
 
 .statusCancelled {
-  background: linear-gradient(135deg, #fee2e2, #fecaca);
-  color: #991b1b;
-  border: 1px solid #ef4444;
+  background: #FEE2E2;
+  color: #B91C1C;
+  border: 1px solid #EF4444;
   box-shadow: 0 2px 8px rgba(239, 68, 68, 0.2);
 }
 
 .statusRevision {
-  background: linear-gradient(135deg, #fed7aa, #fdba74);
-  color: #ea580c;
-  border: 1px solid #f97316;
-  box-shadow: 0 2px 8px rgba(249, 115, 22, 0.2);
+  background: #EDE9FE;
+  color: #6D28D9;
+  border: 1px solid #8B5CF6;
+  box-shadow: 0 2px 8px rgba(139, 92, 246, 0.2);
 }
 
 .statusPaymentFailed {
-  background: linear-gradient(135deg, #fecaca, #fca5a5);
-  color: #991b1b;
-  border: 1px solid #ef4444;
+  background: #FEE2E2;
+  color: #B91C1C;
+  border: 1px solid #EF4444;
   box-shadow: 0 2px 8px rgba(239, 68, 68, 0.2);
 }
 
 .statusPendingDisplayApproval {
-  background: linear-gradient(135deg, #e0e7ff, #c7d2fe);
-  color: #3730a3;
-  border: 1px solid #6366f1;
+  background: #E0E7FF;
+  color: #4338CA;
+  border: 1px solid #6366F1;
   box-shadow: 0 2px 8px rgba(99, 102, 241, 0.2);
 }
 
 .statusCancelledForfeited {
-  background: linear-gradient(135deg, #f3f4f6, #d1d5db);
-  color: #374151;
-  border: 1px solid #6b7280;
-  box-shadow: 0 2px 8px rgba(107, 114, 128, 0.2);
+  background: #FECACA;
+  color: #991B1B;
+  border: 1px solid #EF4444;
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.2);
 }
 
 .statusRefund {
-  background: linear-gradient(135deg, #fef3c7, #fde68a);
-  color: #92400e;
-  border: 1px solid #f59e0b;
-  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.2);
+  background: #D1FAE5;
+  color: #047857;
+  border: 1px solid #10B981;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.2);
+}
+
+.statusPendingApproval {
+  background: #DBEAFE;
+  color: #1D4ED8;
+  border: 1px solid #3B82F6;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
+}
+
+.statusDesignRevise {
+  background: #EDE9FE;
+  color: #6D28D9;
+  border: 1px solid #8B5CF6;
+  box-shadow: 0 2px 8px rgba(139, 92, 246, 0.2);
 }
 
 .orderAmount {

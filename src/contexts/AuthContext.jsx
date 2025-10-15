@@ -100,9 +100,24 @@ export const AuthProvider = ({ children }) => {
     // Clear any existing orders to prevent showing other users' data
     localStorage.removeItem('adscreenhub_orders');
     
-    setUser(userData);
-    localStorage.setItem('user', JSON.stringify(userData));
+    // Ensure userData has required fields
+    const validUserData = {
+      ...userData,
+      id: userData.id || userData.user_id || userData.sub,
+      email: userData.email,
+      fullName: userData.fullName || userData.full_name || userData.name || userData.email?.split('@')[0]
+    };
+    
+    setUser(validUserData);
+    localStorage.setItem('user', JSON.stringify(validUserData));
     localStorage.setItem('token', token);
+    
+    // Force a small delay to ensure state is updated
+    setTimeout(() => {
+      // Trigger a custom event to notify components that auth state has changed
+      window.dispatchEvent(new CustomEvent('auth:login-success'));
+    }, 100);
+    
     return true;
   };
 
@@ -143,6 +158,12 @@ export const AuthProvider = ({ children }) => {
       // Check if it's a custom session token (from registration)
       if (token.startsWith('reg_')) {
         // Custom session token - always valid until user logs out
+        return true;
+      }
+      
+      // Check if user data exists and is valid
+      const parsedUser = JSON.parse(userData);
+      if (parsedUser && parsedUser.id) {
         return true;
       }
       
