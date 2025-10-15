@@ -166,6 +166,9 @@
   color: #6b7280;
   font-weight: 500;
   box-sizing: border-box;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
 }
 
 .dateInput:focus {
@@ -184,6 +187,25 @@
   cursor: pointer;
 }
 
+/* Disable past dates on mobile */
+.dateInput::-webkit-datetime-edit-text {
+  color: #6b7280;
+}
+
+.dateInput::-webkit-datetime-edit-month-field,
+.dateInput::-webkit-datetime-edit-day-field,
+.dateInput::-webkit-datetime-edit-year-field {
+  color: #6b7280;
+}
+
+/* Firefox date input styling */
+.dateInput::-moz-datetime-edit-text,
+.dateInput::-moz-datetime-edit-month-field,
+.dateInput::-moz-datetime-edit-day-field,
+.dateInput::-moz-datetime-edit-year-field {
+  color: #6b7280;
+}
+
 .calendarIcon {
   position: absolute;
   left: 12px;
@@ -199,6 +221,14 @@
 
 .dateInput:focus + .calendarIcon svg {
   stroke: #3b82f6;
+}
+
+.dateHint {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin-top: 0.5rem;
+  text-align: center;
+  font-weight: 500;
 }
 
 /* Screens Grid */
@@ -323,6 +353,11 @@
   .calendarIcon svg {
     width: 16px;
     height: 16px;
+  }
+  
+  .dateHint {
+    font-size: 0.8rem;
+    margin-top: 0.25rem;
   }
 }
 

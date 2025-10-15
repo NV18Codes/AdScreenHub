@@ -374,19 +374,6 @@ export default function BookingFlow() {
 
   // Handle date selection
   const handleDateSelect = async (date) => {
-    // Validate date is at least 2 days from today
-    if (date) {
-      const selectedDateObj = new Date(date);
-      const today = new Date();
-      const minDate = new Date(today.getTime() + 2 * 24 * 60 * 60 * 1000); // +2 days
-      
-      if (selectedDateObj < minDate) {
-        setError('Please select a date at least 2 days from today');
-        setSelectedDate('');
-        return;
-      }
-    }
-    
     setSelectedDate(date);
     setSelectedScreen(null);
     setSelectedPlan(null);
@@ -986,8 +973,16 @@ export default function BookingFlow() {
                   const minDate = new Date(today.getTime() + 2 * 24 * 60 * 60 * 1000);
                   return minDate.toISOString().split('T')[0];
                 })()}
+                max={(() => {
+                  const today = new Date();
+                  const maxDate = new Date(today.getTime() + 365 * 24 * 60 * 60 * 1000); // 1 year from today
+                  return maxDate.toISOString().split('T')[0];
+                })()}
                 className={styles.dateInput}
                 placeholder="Select Date"
+                required
+                autoComplete="off"
+                inputMode="none"
               />
               <div className={styles.calendarIcon}>
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -996,6 +991,9 @@ export default function BookingFlow() {
                 </svg>
               </div>
             </div>
+            <p className={styles.dateHint}>
+              📅 Select a date at least 2 days from today
+            </p>
           </div>
         </div>
 
