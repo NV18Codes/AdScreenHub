@@ -126,7 +126,7 @@ export default function Steps() {
                  className="w-full h-full object-cover"
                  controls
                  playsInline
-                 preload="auto"
+                 preload="metadata"
                  poster="/Banner.png"
                  onLoadStart={() => {
                    console.log("Video loading started");
@@ -143,7 +143,9 @@ export default function Steps() {
                    setVideoLoading(false);
                  }}
                >
-                 <source src="/About AdScreenHub (1) (1) (1).mp4" type="video/mp4" />
+                 <source src="/About%20AdScreenHub%20(1)%20(1)%20(1).mp4" type="video/mp4" />
+                 <source src="./About AdScreenHub (1) (1) (1).mp4" type="video/mp4" />
+                 <source src="About AdScreenHub (1) (1) (1).mp4" type="video/mp4" />
                  Your browser does not support the video tag.
                </video>
                
