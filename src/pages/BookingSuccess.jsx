@@ -103,49 +103,53 @@ const BookingSuccess = () => {
         {order && (
           <div className={styles.orderDetails}>
             <h2>Order Details</h2>
-            <div className={styles.detailsGrid}>
-              <div className={styles.detailItem}>
-                <span className={styles.label}>Order ID:</span>
-                <span className={styles.value}>#{order.orderUid || order.order_uid || `ORD-${order.id}`}</span>
-              </div>
-              <div className={styles.detailItem}>
-                <span className={styles.label}>Location:</span>
-                <span className={styles.value}>{order.location?.name || 'N/A'}</span>
-              </div>
-              <div className={styles.detailItem}>
-                <span className={styles.label}>Plan:</span>
-                <span className={styles.value}>{order.plan?.name || 'N/A'}</span>
-              </div>
-              <div className={styles.detailItem}>
-                <span className={styles.label}>Start Date:</span>
-                <span className={styles.value}>{order.startDate || 'N/A'}</span>
-              </div>
-              <div className={styles.detailItem}>
-                <span className={styles.label}>Duration:</span>
-                <span className={styles.value}>{order.plan?.duration || order.duration_days || order.planDuration || 'N/A'} day{(order.plan?.duration || order.duration_days || order.planDuration || 1) > 1 ? 's' : ''}</span>
-              </div>
-              <div className={styles.detailItem}>
-                <span className={styles.label}>Total Cost:</span>
-                <span className={styles.value}>
-                  ₹{(order.baseAmount || 0).toLocaleString('en-IN')}
+            <div className={styles.orderInfo}>
+              <div className={styles.orderHeader}>
+                <span className={styles.orderNumber}>Order #{order.orderUid || order.order_uid || order.id}</span>
+                <span className={styles.orderDate}>
+                  {order.createdAt ? new Date(order.createdAt).toLocaleDateString('en-US', { 
+                    year: 'numeric', 
+                    month: 'short', 
+                    day: 'numeric' 
+                  }) : new Date().toLocaleDateString('en-US', { 
+                    year: 'numeric', 
+                    month: 'short', 
+                    day: 'numeric' 
+                  })}
                 </span>
               </div>
+              
               <div className={styles.detailItem}>
-                <span className={styles.label}>GST (18%):</span>
+                <span className={styles.label}>📍 Location:</span>
+                <span className={styles.value}>{order.location?.name || order.locationName || 'N/A'}</span>
+              </div>
+              
+              <div className={styles.detailItem}>
+                <span className={styles.label}>📋 Plan:</span>
+                <span className={styles.value}>{order.plan?.name || order.planName || 'N/A'}</span>
+              </div>
+              
+              <div className={styles.detailItem}>
+                <span className={styles.label}>📅 Start Date:</span>
+                <span className={styles.value}>{order.startDate || order.start_date || 'N/A'}</span>
+              </div>
+              
+              <div className={styles.detailItem}>
+                <span className={styles.label}>📅 End Date:</span>
+                <span className={styles.value}>{order.endDate || order.end_date || order.startDate || order.start_date || 'N/A'}</span>
+              </div>
+              
+              <div className={styles.detailItem}>
+                <span className={styles.label}>₹ Total Cost:</span>
                 <span className={styles.value}>
-                  ₹{(order.gstAmount || 0).toLocaleString('en-IN')}
+                  ₹{(order.baseAmount || order.total_cost || 0).toLocaleString('en-IN')}
                 </span>
               </div>
+              
               <div className={styles.detailItem}>
-                <span className={styles.label}>Final Amount:</span>
+                <span className={styles.label}>💳 Final Amount:</span>
                 <span className={styles.value}>
-                  ₹{((order.baseAmount || 0) + (order.gstAmount || 0)).toLocaleString('en-IN')}
-                </span>
-              </div>
-              <div className={styles.detailItem}>
-                <span className={styles.label}>Status:</span>
-                <span className={`${styles.value} ${styles.status}`}>
-                  {order.status || 'Payment Completed - Pending Approval'}
+                  ₹{(order.final_amount || order.totalAmount || (order.baseAmount || 0) + (order.gstAmount || 0)).toLocaleString('en-IN')}
                 </span>
               </div>
             </div>
