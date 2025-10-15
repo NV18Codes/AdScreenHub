@@ -141,13 +141,15 @@
   align-items: center;
   width: 100%;
   padding: 0 1rem;
+  box-sizing: border-box;
 }
 
 .dateInputContainer {
   position: relative;
-  display: inline-block;
+  display: block;
   width: 100%;
   max-width: 300px;
+  box-sizing: border-box;
 }
 
 .dateInput {
@@ -157,7 +159,7 @@
   font-size: 1rem;
   min-width: 200px;
   width: 100%;
-  max-width: 300px;
+  max-width: 100%;
   transition: border-color 0.3s ease;
   color-scheme: light;
   background-color: #f3f4f6;
@@ -259,18 +261,21 @@
   
   .dateSelection {
     width: 100%;
-    padding: 0 1rem;
+    padding: 0 0.5rem;
     justify-content: flex-start;
+    box-sizing: border-box;
   }
   
   .dateInputContainer {
     width: 100%;
-    max-width: 300px;
+    max-width: 100%;
+    box-sizing: border-box;
   }
   
   .dateInput {
     min-width: 150px;
     width: 100%;
+    max-width: 100%;
     font-size: 0.9rem;
     padding: 0.6rem 0.8rem 0.6rem 2.5rem;
     box-sizing: border-box;
@@ -289,17 +294,26 @@
 /* Additional mobile-specific styles for very small screens */
 @media (max-width: 480px) {
   .dateSelection {
-    padding: 0 0.5rem;
+    padding: 0 0.25rem;
+    box-sizing: border-box;
+    overflow: hidden;
   }
   
   .dateInputContainer {
     max-width: 100%;
+    width: 100%;
+    box-sizing: border-box;
+    overflow: hidden;
   }
   
   .dateInput {
     min-width: 120px;
+    width: 100%;
+    max-width: 100%;
     font-size: 0.85rem;
     padding: 0.5rem 0.7rem 0.5rem 2.2rem;
+    box-sizing: border-box;
+    overflow: hidden;
   }
   
   .calendarIcon {
@@ -307,8 +321,8 @@
   }
   
   .calendarIcon svg {
-    width: 14px;
-    height: 14px;
+    width: 16px;
+    height: 16px;
   }
 }
 

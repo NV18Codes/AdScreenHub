@@ -374,6 +374,19 @@ export default function BookingFlow() {
 
   // Handle date selection
   const handleDateSelect = async (date) => {
+    // Validate date is at least 2 days from today
+    if (date) {
+      const selectedDateObj = new Date(date);
+      const today = new Date();
+      const minDate = new Date(today.getTime() + 2 * 24 * 60 * 60 * 1000); // +2 days
+      
+      if (selectedDateObj < minDate) {
+        setError('Please select a date at least 2 days from today');
+        setSelectedDate('');
+        return;
+      }
+    }
+    
     setSelectedDate(date);
     setSelectedScreen(null);
     setSelectedPlan(null);
@@ -968,7 +981,11 @@ export default function BookingFlow() {
                 type="date"
                 value={selectedDate}
                 onChange={(e) => handleDateSelect(e.target.value)}
-                min={new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]}
+                min={(() => {
+                  const today = new Date();
+                  const minDate = new Date(today.getTime() + 2 * 24 * 60 * 60 * 1000);
+                  return minDate.toISOString().split('T')[0];
+                })()}
                 className={styles.dateInput}
                 placeholder="Select Date"
               />
