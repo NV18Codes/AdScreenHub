@@ -23,15 +23,13 @@ export default function DashboardOverview() {
         return styles.statusPendingApproval;
       case 'Design Revise':
         return styles.statusReviseYourDesign;
-      case 'Pending Display Approval':
+      case 'Pending Display (Approved)':
         return styles.statusPendingApproval;
       case 'In Display':
         return styles.statusInDisplay;
       case 'Completed':
         return styles.statusCompletedDisplay;
       case 'Cancelled - Forfeited':
-        return styles.statusCancelledDisplay;
-      case 'Cancelled':
         return styles.statusCancelledDisplay;
       case 'Cancelled - Refunded':
         return styles.statusCancelledDisplay;

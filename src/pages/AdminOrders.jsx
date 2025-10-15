@@ -26,30 +26,28 @@ export default function AdminOrders() {
   const getStatusClass = (status) => {
     const trimmedStatus = status ? status.trim() : '';
     
-    switch (trimmedStatus) {
-      case 'Pending Payment':
-        return styles.statusPendingPayment;
-      case 'Payment Failed':
-        return styles.statusPaymentFailed;
-      case 'Pending Approval':
-        return styles.statusPendingApproval;
-      case 'Design Revise':
-        return styles.statusDesignRevise;
-      case 'Pending Display Approval':
-        return styles.statusPendingDisplay;
-      case 'In Display':
-        return styles.statusInDisplay;
-      case 'Completed':
-        return styles.statusCompleted;
-      case 'Cancelled - Forfeited':
-        return styles.statusCancelledDisplay;
-      case 'Cancelled':
-        return styles.statusCancelledDisplay;
-      case 'Cancelled - Refunded':
-        return styles['statusCancelled-Refunded'];
-      default:
-        return styles.statusPendingPayment;
-    }
+        switch (trimmedStatus) {
+          case 'Pending Payment':
+            return styles.statusPendingPayment;
+          case 'Payment Failed':
+            return styles.statusPaymentFailed;
+          case 'Pending Approval':
+            return styles.statusPendingApproval;
+          case 'Design Revise':
+            return styles.statusDesignRevise;
+          case 'Pending Display (Approved)':
+            return styles.statusPendingDisplay;
+          case 'In Display':
+            return styles.statusInDisplay;
+          case 'Completed':
+            return styles.statusCompleted;
+          case 'Cancelled - Forfeited':
+            return styles.statusCancelledDisplay;
+          case 'Cancelled - Refunded':
+            return styles['statusCancelled-Refunded'];
+          default:
+            return styles.statusPendingPayment;
+        }
   };
 
   const showToast = (message, type = 'success') => {
@@ -112,7 +110,7 @@ export default function AdminOrders() {
     for (const order of designReviseOrders) {
       try {
         await adminOrdersAPI.updateOrder(order.id, {
-          status: ORDER_STATUS.CANCELLED,
+          status: ORDER_STATUS.CANCELLED_FORFEITED,
           remarks: (order.remarks || '') + ' [Auto-cancelled: Design revision deadline exceeded]'
         });
         updatedCount++;
@@ -640,9 +638,9 @@ export default function AdminOrders() {
                     onChange={(e) => setUpdateStatus(e.target.value)}
                     className={styles.select}
                   >
-                    <option value="Design Revise">Design Revise</option>
-                    <option value="Pending Display Approval">Pending Display Approval</option>
-                    <option value="Cancelled - Refunded">Cancelled - Refunded</option>
+        <option value="Design Revise">Design Revise</option>
+        <option value="Pending Display (Approved)">Pending Display (Approved)</option>
+        <option value="Cancelled - Refunded">Cancelled - Refunded</option>
                   </select>
                 </div>
 

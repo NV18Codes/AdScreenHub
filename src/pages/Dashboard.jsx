@@ -411,7 +411,7 @@ export default function Dashboard() {
   const getTotalSpent = () => {
     const orders = JSON.parse(localStorage.getItem('adscreenhub_orders') || '[]');
     const total = orders
-      .filter(order => order.status !== ORDER_STATUS.CANCELLED)
+      .filter(order => !['Cancelled - Forfeited', 'Cancelled - Refunded'].includes(order.status))
       .reduce((sum, order) => sum + (order.amount || order.price || 0), 0);
     return (total || 0).toLocaleString('en-IN');
   };
@@ -445,7 +445,7 @@ export default function Dashboard() {
         return styles.statusPending;
       case ORDER_STATUS.DESIGN_REVISE:
         return styles.statusRevision;
-      case ORDER_STATUS.PENDING_DISPLAY_APPROVAL:
+      case ORDER_STATUS.PENDING_DISPLAY_APPROVED:
         return styles.statusPendingDisplayApproval;
       case ORDER_STATUS.IN_DISPLAY:
         return styles.statusActive;
@@ -453,8 +453,6 @@ export default function Dashboard() {
         return styles.statusCompleted;
       case ORDER_STATUS.CANCELLED_FORFEITED:
         return styles.statusCancelledForfeited;
-      case ORDER_STATUS.CANCELLED:
-        return styles.statusCancelled;
       case ORDER_STATUS.CANCELLED_REFUNDED:
         return styles.statusRefund;
       default:

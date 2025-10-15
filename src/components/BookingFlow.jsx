@@ -426,7 +426,8 @@ export default function BookingFlow() {
     newEnd.setDate(newEnd.getDate() + durationDays - 1);
     
     const conflicts = orders.filter(order => {
-      if (order.status === 'Cancelled Display' || 
+      if (order.status === 'Cancelled - Forfeited' || 
+          order.status === 'Cancelled - Refunded' ||
           order.status === 'Payment Failed') {
         return false;
       }

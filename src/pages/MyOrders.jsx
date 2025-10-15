@@ -389,30 +389,28 @@ export default function MyOrders() {
     // Handle both exact matches and trimmed matches
     const trimmedStatus = status ? status.trim() : '';
     
-    switch (trimmedStatus) {
-      case 'Pending Payment':
-        return styles.statusPending;
-      case 'Payment Failed':
-        return styles.statusPaymentFailed;
-      case 'Pending Approval':
-        return styles.statusPendingApproval;
-      case 'Design Revise':
-        return styles.statusDesignRevise;
-      case 'Pending Display Approval':
-        return styles.statusPendingDisplayApproval;
-      case 'In Display':
-        return styles.statusActive;
-      case 'Completed':
-        return styles.statusCompleted;
-      case 'Cancelled - Forfeited':
-        return styles.statusCancelledForfeited;
-      case 'Cancelled':
-        return styles.statusCancelled;
-      case 'Cancelled - Refunded':
-        return styles.statusRefund;
-      default:
-        return styles.statusPending;
-    }
+        switch (trimmedStatus) {
+          case 'Pending Payment':
+            return styles.statusPending;
+          case 'Payment Failed':
+            return styles.statusPaymentFailed;
+          case 'Pending Approval':
+            return styles.statusPendingApproval;
+          case 'Design Revise':
+            return styles.statusDesignRevise;
+          case 'Pending Display (Approved)':
+            return styles.statusPendingDisplayApproval;
+          case 'In Display':
+            return styles.statusActive;
+          case 'Completed':
+            return styles.statusCompleted;
+          case 'Cancelled - Forfeited':
+            return styles.statusCancelledForfeited;
+          case 'Cancelled - Refunded':
+            return styles.statusRefund;
+          default:
+            return styles.statusPending;
+        }
   };
 
   if (loading) {
