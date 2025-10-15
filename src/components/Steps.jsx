@@ -152,7 +152,7 @@ export default function Steps() {
                      setVideoLoading(false);
                    }}
                  >
-                   <source src="/About AdScreenHub (1) (1).mp4" type="video/mp4" />
+                   <source src="/About AdScreenHub (1) (1) (1).mp4" type="video/mp4" />
                  </video>
                )}
              </div>
