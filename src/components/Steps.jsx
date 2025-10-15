@@ -134,7 +134,7 @@ export default function Steps() {
                   console.error('Video error details:', e.target.error);
                 }}
               >
-                <source src="/About AdScreenHub.mp4" type="video/mp4" />
+                <source src="/About AdScreenHub (1).mp4" type="video/mp4" />
                 <div style={{ 
                   padding: '2rem', 
                   textAlign: 'center', 
