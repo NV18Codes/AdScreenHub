@@ -95,16 +95,14 @@ export default function Steps() {
             </p>
 
              <div
-               className="relative rounded-xl overflow-hidden shadow-2xl bg-gradient-to-br from-blue-600 to-purple-700 flex items-center justify-center"
+               className="relative rounded-xl overflow-hidden shadow-2xl"
                style={{ minHeight: "500px" }}
              >
-               <div className="text-center text-white p-8">
-                 <div className="text-6xl mb-4">📺</div>
-                 <h3 className="text-2xl font-bold mb-2">About AdScreenHub</h3>
-                 <p className="text-lg opacity-90">
-                   Experience the power of LED advertising with our premium display screens
-                 </p>
-               </div>
+               <img 
+                 src="/Banner.png" 
+                 alt="AdScreenHub - LED Advertising Screens"
+                 className="w-full h-full object-cover"
+               />
              </div>
           </div>
         </div>
