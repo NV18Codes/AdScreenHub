@@ -156,14 +156,10 @@ export const mockOrders = [
   }
 ];
 
-// Order Status Options
-export const orderStatuses = [
-  "Pending Approval",
-  "In Display",
-  "Completed Display",
-  "Cancelled Display",
-  "Revise Your Design"
-];
+// Order Status Options - Import from centralized constants
+import { ALL_ORDER_STATUSES } from '../config/orderStatuses';
+
+export const orderStatuses = ALL_ORDER_STATUSES;
 
 // File Upload Restrictions
 export const uploadRestrictions = {
