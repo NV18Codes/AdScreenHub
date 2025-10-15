@@ -2,47 +2,63 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Prevent word breaking on small screens */
+@media (max-width: 768px) {
+  * {
+    word-wrap: normal !important;
+    overflow-wrap: normal !important;
+    hyphens: none !important;
+    word-break: keep-all !important;
+  }
+}
+
 /* Consistent Typography System */
 .heading-primary {
   @apply text-6xl font-bold text-blue-900 leading-tight;
-  word-wrap: break-word;
-  overflow-wrap: break-word;
-  hyphens: auto;
+  word-wrap: normal;
+  overflow-wrap: normal;
+  hyphens: none;
+  word-break: keep-all;
 }
 
 .heading-secondary {
   @apply text-5xl font-bold text-blue-900 leading-tight;
-  word-wrap: break-word;
-  overflow-wrap: break-word;
-  hyphens: auto;
+  word-wrap: normal;
+  overflow-wrap: normal;
+  hyphens: none;
+  word-break: keep-all;
 }
 
 .heading-tertiary {
   @apply text-4xl font-bold text-blue-900 leading-tight;
-  word-wrap: break-word;
-  overflow-wrap: break-word;
-  hyphens: auto;
+  word-wrap: normal;
+  overflow-wrap: normal;
+  hyphens: none;
+  word-break: keep-all;
 }
 
 .heading-quaternary {
   @apply text-3xl font-bold text-blue-900 leading-tight;
-  word-wrap: break-word;
-  overflow-wrap: break-word;
-  hyphens: auto;
+  word-wrap: normal;
+  overflow-wrap: normal;
+  hyphens: none;
+  word-break: keep-all;
 }
 
 .heading-quinary {
   @apply text-2xl font-bold text-blue-900 leading-tight;
-  word-wrap: break-word;
-  overflow-wrap: break-word;
-  hyphens: auto;
+  word-wrap: normal;
+  overflow-wrap: normal;
+  hyphens: none;
+  word-break: keep-all;
 }
 
 .heading-hero {
   @apply text-7xl md:text-8xl font-bold leading-tight;
-  word-wrap: break-word;
-  overflow-wrap: break-word;
-  hyphens: auto;
+  word-wrap: normal;
+  overflow-wrap: normal;
+  hyphens: none;
+  word-break: keep-all;
 }
 
 /* Section Headings */

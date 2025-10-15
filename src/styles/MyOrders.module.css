@@ -1119,9 +1119,10 @@
   .headerText h1 {
     font-size: 1.75rem;
     display: block;
-    word-wrap: break-word;
-    overflow-wrap: break-word;
-    hyphens: auto;
+    word-wrap: normal;
+    overflow-wrap: normal;
+    hyphens: none;
+    word-break: keep-all;
     max-width: 100%;
     box-sizing: border-box;
     margin-bottom: 0.5rem;
@@ -1232,9 +1233,10 @@
   
   .headerText h1 {
     font-size: 1.5rem;
-    word-wrap: break-word;
-    overflow-wrap: break-word;
-    hyphens: auto;
+    word-wrap: normal;
+    overflow-wrap: normal;
+    hyphens: none;
+    word-break: keep-all;
     max-width: 100%;
     box-sizing: border-box;
     margin-bottom: 0.5rem;

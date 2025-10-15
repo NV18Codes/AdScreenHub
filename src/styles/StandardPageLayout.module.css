@@ -57,9 +57,10 @@
   -webkit-text-fill-color: transparent;
   background-clip: text;
   color: #1319B3;
-  word-wrap: break-word;
-  overflow-wrap: break-word;
-  hyphens: auto;
+  word-wrap: normal;
+  overflow-wrap: normal;
+  hyphens: none;
+  word-break: keep-all;
   line-height: 1.2;
 }
 

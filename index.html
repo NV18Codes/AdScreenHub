@@ -9,6 +9,15 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
     <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+    <script>
+      // Suppress Razorpay otp-credentials warning
+      window.addEventListener('error', function(e) {
+        if (e.message && e.message.includes('otp-credentials')) {
+          e.preventDefault();
+          return false;
+        }
+      });
+    </script>
     <title>ADSCREENHUB - LED Billboard Advertising Platform</title>
   </head>
   <body>

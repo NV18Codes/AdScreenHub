@@ -15,15 +15,34 @@ export default function BookingFlow() {
   const [selectedDate, setSelectedDate] = useState('');
   const [selectedScreen, setSelectedScreen] = useState(null);
   const [selectedPlan, setSelectedPlan] = useState(null);
-  const [minDate, setMinDate] = useState('');
   const [showScreenModal, setShowScreenModal] = useState(false);
 
-  // Set minimum date on component mount
-  useEffect(() => {
-    const today = new Date();
-    const minDateValue = new Date(today.getTime() + 2 * 24 * 60 * 60 * 1000);
-    setMinDate(minDateValue.toISOString().split('T')[0]);
-  }, []);
+  // Calculate minimum date (today + 2 days) in user's local timezone
+  const calculateMinDate = () => {
+    const now = new Date();
+    
+    // Get local date (not UTC)
+    const localYear = now.getFullYear();
+    const localMonth = now.getMonth();
+    const localDate = now.getDate();
+    
+    // Calculate minimum date directly using local date + 2
+    const minDateValue = new Date(localYear, localMonth, localDate + 2);
+    
+    // Format as YYYY-MM-DD for HTML date input
+    const year = minDateValue.getFullYear();
+    const month = String(minDateValue.getMonth() + 1).padStart(2, '0');
+    const day = String(minDateValue.getDate()).padStart(2, '0');
+    const minDateString = `${year}-${month}-${day}`;
+    
+    console.log('Current time (UTC):', now.toISOString());
+    console.log('Current time (Local):', now.toString());
+    console.log('Local date:', localDate, localMonth + 1, localYear);
+    console.log('Min date (local + 2):', minDateString);
+    
+    return minDateString;
+  };
+
   const [designFile, setDesignFile] = useState(null);
   const [designPreview, setDesignPreview] = useState(null);
   const [uploadError, setUploadError] = useState('');
@@ -103,27 +122,39 @@ export default function BookingFlow() {
       // Handle the specific API response structure: plan.features.features
       let features = [];
       if (plan.features && plan.features.features && Array.isArray(plan.features.features)) {
-        features = plan.features.features.filter(feature => 
-          !feature.toLowerCase().includes('day plan') && 
-          !feature.toLowerCase().includes('day display') &&
-          !feature.toLowerCase().includes('duration') &&
-          !feature.toLowerCase().includes('1 day') &&
-          !feature.toLowerCase().includes('3 day') &&
-          !feature.toLowerCase().includes('5 day') &&
-          !feature.toLowerCase().includes('day') ||
-          feature.toLowerCase().includes('ad slots')
-        );
+        features = plan.features.features.filter(feature => {
+          const lowerFeature = feature.toLowerCase().trim();
+          // Remove any feature that contains duration information since we show duration separately
+          return !lowerFeature.includes('day plan') && 
+                 !lowerFeature.includes('day display') &&
+                 !lowerFeature.includes('duration') &&
+                 !lowerFeature.includes('1 day') &&
+                 !lowerFeature.includes('3 day') &&
+                 !lowerFeature.includes('5 day') &&
+                 !lowerFeature.includes('day') &&
+                 !lowerFeature.includes('plan') &&
+                 !lowerFeature.includes('power play') &&
+                 !lowerFeature.includes('rapid reach') &&
+                 !lowerFeature.includes('peak push') &&
+                 lowerFeature.length > 0;
+        });
       } else if (Array.isArray(plan.features)) {
-        features = plan.features.filter(feature => 
-          !feature.toLowerCase().includes('day plan') && 
-          !feature.toLowerCase().includes('day display') &&
-          !feature.toLowerCase().includes('duration') &&
-          !feature.toLowerCase().includes('1 day') &&
-          !feature.toLowerCase().includes('3 day') &&
-          !feature.toLowerCase().includes('5 day') &&
-          !feature.toLowerCase().includes('day') ||
-          feature.toLowerCase().includes('ad slots')
-        );
+        features = plan.features.filter(feature => {
+          const lowerFeature = feature.toLowerCase().trim();
+          // Remove any feature that contains duration information since we show duration separately
+          return !lowerFeature.includes('day plan') && 
+                 !lowerFeature.includes('day display') &&
+                 !lowerFeature.includes('duration') &&
+                 !lowerFeature.includes('1 day') &&
+                 !lowerFeature.includes('3 day') &&
+                 !lowerFeature.includes('5 day') &&
+                 !lowerFeature.includes('day') &&
+                 !lowerFeature.includes('plan') &&
+                 !lowerFeature.includes('power play') &&
+                 !lowerFeature.includes('rapid reach') &&
+                 !lowerFeature.includes('peak push') &&
+                 lowerFeature.length > 0;
+        });
       } else if (typeof plan.features === 'string') {
         features = [plan.features];
       }
@@ -134,7 +165,7 @@ export default function BookingFlow() {
         if (planName === 'SPARK') {
           features = [
             "700 ad slots (10 sec/slot)",
-            "1 day power play",
+            "Power play",
             "Quick visibility",
             "Occasion Focussed",
             "Moment Centric"
@@ -142,7 +173,7 @@ export default function BookingFlow() {
         } else if (planName === 'IMPACT') {
           features = [
             "2100 ad slots (10 sec/slot)",
-            "3 day rapid reach",
+            "Rapid reach",
             "Awareness Booster",
             "Momentum Gainer",
             "Weekend Blitz"
@@ -150,7 +181,7 @@ export default function BookingFlow() {
         } else if (planName === 'THRIVE') {
           features = [
             "3500 ad slots (10 sec/slot)",
-            "5 day peak push",
+            "Peak push",
             "Increased Exposure",
             "Lasting Recall",
             "Brand Amplification"
@@ -158,9 +189,9 @@ export default function BookingFlow() {
         } else {
           // Generic fallback
           features = [
-            `${durationDays} day display duration`,
             "High-quality LED display",
-            "Professional ad placement"
+            "Professional ad placement",
+            "Premium visibility"
           ];
         }
       }
@@ -169,7 +200,7 @@ export default function BookingFlow() {
         id: plan.id || '',
         name: (plan.name || '').toUpperCase(),
         price: plan.price || 0,
-        duration: `${durationDays} day${durationDays > 1 ? 's' : ''}`,
+        duration: plan.description || `${durationDays} day${durationDays > 1 ? 's' : ''}`, // Use backend description
         duration_days: durationDays, // Keep numeric value for calculations
         description: plan.description || '',
         adSlots: plan.features?.slots || 1, // Use slots from API response
@@ -401,9 +432,20 @@ export default function BookingFlow() {
   // Handle date selection
   const handleDateSelect = async (date) => {
     // Block invalid dates - don't allow selection
-    if (date && minDate) {
+    if (date) {
       const selectedDateObj = new Date(date);
-      const minDateObj = new Date(minDate);
+      const currentMinDate = calculateMinDate(); // Always calculate fresh
+      const minDateObj = new Date(currentMinDate);
+      
+      // Reset time to start of day for accurate comparison
+      selectedDateObj.setHours(0, 0, 0, 0);
+      minDateObj.setHours(0, 0, 0, 0);
+
+      console.log('Date validation:', {
+        selected: selectedDateObj.toISOString().split('T')[0],
+        minDate: minDateObj.toISOString().split('T')[0],
+        isValid: selectedDateObj >= minDateObj
+      });
 
       if (selectedDateObj < minDateObj) {
         // Show toast for invalid date selection
@@ -659,10 +701,15 @@ export default function BookingFlow() {
       return;
     }
     
-    // Validate date is at least 2 days from today
-    if (selectedDate && minDate) {
+    // Validate date is at least 2 days from today (IST)
+    if (selectedDate) {
       const selectedDateObj = new Date(selectedDate);
-      const minDateObj = new Date(minDate);
+      const currentMinDate = calculateMinDate();
+      const minDateObj = new Date(currentMinDate);
+      
+      // Reset time to start of day for accurate comparison
+      selectedDateObj.setHours(0, 0, 0, 0);
+      minDateObj.setHours(0, 0, 0, 0);
 
       if (selectedDateObj < minDateObj) {
         setIncompleteStep('date-selection');
@@ -1093,7 +1140,7 @@ export default function BookingFlow() {
                 type="date"
                 value={selectedDate}
                 onChange={(e) => handleDateSelect(e.target.value)}
-                min={minDate}
+                min={calculateMinDate()}
                 max={(() => {
                   const today = new Date();
                   const maxDate = new Date(today.getTime() + 365 * 24 * 60 * 60 * 1000); // 1 year from today
@@ -1106,13 +1153,26 @@ export default function BookingFlow() {
                 inputMode="none"
                 onFocus={(e) => {
                   // Ensure the min date is properly set when focused
-                  e.target.min = minDate;
+                  const freshMinDate = calculateMinDate();
+                  e.target.min = freshMinDate;
+                  console.log('Focus - setting min to:', freshMinDate);
                 }}
                 onInput={(e) => {
                   // Block invalid dates at input level
-                  if (e.target.value && minDate) {
+                  if (e.target.value) {
                     const selectedDate = new Date(e.target.value);
-                    const minDateObj = new Date(minDate);
+                    const currentMinDate = calculateMinDate(); // Always calculate fresh
+                    const minDateObj = new Date(currentMinDate);
+                    
+                    // Reset time to start of day for accurate comparison
+                    selectedDate.setHours(0, 0, 0, 0);
+                    minDateObj.setHours(0, 0, 0, 0);
+                    
+                    console.log('onInput validation:', {
+                      selected: selectedDate.toISOString().split('T')[0],
+                      minDate: minDateObj.toISOString().split('T')[0],
+                      isValid: selectedDate >= minDateObj
+                    });
                     
                     if (selectedDate < minDateObj) {
                       e.target.value = '';
@@ -1232,9 +1292,6 @@ export default function BookingFlow() {
                       <div className={styles.planPrice}>₹{(plan.price || 0).toLocaleString('en-IN')}</div>
                   </div>
                     <div className={styles.planDuration}>{plan.duration}</div>
-                    {plan.description && (
-                      <div className={styles.planDescription}>{plan.description}</div>
-                    )}
                     <ul className={styles.planFeatures}>
                       {plan.features && Array.isArray(plan.features) && plan.features.map((feature, index) => (
                         <li key={index}>{feature}</li>

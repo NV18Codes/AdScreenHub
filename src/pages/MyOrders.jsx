@@ -960,7 +960,7 @@ export default function MyOrders() {
       {/* Re-upload Creative Modal */}
       {showReuploadModal && (() => {
         const reuploadOrder = orders.find(o => o.id === reuploadOrderId);
-        return (
+        return reuploadOrder ? (
           <div className={styles.modalOverlay} onClick={() => setShowReuploadModal(false)}>
             <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
               <button
@@ -1072,8 +1072,8 @@ export default function MyOrders() {
               </div>
             </div>
           </div>
-        );
-                })}
+        ) : null;
+      })()}
 
       {/* Toast Notification */}
       {toast.show && (

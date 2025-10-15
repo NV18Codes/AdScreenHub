@@ -164,6 +164,24 @@ export default function BookingCalendar() {
   const handleDateChange = async (e) => {
     const newDate = e.target.value;
     
+    // Validate date is at least 2 days from today (IST)
+    if (newDate) {
+      const selectedDateObj = new Date(newDate);
+      const currentMinDate = calculateMinDate();
+      const minDateObj = new Date(currentMinDate);
+      
+      // Reset time to start of day for accurate comparison
+      selectedDateObj.setHours(0, 0, 0, 0);
+      minDateObj.setHours(0, 0, 0, 0);
+      
+      if (selectedDateObj < minDateObj) {
+        // Show error and don't set the date
+        alert('Please select a date at least 2 days from today');
+        e.target.value = '';
+        return;
+      }
+    }
+    
     setSelectedDate(newDate);
     setSelectedScreen(null);
     setSelectedPlan(null);
@@ -394,18 +412,25 @@ export default function BookingCalendar() {
     localStorage.removeItem('adscreenhub_design');
   };
 
-  // Get minimum date (today + 2 days)
-  const today = new Date();
-  today.setHours(0, 0, 0, 0); // Reset time to start of day
-  const minDate = new Date(today);
-  minDate.setDate(today.getDate() + 2);
-  minDate.setHours(0, 0, 0, 0); // Reset time to start of day
-  const minDateString = minDate.toISOString().split('T')[0];
+  // Calculate minimum date (today + 2 days) in user's local timezone
+  const calculateMinDate = () => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Reset to start of day
+    
+    const minDate = new Date(today);
+    minDate.setDate(today.getDate() + 2); // Add exactly 2 days
+    
+    return minDate.toISOString().split('T')[0];
+  };
+
+  const minDateString = calculateMinDate();
   
-  // Get maximum date (today + 30 days)
+  // Get maximum date (today + 30 days) in user's local timezone
+  const today = new Date();
+  today.setHours(0, 0, 0, 0); // Reset to start of day
+  
   const maxDate = new Date(today);
   maxDate.setDate(today.getDate() + 30);
-  maxDate.setHours(0, 0, 0, 0); // Reset time to start of day
   const maxDateString = maxDate.toISOString().split('T')[0];
 
   // Format date to dd-mm-yyyy
