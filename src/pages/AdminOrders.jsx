@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { adminOrdersAPI } from '../config/adminApi';
 import { formatDate, formatCurrency } from '../utils/validation';
+import { ORDER_STATUS, ALL_ORDER_STATUSES } from '../config/orderStatuses';
 import Toast from '../components/Toast';
 import LoadingSpinner from '../components/LoadingSpinner';
 import styles from '../styles/AdminOrders.module.css';
@@ -32,34 +33,66 @@ export default function AdminOrders() {
     fetchOrders();
   }, []);
 
-  // Check and update orders that should move from "Pending Display" to "In Display"
+  // Check and update orders that should move from "In Display" to "Completed" or auto-cancel "Design Revise"
   const checkDisplayDates = async (orders) => {
     const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
     
-    const ordersToUpdate = orders.filter(order => {
-      if (order.status !== 'Pending Display') return false;
+    // Orders to move from "In Display" to "Completed"
+    const inDisplayOrders = orders.filter(order => {
+      if (order.status !== ORDER_STATUS.IN_DISPLAY) return false;
       
       const displayDate = order.start_date || order.startDate || order.displayDate;
       if (!displayDate) return false;
       
-      // Convert display date to YYYY-MM-DD format for comparison
-      const orderDisplayDate = new Date(displayDate).toISOString().split('T')[0];
-      return orderDisplayDate <= today;
+      const durationDays = order.plans?.duration_days || order.planDuration || 1;
+      const startDate = new Date(displayDate);
+      const endDate = new Date(startDate);
+      endDate.setDate(endDate.getDate() + durationDays - 1);
+      const orderEndDate = endDate.toISOString().split('T')[0];
+      
+      return orderEndDate < today;
     });
     
-    // Update orders that should be "In Display" now
-    for (const order of ordersToUpdate) {
+    // Orders to cancel "Design Revise" if booking date has passed
+    const designReviseOrders = orders.filter(order => {
+      if (order.status !== ORDER_STATUS.DESIGN_REVISE) return false;
+      
+      const displayDate = order.start_date || order.startDate || order.displayDate;
+      if (!displayDate) return false;
+      
+      const orderDisplayDate = new Date(displayDate).toISOString().split('T')[0];
+      return orderDisplayDate < today;
+    });
+    
+    let updatedCount = 0;
+    
+    // Update "In Display" orders to "Completed"
+    for (const order of inDisplayOrders) {
       try {
         await adminOrdersAPI.updateOrder(order.id, {
-          status: 'In Display',
-          remarks: (order.remarks || '') + ' [Auto-updated: Display date reached]'
+          status: ORDER_STATUS.COMPLETED,
+          remarks: (order.remarks || '') + ' [Auto-updated: Display period completed]'
         });
+        updatedCount++;
       } catch (error) {
-        console.error(`Failed to update order ${order.id} to In Display:`, error);
+        // Silent error handling
       }
     }
     
-    return ordersToUpdate.length;
+    // Cancel "Design Revise" orders if booking date has passed
+    for (const order of designReviseOrders) {
+      try {
+        await adminOrdersAPI.updateOrder(order.id, {
+          status: ORDER_STATUS.CANCELLED,
+          remarks: (order.remarks || '') + ' [Auto-cancelled: Design revision deadline exceeded]'
+        });
+        updatedCount++;
+      } catch (error) {
+        // Silent error handling
+      }
+    }
+    
+    return updatedCount;
   };
 
   const fetchOrders = async (isRefresh = false) => {
@@ -157,29 +190,17 @@ export default function AdminOrders() {
   // Calculate analytics from ALL orders
   const analytics = {
     total: allOrders.length,
-    pendingApproval: allOrders.filter(o => o.status === 'Pending Approval').length,
-    pendingDisplay: allOrders.filter(o => o.status === 'Pending Display').length,
-    inDisplay: allOrders.filter(o => o.status === 'In Display').length,
-    completed: allOrders.filter(o => o.status === 'Completed').length,
-    needsRevision: allOrders.filter(o => o.status === 'Design Revise').length,
-    paymentFailed: allOrders.filter(o => o.status === 'Payment Failed').length,
+    pendingApproval: allOrders.filter(o => o.status === ORDER_STATUS.PENDING_APPROVAL).length,
+    inDisplay: allOrders.filter(o => o.status === ORDER_STATUS.IN_DISPLAY).length,
+    completed: allOrders.filter(o => o.status === ORDER_STATUS.COMPLETED).length,
+    needsRevision: allOrders.filter(o => o.status === ORDER_STATUS.DESIGN_REVISE).length,
     totalRevenue: allOrders
-      .filter(o => ['Pending Display', 'In Display', 'Completed', 'Design Revise'].includes(o.status))
-      .reduce((sum, o) => sum + (o.total_cost || 0), 0)
+      .filter(o => [ORDER_STATUS.IN_DISPLAY, ORDER_STATUS.COMPLETED, ORDER_STATUS.DESIGN_REVISE].includes(o.status))
+      .reduce((sum, o) => sum + (o.total_cost || o.final_amount || o.totalAmount || 0), 0)
   };
 
   // All possible statuses
-  const allStatuses = [
-    'All',
-    'Pending Payment',
-    'Pending Approval',
-    'Pending Display',
-    'In Display',
-    'Completed',
-    'Cancelled',
-    'Design Revise',
-    'Cancelled - Refunded'
-  ];
+  const allStatuses = ['All', ...ALL_ORDER_STATUSES];
 
   // Handle file selection
   const handleFileSelect = (e) => {
@@ -325,13 +346,6 @@ export default function AdminOrders() {
             <div className={styles.analyticsContent}>
               <p className={styles.analyticsLabel}>Pending Approval</p>
               <p className={styles.analyticsValue}>{analytics.pendingApproval}</p>
-            </div>
-          </div>
-          <div className={styles.analyticsCard}>
-            <div className={styles.analyticsIcon}>✅</div>
-            <div className={styles.analyticsContent}>
-              <p className={styles.analyticsLabel}>Pending Display</p>
-              <p className={styles.analyticsValue}>{analytics.pendingDisplay}</p>
             </div>
           </div>
           <div className={styles.analyticsCard}>
@@ -542,14 +556,9 @@ export default function AdminOrders() {
                     onChange={(e) => setUpdateStatus(e.target.value)}
                     className={styles.select}
                   >
-                    <option value="Pending Payment">Pending Payment</option>
-                    <option value="Pending Approval">Pending Approval</option>
-                    <option value="Pending Display">Pending Display (Approved)</option>
-                    <option value="In Display">In Display</option>
-                    <option value="Completed">Completed</option>
-                    <option value="Cancelled">Cancelled</option>
-                    <option value="Design Revise">Design Revise</option>
-                    <option value="Cancelled - Refunded">Cancelled - Refunded</option>
+                    {ALL_ORDER_STATUSES.map(status => (
+                      <option key={status} value={status}>{status}</option>
+                    ))}
                   </select>
                 </div>
 

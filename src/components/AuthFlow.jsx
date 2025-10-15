@@ -389,36 +389,38 @@ export default function AuthFlow() {
         phoneToken: phoneTokenToUse,
       });
       
-      // Registration successful - create authenticated session directly
-      
-      const userEmail = localStorage.getItem('pendingEmail');
-      
-      // Create user object from registration data
-      const newUserData = {
-        email: userEmail,
-        fullName: name,
-        name: name,
-        id: Date.now(), // Temporary ID until we get real one from API
-        verified: true
-      };
-      
-      // Create a session token
-      const sessionToken = `reg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-      
-      // Store user data and token
-      localStorage.setItem('user', JSON.stringify(newUserData));
-      localStorage.setItem('authToken', sessionToken);
-      localStorage.setItem('token', sessionToken);
+      // Registration successful - use the API response data
+      if (registrationResponse.data && registrationResponse.data.success) {
+        const responseData = registrationResponse.data.data;
+        const userData = responseData.user || responseData;
+        const token = responseData.token || responseData.accessToken || responseData.authToken;
+        
+        if (!userData || !token) {
+          setError("Invalid response from server. Please try again.");
+          setLoading(false);
+          return;
+        }
+        
+        // Store user data and token from API response
+        localStorage.setItem('user', JSON.stringify(userData));
+        localStorage.setItem('authToken', token);
+        localStorage.setItem('token', token);
       
       // Clear verification tokens
       localStorage.removeItem('emailToken');
       localStorage.removeItem('phoneToken');
       localStorage.removeItem('pendingEmail');
       
-      // Use the login function from AuthContext
-      const loginSuccess = login(newUserData, sessionToken);
-      if (!loginSuccess) {
-        setError("Invalid email or password.");
+        // Use the login function from AuthContext with API response data
+        const loginSuccess = login(userData, token);
+        if (!loginSuccess) {
+          setError("Failed to create user session. Please try again.");
+          setLoading(false);
+          return;
+        }
+      } else {
+        setError("Registration failed. Please try again.");
+        setLoading(false);
         return;
       }
       
@@ -431,8 +433,8 @@ export default function AuthFlow() {
       
       // Force immediate redirect to avoid React state timing issues
       setTimeout(() => {
-        const userData = JSON.parse(localStorage.getItem('user') || '{}');
-        const isAdmin = userData.user_role === 'admin' || userData.role === 'admin' || userData.is_admin === true;
+        const storedUserData = JSON.parse(localStorage.getItem('user') || '{}');
+        const isAdmin = storedUserData.user_role === 'admin' || storedUserData.role === 'admin' || storedUserData.is_admin === true;
         
         navigate(isAdmin ? '/admin/orders' : '/dashboard', { replace: true });
       }, 100);

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { ordersAPI } from '../config/api';
+import { ORDER_STATUS } from '../config/orderStatuses';
 import styles from '../styles/BookingSuccess.module.css';
 
 const BookingSuccess = () => {
@@ -25,6 +26,10 @@ const BookingSuccess = () => {
         )[0];
         
         // Transform to match expected format
+        const baseAmount = mostRecentOrder.baseAmount || mostRecentOrder.price || mostRecentOrder.plans?.price || 7999;
+        const gstAmount = Math.round(baseAmount * 0.18);
+        const totalAmount = mostRecentOrder.total_cost || mostRecentOrder.final_amount || mostRecentOrder.totalAmount || mostRecentOrder.amount;
+        
         const transformedOrder = {
           id: mostRecentOrder.id,
           orderId: mostRecentOrder.id,
@@ -37,7 +42,9 @@ const BookingSuccess = () => {
             duration: mostRecentOrder.plans?.duration_days || mostRecentOrder.plan?.duration_days || 'N/A'
           },
           startDate: mostRecentOrder.start_date || mostRecentOrder.startDate || mostRecentOrder.displayDate,
-          totalAmount: mostRecentOrder.total_cost || mostRecentOrder.final_amount || mostRecentOrder.totalAmount || mostRecentOrder.amount,
+          baseAmount: baseAmount,
+          gstAmount: gstAmount,
+          totalAmount: totalAmount,
           status: mostRecentOrder.status,
           createdAt: mostRecentOrder.created_at || mostRecentOrder.createdAt
         };
@@ -90,7 +97,7 @@ const BookingSuccess = () => {
             },
             startDate: foundOrder.start_date || foundOrder.startDate,
             totalAmount: foundOrder.total_cost || foundOrder.final_amount || foundOrder.totalAmount,
-            status: foundOrder.status || 'Pending Approval',
+            status: foundOrder.status || ORDER_STATUS.PENDING_APPROVAL,
             createdAt: foundOrder.created_at || foundOrder.createdAt
           };
           
@@ -118,7 +125,7 @@ const BookingSuccess = () => {
               },
               startDate: localOrder.start_date || localOrder.startDate || localOrder.displayDate,
               totalAmount: localOrder.total_cost || localOrder.final_amount || localOrder.totalAmount || localOrder.amount,
-              status: localOrder.status || 'Pending Approval',
+              status: localOrder.status || ORDER_STATUS.PENDING_APPROVAL,
               createdAt: localOrder.created_at || localOrder.createdAt
             };
             
@@ -140,7 +147,7 @@ const BookingSuccess = () => {
                 plan: { name: 'Processing...', duration: '...' },
                 startDate: 'Processing...',
                 totalAmount: 0,
-                status: 'Pending Approval',
+                status: ORDER_STATUS.PENDING_APPROVAL,
                 createdAt: new Date().toISOString()
               });
               setLoading(false);
@@ -190,9 +197,21 @@ const BookingSuccess = () => {
       <div className={styles.successCard}>
         <div className={styles.successIcon}>
           <div className={styles.checkmark}>
-            <div className={styles.checkmarkCircle}></div>
-            <div className={styles.checkmarkStem}></div>
-            <div className={styles.checkmarkKick}></div>
+            <svg 
+              className={styles.checkmarkSvg} 
+              viewBox="0 0 100 100" 
+              fill="none" 
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <circle cx="50" cy="50" r="45" fill="#4CAF50" stroke="#45a049" strokeWidth="2"/>
+              <path 
+                d="M25 50 L40 65 L75 30" 
+                stroke="white" 
+                strokeWidth="6" 
+                strokeLinecap="round" 
+                strokeLinejoin="round"
+              />
+            </svg>
           </div>
         </div>
         
@@ -226,9 +245,23 @@ const BookingSuccess = () => {
                 <span className={styles.value}>{order.plan?.duration || order.duration_days || order.planDuration || 'N/A'} day{(order.plan?.duration || order.duration_days || order.planDuration || 1) > 1 ? 's' : ''}</span>
               </div>
               <div className={styles.detailItem}>
+                <span className={styles.label}>Base Price:</span>
+                <span className={styles.value}>
+                  ₹{order.baseAmount.toLocaleString('en-IN')}
+                </span>
+              </div>
+              <div className={styles.detailItem}>
+                <span className={styles.label}>GST (18%):</span>
+                <span className={styles.value}>
+                  ₹{order.gstAmount.toLocaleString('en-IN')}
+                </span>
+              </div>
+              <div className={styles.detailItem}>
                 <span className={styles.label}>Total Amount:</span>
                 <span className={styles.value}>
-                  {order.totalAmount > 0 ? `₹${order.totalAmount.toLocaleString('en-IN')}` : 'Processing...'}
+                  {(order.total_cost || order.final_amount || order.totalAmount || 0) > 0 ? 
+                    `₹${(order.total_cost || order.final_amount || order.totalAmount || 0).toLocaleString('en-IN')}` : 
+                    'Processing...'}
                 </span>
               </div>
               <div className={styles.detailItem}>
