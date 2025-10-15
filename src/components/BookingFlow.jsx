@@ -15,7 +15,15 @@ export default function BookingFlow() {
   const [selectedDate, setSelectedDate] = useState('');
   const [selectedScreen, setSelectedScreen] = useState(null);
   const [selectedPlan, setSelectedPlan] = useState(null);
+  const [minDate, setMinDate] = useState('');
   const [showScreenModal, setShowScreenModal] = useState(false);
+
+  // Set minimum date on component mount
+  useEffect(() => {
+    const today = new Date();
+    const minDateValue = new Date(today.getTime() + 2 * 24 * 60 * 60 * 1000);
+    setMinDate(minDateValue.toISOString().split('T')[0]);
+  }, []);
   const [designFile, setDesignFile] = useState(null);
   const [designPreview, setDesignPreview] = useState(null);
   const [uploadError, setUploadError] = useState('');
@@ -375,12 +383,11 @@ export default function BookingFlow() {
   // Handle date selection
   const handleDateSelect = async (date) => {
     // Block invalid dates - don't allow selection
-    if (date) {
+    if (date && minDate) {
       const selectedDateObj = new Date(date);
-      const today = new Date();
-      const minDate = new Date(today.getTime() + 2 * 24 * 60 * 60 * 1000); // +2 days
-      
-      if (selectedDateObj < minDate) {
+      const minDateObj = new Date(minDate);
+
+      if (selectedDateObj < minDateObj) {
         // Show toast for invalid date selection
         setToast({
           show: true,
@@ -631,18 +638,19 @@ export default function BookingFlow() {
     }
     
     // Validate date is at least 2 days from today
-    const selectedDateObj = new Date(selectedDate);
-    const today = new Date();
-    const minDate = new Date(today.getTime() + 2 * 24 * 60 * 60 * 1000); // +2 days
-    
-    if (selectedDateObj < minDate) {
-      setIncompleteStep('date-selection');
-      setError('Please select a date at least 2 days from today');
-      setConfirmingOrder(false);
-      setTimeout(() => {
-        document.querySelector('[data-step="1"]')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }, 100);
-      return;
+    if (selectedDate && minDate) {
+      const selectedDateObj = new Date(selectedDate);
+      const minDateObj = new Date(minDate);
+
+      if (selectedDateObj < minDateObj) {
+        setIncompleteStep('date-selection');
+        setError('Please select a date at least 2 days from today');
+        setConfirmingOrder(false);
+        setTimeout(() => {
+          document.querySelector('[data-step="1"]')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 100);
+        return;
+      }
     }
     
     if (!selectedScreen) {
@@ -1001,11 +1009,7 @@ export default function BookingFlow() {
                 type="date"
                 value={selectedDate}
                 onChange={(e) => handleDateSelect(e.target.value)}
-                min={(() => {
-                  const today = new Date();
-                  const minDate = new Date(today.getTime() + 2 * 24 * 60 * 60 * 1000);
-                  return minDate.toISOString().split('T')[0];
-                })()}
+                min={minDate}
                 max={(() => {
                   const today = new Date();
                   const maxDate = new Date(today.getTime() + 365 * 24 * 60 * 60 * 1000); // 1 year from today
@@ -1016,6 +1020,26 @@ export default function BookingFlow() {
                 required
                 autoComplete="off"
                 inputMode="none"
+                onFocus={(e) => {
+                  // Ensure the min date is properly set when focused
+                  e.target.min = minDate;
+                }}
+                onInput={(e) => {
+                  // Block invalid dates at input level
+                  if (e.target.value && minDate) {
+                    const selectedDate = new Date(e.target.value);
+                    const minDateObj = new Date(minDate);
+                    
+                    if (selectedDate < minDateObj) {
+                      e.target.value = '';
+                      setToast({
+                        show: true,
+                        message: 'Please select a date at least 2 days from today',
+                        type: 'error'
+                      });
+                    }
+                  }
+                }}
               />
               <div className={styles.calendarIcon}>
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">

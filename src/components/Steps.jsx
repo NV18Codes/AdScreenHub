@@ -61,6 +61,8 @@ const steps = [
 
 export default function Steps() {
   const videoRef = useRef(null);
+  const [videoError, setVideoError] = useState(false);
+  const [videoLoading, setVideoLoading] = useState(true);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -126,15 +128,40 @@ export default function Steps() {
                 preload="metadata"
                 poster="/Banner.png"
                 style={{ minHeight: '500px' }}
-                onLoadStart={() => console.log('Video loading started')}
-                onCanPlay={() => console.log('Video can play')}
+                muted={false}
+                autoPlay={false}
+                onLoadStart={() => {
+                  console.log('Video loading started');
+                  setVideoLoading(true);
+                  setVideoError(false);
+                }}
+                onLoadedData={() => {
+                  console.log('Video data loaded');
+                  setVideoLoading(false);
+                }}
+                onCanPlay={() => {
+                  console.log('Video can play');
+                  setVideoLoading(false);
+                }}
+                onCanPlayThrough={() => {
+                  console.log('Video can play through');
+                  setVideoLoading(false);
+                }}
+                onPlay={() => console.log('Video started playing')}
+                onPause={() => console.log('Video paused')}
+                onProgress={() => console.log('Video loading progress')}
                 onError={(e) => {
                   console.error('Video error:', e);
                   console.error('Video src:', e.target.src);
                   console.error('Video error details:', e.target.error);
+                  console.error('Video network state:', e.target.networkState);
+                  console.error('Video ready state:', e.target.readyState);
+                  setVideoError(true);
+                  setVideoLoading(false);
                 }}
               >
-                <source src="/About AdScreenHub (1).mp4" type="video/mp4" />
+                <source src="/About AdScreenHub.mp4" type="video/mp4; codecs=avc1.42E01E,mp4a.40.2" />
+                <source src="./About AdScreenHub.mp4" type="video/mp4" />
                 <div style={{ 
                   padding: '2rem', 
                   textAlign: 'center', 
@@ -146,9 +173,26 @@ export default function Steps() {
                   justifyContent: 'center',
                   flexDirection: 'column'
                 }}>
-                  <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🎥</div>
-                  <p>About AdScreenHub Video</p>
-                  <p style={{ fontSize: '0.875rem', marginTop: '0.5rem' }}>Click play to watch</p>
+                  {videoLoading && (
+                    <>
+                      <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>⏳</div>
+                      <p>Loading video...</p>
+                    </>
+                  )}
+                  {videoError && (
+                    <>
+                      <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>❌</div>
+                      <p>Video failed to load</p>
+                      <p style={{ fontSize: '0.875rem', marginTop: '0.5rem' }}>Please try refreshing the page</p>
+                    </>
+                  )}
+                  {!videoLoading && !videoError && (
+                    <>
+                      <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🎥</div>
+                      <p>About AdScreenHub Video</p>
+                      <p style={{ fontSize: '0.875rem', marginTop: '0.5rem' }}>Click play to watch</p>
+                    </>
+                  )}
                 </div>
                 Your browser does not support the video tag.
               </video>
