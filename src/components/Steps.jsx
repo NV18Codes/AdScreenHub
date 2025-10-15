@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState } from "react";
+import React from "react";
 
 const MapPinIcon = () => (
   <svg className="w-7 h-7" fill="currentColor" viewBox="0 0 24 24">
@@ -59,29 +59,6 @@ const steps = [
 ];
 
 export default function Steps() {
-  const videoRef = useRef(null);
-  const [videoError, setVideoError] = useState(false);
-  const [videoLoading, setVideoLoading] = useState(true);
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (videoRef.current) {
-            if (!entry.isIntersecting) videoRef.current.pause();
-          }
-        });
-      },
-      { threshold: 0.5 }
-    );
-
-    if (videoRef.current) observer.observe(videoRef.current);
-
-    return () => {
-      if (videoRef.current) observer.unobserve(videoRef.current);
-    };
-  }, []);
-
   return (
     <section className="px-8 py-16 bg-white">
       <div className="max-w-7xl mx-auto">
@@ -118,55 +95,16 @@ export default function Steps() {
             </p>
 
              <div
-               className="relative rounded-xl overflow-hidden shadow-2xl"
+               className="relative rounded-xl overflow-hidden shadow-2xl bg-gradient-to-br from-blue-600 to-purple-700 flex items-center justify-center"
                style={{ minHeight: "500px" }}
              >
-               <video
-                 ref={videoRef}
-                 className="w-full h-full object-cover"
-                 controls
-                 playsInline
-                 preload="metadata"
-                 poster="/Banner.png"
-                 onLoadStart={() => {
-                   console.log("Video loading started");
-                   setVideoLoading(true);
-                   setVideoError(false);
-                 }}
-                 onCanPlay={() => {
-                   console.log("Video can play");
-                   setVideoLoading(false);
-                 }}
-                 onError={(e) => {
-                   console.log("Video error:", e);
-                   setVideoError(true);
-                   setVideoLoading(false);
-                 }}
-               >
-                 <source src="/About%20AdScreenHub%20(1)%20(1)%20(1).mp4" type="video/mp4" />
-                 <source src="./About AdScreenHub (1) (1) (1).mp4" type="video/mp4" />
-                 <source src="About AdScreenHub (1) (1) (1).mp4" type="video/mp4" />
-                 Your browser does not support the video tag.
-               </video>
-               
-               {videoLoading && (
-                 <div className="absolute inset-0 bg-gray-100 flex items-center justify-center">
-                   <div className="text-center">
-                     <div className="text-5xl mb-3 animate-pulse">⏳</div>
-                     <p className="text-gray-600">Loading video...</p>
-                   </div>
-                 </div>
-               )}
-               
-               {videoError && (
-                 <div className="absolute inset-0 bg-gray-100 flex items-center justify-center">
-                   <div className="text-center">
-                     <div className="text-5xl mb-3">🎥</div>
-                     <p className="text-gray-600 font-semibold">Video unavailable</p>
-                     <p className="text-sm text-gray-500 mt-1">Please try again later</p>
-                   </div>
-                 </div>
-               )}
+               <div className="text-center text-white p-8">
+                 <div className="text-6xl mb-4">📺</div>
+                 <h3 className="text-2xl font-bold mb-2">About AdScreenHub</h3>
+                 <p className="text-lg opacity-90">
+                   Experience the power of LED advertising with our premium display screens
+                 </p>
+               </div>
              </div>
           </div>
         </div>
