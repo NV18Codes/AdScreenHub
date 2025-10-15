@@ -62,7 +62,12 @@ export default function BookingCalendar() {
         ...plan.features.features.filter(feature => 
           !feature.toLowerCase().includes('day plan') && 
           !feature.toLowerCase().includes('day display') &&
-          !feature.toLowerCase().includes('duration')
+          !feature.toLowerCase().includes('duration') &&
+          !feature.toLowerCase().includes('1 day') &&
+          !feature.toLowerCase().includes('3 day') &&
+          !feature.toLowerCase().includes('5 day') &&
+          !feature.toLowerCase().includes('day') ||
+          feature.toLowerCase().includes('ad slots')
         )
       ]
     }));

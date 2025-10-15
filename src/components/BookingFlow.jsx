@@ -106,13 +106,23 @@ export default function BookingFlow() {
         features = plan.features.features.filter(feature => 
           !feature.toLowerCase().includes('day plan') && 
           !feature.toLowerCase().includes('day display') &&
-          !feature.toLowerCase().includes('duration')
+          !feature.toLowerCase().includes('duration') &&
+          !feature.toLowerCase().includes('1 day') &&
+          !feature.toLowerCase().includes('3 day') &&
+          !feature.toLowerCase().includes('5 day') &&
+          !feature.toLowerCase().includes('day') ||
+          feature.toLowerCase().includes('ad slots')
         );
       } else if (Array.isArray(plan.features)) {
         features = plan.features.filter(feature => 
           !feature.toLowerCase().includes('day plan') && 
           !feature.toLowerCase().includes('day display') &&
-          !feature.toLowerCase().includes('duration')
+          !feature.toLowerCase().includes('duration') &&
+          !feature.toLowerCase().includes('1 day') &&
+          !feature.toLowerCase().includes('3 day') &&
+          !feature.toLowerCase().includes('5 day') &&
+          !feature.toLowerCase().includes('day') ||
+          feature.toLowerCase().includes('ad slots')
         );
       } else if (typeof plan.features === 'string') {
         features = [plan.features];
@@ -637,7 +647,11 @@ export default function BookingFlow() {
     // Validate all steps and redirect to incomplete step
     if (!selectedDate) {
       setIncompleteStep('date-selection');
-      setError('Please select a date to continue');
+      setToast({
+        show: true,
+        message: 'Please complete all required * fields',
+        type: 'error'
+      });
       setConfirmingOrder(false);
       setTimeout(() => {
         document.querySelector('[data-step="1"]')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -652,7 +666,11 @@ export default function BookingFlow() {
 
       if (selectedDateObj < minDateObj) {
         setIncompleteStep('date-selection');
-        setError('Please select a date at least 2 days from today');
+        setToast({
+          show: true,
+          message: 'Please select a date at least 2 days from today',
+          type: 'error'
+        });
         setConfirmingOrder(false);
         setTimeout(() => {
           document.querySelector('[data-step="1"]')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -663,7 +681,11 @@ export default function BookingFlow() {
     
     if (!selectedScreen) {
       setIncompleteStep('screen-selection');
-      setError('Please select a location to continue');
+      setToast({
+        show: true,
+        message: 'Please complete all required * fields',
+        type: 'error'
+      });
       setConfirmingOrder(false);
       setTimeout(() => {
         document.querySelector('[data-step="2"]')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -673,7 +695,11 @@ export default function BookingFlow() {
     
     if (!selectedPlan) {
       setIncompleteStep('plan-selection');
-      setError('Please select a plan to continue');
+      setToast({
+        show: true,
+        message: 'Please complete all required * fields',
+        type: 'error'
+      });
       setConfirmingOrder(false);
       setTimeout(() => {
         document.querySelector('[data-step="3"]')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -685,7 +711,11 @@ export default function BookingFlow() {
 
     if (!isPlanAvailable) {
       setIncompleteStep('plan-selection');
-      setError('Selected plan is no longer available. Please select a different plan.');
+      setToast({
+        show: true,
+        message: 'Selected plan is no longer available. Please select a different plan.',
+        type: 'error'
+      });
       setConfirmingOrder(false);
       setTimeout(() => {
         document.querySelector('[data-step="3"]')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -695,7 +725,11 @@ export default function BookingFlow() {
     
     if (!designFile || !fileUploaded) {
       setIncompleteStep('file-upload');
-      setError('Please upload your creative file to continue');
+      setToast({
+        show: true,
+        message: 'Please complete all required * fields',
+        type: 'error'
+      });
       setConfirmingOrder(false);
       setTimeout(() => {
         document.querySelector('[data-step="4"]')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -705,29 +739,57 @@ export default function BookingFlow() {
     
     if (!address.trim()) {
       setIncompleteStep('order-details');
-      setError('Please enter your billing address');
+      setToast({
+        show: true,
+        message: 'Please complete all required * fields',
+        type: 'error'
+      });
       setConfirmingOrder(false);
+      setTimeout(() => {
+        document.querySelector('[data-step="5"]')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 100);
       return;
     }
     
     if (!city.trim()) {
       setIncompleteStep('order-details');
-      setError('Please enter your city');
+      setToast({
+        show: true,
+        message: 'Please complete all required * fields',
+        type: 'error'
+      });
       setConfirmingOrder(false);
+      setTimeout(() => {
+        document.querySelector('[data-step="5"]')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 100);
       return;
     }
     
     if (!zip.trim() || zip.length !== 6) {
       setIncompleteStep('order-details');
-      setError('Please enter a valid 6-digit pincode');
+      setToast({
+        show: true,
+        message: 'Please complete all required * fields',
+        type: 'error'
+      });
       setConfirmingOrder(false);
+      setTimeout(() => {
+        document.querySelector('[data-step="5"]')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 100);
       return;
     }
     
     if (gstApplicable && (!companyName.trim() || !gstNumber.trim())) {
       setIncompleteStep('order-details');
-      setError('Please fill in all GST details');
+      setToast({
+        show: true,
+        message: 'Please complete all required * fields',
+        type: 'error'
+      });
       setConfirmingOrder(false);
+      setTimeout(() => {
+        document.querySelector('[data-step="5"]')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 100);
       return;
     }
     
@@ -735,16 +797,30 @@ export default function BookingFlow() {
       const gstValidation = validateGSTNumber(gstNumber.trim());
       if (!gstValidation.valid) {
         setIncompleteStep('order-details');
-        setError(gstValidation.error);
+        setToast({
+          show: true,
+          message: 'Invalid GST Number',
+          type: 'error'
+        });
         setConfirmingOrder(false);
+        setTimeout(() => {
+          document.querySelector('[data-step="5"]')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 100);
         return;
       }
     }
     
     if (!termsAccepted) {
       setIncompleteStep('order-details');
-      setError('Please accept the terms and conditions');
+      setToast({
+        show: true,
+        message: 'Please complete all required * fields',
+        type: 'error'
+      });
       setConfirmingOrder(false);
+      setTimeout(() => {
+        document.querySelector('[data-step="5"]')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 100);
       return;
     }
     
@@ -1520,6 +1596,11 @@ export default function BookingFlow() {
                           if (!validation.valid) {
                             // Show validation error in real-time
                             setError(validation.error);
+                            setToast({
+                              show: true,
+                              message: 'Invalid GST Number',
+                              type: 'error'
+                            });
                           } else {
                             // Clear error if valid
                             setError('');
@@ -1648,7 +1729,7 @@ export default function BookingFlow() {
 
                     <button
               onClick={handleConfirmOrder}
-              disabled={confirmingOrder || !designFile || !fileUploaded || !address.trim() || !city.trim() || !zip.trim() || zip.length !== 6 || !termsAccepted}
+              disabled={confirmingOrder}
               className={styles.confirmButton}
             >
               {confirmingOrder ? (
