@@ -221,10 +221,30 @@ export default function AdminOrders() {
     inDisplay: allOrders.filter(o => o.status === ORDER_STATUS.IN_DISPLAY).length,
     completed: allOrders.filter(o => o.status === ORDER_STATUS.COMPLETED).length,
     needsRevision: allOrders.filter(o => o.status === ORDER_STATUS.DESIGN_REVISE).length,
-    totalRevenue: allOrders
-      .filter(o => [ORDER_STATUS.IN_DISPLAY, ORDER_STATUS.COMPLETED, ORDER_STATUS.DESIGN_REVISE].includes(o.status))
-      .reduce((sum, o) => sum + (o.final_amount || o.total_cost || o.totalAmount || 0), 0)
+    totalRevenue: allOrders.reduce((sum, o) => {
+      const amount = o.final_amount || o.total_cost || o.totalAmount || 0;
+      console.log('Order revenue calculation:', {
+        orderId: o.id,
+        final_amount: o.final_amount,
+        total_cost: o.total_cost,
+        totalAmount: o.totalAmount,
+        calculatedAmount: amount
+      });
+      return sum + amount;
+    }, 0)
   };
+
+  // Debug: Log analytics calculation
+  console.log('Analytics calculation:', {
+    totalOrders: allOrders.length,
+    totalRevenue: analytics.totalRevenue,
+    sampleOrder: allOrders[0] ? {
+      id: allOrders[0].id,
+      final_amount: allOrders[0].final_amount,
+      total_cost: allOrders[0].total_cost,
+      totalAmount: allOrders[0].totalAmount
+    } : 'No orders'
+  });
 
   // All possible statuses
   const allStatuses = ['All', ...ALL_ORDER_STATUSES];
@@ -538,16 +558,6 @@ export default function AdminOrders() {
                     <div className={styles.detailRow}>
                       <span className={styles.label}>💬 Remarks:</span>
                       <span className={styles.value}>{order.remarks}</span>
-                    </div>
-                  )}
-                  {order.creative_image_url && (
-                    <div className={styles.detailRow}>
-                      <span className={styles.label}>🎨 Creative:</span>
-                      <span className={styles.value}>
-                        <a href={order.creative_image_url} target="_blank" rel="noopener noreferrer" className={styles.creativeLink}>
-                          View Creative
-                        </a>
-                      </span>
                     </div>
                   )}
                 </div>

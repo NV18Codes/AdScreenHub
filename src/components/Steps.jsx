@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useRef, useEffect, useState } from "react";
 
 const MapPinIcon = () => (
   <svg className="w-7 h-7" fill="currentColor" viewBox="0 0 24 24">
@@ -59,6 +59,57 @@ const steps = [
 ];
 
 export default function Steps() {
+  const videoRef = useRef(null);
+  const [isVideoVisible, setIsVideoVisible] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            // Video is visible
+            setIsVideoVisible(true);
+          } else {
+            // Video is not visible - pause it if playing
+            setIsVideoVisible(false);
+            if (isPlaying) {
+              video.pause();
+              setIsPlaying(false);
+            }
+          }
+        });
+      },
+      {
+        threshold: 0.5, // Trigger when 50% of video is visible
+        rootMargin: '0px 0px -10% 0px' // Add some margin for better UX
+      }
+    );
+
+    observer.observe(video);
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [isPlaying]);
+
+  const handleVideoClick = () => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    if (video.paused) {
+      video.play().then(() => {
+        setIsPlaying(true);
+      }).catch(console.error);
+    } else {
+      video.pause();
+      setIsPlaying(false);
+    }
+  };
+
   return (
     <section className="px-8 py-16 bg-white">
       <div className="max-w-7xl mx-auto">
@@ -87,24 +138,30 @@ export default function Steps() {
             </div>
           </div>
 
-          {/* RIGHT SIDE */}
-          <div className="lg:pl-8 flex flex-col justify-center h-full">
-            <p className="text-gray-700 text-xl mb-10 font-medium italic text-center lg:text-left">
-              AS EASY AS ADDING A PRODUCT TO CART — RENT OUR LED SCREENS IN
-              MINUTES.
-            </p>
+                 {/* RIGHT SIDE */}
+                 <div className="lg:pl-8 flex flex-col justify-center h-full">
+                   <p className="text-gray-700 text-xl mb-10 font-medium italic text-center lg:text-left">
+                     AS EASY AS ADDING A PRODUCT TO CART — RENT OUR LED SCREENS IN
+                     MINUTES.
+                   </p>
 
-             <div
-               className="relative rounded-xl overflow-hidden shadow-2xl"
-               style={{ minHeight: "500px" }}
-             >
-               <img 
-                 src="/Banner.png" 
-                 alt="AdScreenHub - LED Advertising Screens"
-                 className="w-full h-full object-cover"
-               />
-             </div>
-          </div>
+                   <div
+                     className="relative rounded-xl overflow-hidden shadow-2xl"
+                     style={{ minHeight: "500px" }}
+                   >
+                     <video 
+                       ref={videoRef}
+                       src="https://ecyfovxtjczaugmsszih.supabase.co/storage/v1/object/public/ad-creatives/FRONTEND%20IMAGES/About%20AdScreenHub%20(1).mp4"
+                       alt="AdScreenHub - LED Advertising Screens"
+                       className="w-full h-full object-contain cursor-pointer"
+                       onClick={handleVideoClick}
+                       controls
+                       loop
+                       playsInline
+                       preload="metadata"
+                     />
+                   </div>
+                 </div>
         </div>
       </div>
     </section>
