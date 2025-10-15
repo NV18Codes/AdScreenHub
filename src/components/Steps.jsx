@@ -63,29 +63,6 @@ export default function Steps() {
   const videoRef = useRef(null);
   const [videoError, setVideoError] = useState(false);
   const [videoLoading, setVideoLoading] = useState(true);
-  const [currentVideoSource, setCurrentVideoSource] = useState(0);
-  
-  const videoSources = [
-    "/About AdScreenHub.mp4",
-    "./About AdScreenHub.mp4", 
-    "About AdScreenHub.mp4",
-    "/About AdScreenHub (1).mp4",
-    "./About AdScreenHub (1).mp4"
-  ];
-
-  const tryNextVideoSource = () => {
-    if (currentVideoSource < videoSources.length - 1) {
-      setCurrentVideoSource(prev => prev + 1);
-      setVideoError(false);
-      setVideoLoading(true);
-      if (videoRef.current) {
-        videoRef.current.load();
-      }
-    } else {
-      setVideoError(true);
-      setVideoLoading(false);
-    }
-  };
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -174,16 +151,12 @@ export default function Steps() {
                 onPause={() => console.log('Video paused')}
                 onProgress={() => console.log('Video loading progress')}
                 onError={(e) => {
-                  console.error('Video error:', e);
-                  console.error('Video src:', e.target.src);
-                  console.error('Video error details:', e.target.error);
-                  console.error('Video network state:', e.target.networkState);
-                  console.error('Video ready state:', e.target.readyState);
-                  console.log(`Trying next video source (${currentVideoSource + 1}/${videoSources.length})`);
-                  tryNextVideoSource();
+                  console.log('Video not available, showing placeholder');
+                  setVideoError(true);
+                  setVideoLoading(false);
                 }}
               >
-                <source src={videoSources[currentVideoSource]} type="video/mp4" />
+                <source src="public\About AdScreenHub (1).mp4" type="video/mp4" />
                 <div style={{ 
                   padding: '2rem', 
                   textAlign: 'center', 
@@ -203,32 +176,11 @@ export default function Steps() {
                   )}
                   {videoError && (
                     <>
-                      <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>❌</div>
-                      <p>Video failed to load</p>
-                      <p style={{ fontSize: '0.875rem', marginTop: '0.5rem', marginBottom: '1rem' }}>
-                        Tried {videoSources.length} different sources
+                      <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🎥</div>
+                      <p>About AdScreenHub Video</p>
+                      <p style={{ fontSize: '0.875rem', marginTop: '0.5rem' }}>
+                        Video will be available soon
                       </p>
-                      <button 
-                        onClick={() => {
-                          setCurrentVideoSource(0);
-                          setVideoError(false);
-                          setVideoLoading(true);
-                          if (videoRef.current) {
-                            videoRef.current.load();
-                          }
-                        }}
-                        style={{
-                          padding: '0.5rem 1rem',
-                          backgroundColor: '#3b82f6',
-                          color: 'white',
-                          border: 'none',
-                          borderRadius: '0.375rem',
-                          cursor: 'pointer',
-                          fontSize: '0.875rem'
-                        }}
-                      >
-                        Retry
-                      </button>
                     </>
                   )}
                   {!videoLoading && !videoError && (
