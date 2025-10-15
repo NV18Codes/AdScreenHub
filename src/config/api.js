@@ -145,12 +145,9 @@ export const authAPI = {
 export const dataAPI = {
   getPlans: async () => {
     try {
-      console.log('📞 Calling plans API:', `${API_BASE_URL}${API_ENDPOINTS.DATA.GET_PLANS}`);
       const result = await makeRequest(API_ENDPOINTS.DATA.GET_PLANS, null, 'GET');
-      console.log('📞 Plans API response:', result);
       return result;
     } catch (error) {
-      console.error('❌ Error in getPlans:', error);
       return { success: false, error: error.message, data: null };
     }
   },
@@ -159,7 +156,6 @@ export const dataAPI = {
     try {
       return await makeRequest(`${API_ENDPOINTS.DATA.GET_LOCATIONS_BY_DATE}/${date}`, null, 'GET');
     } catch (error) {
-      console.error('Error in getLocationAvailability:', error);
       return { success: false, error: error.message, data: null };
     }
   },
@@ -168,7 +164,6 @@ export const dataAPI = {
     try {
       return await makeRequest(`${API_ENDPOINTS.DATA.GET_PLANS_BY_LOCATION}/${locationId}`, null, 'GET');
     } catch (error) {
-      console.error('Error in getPlansByLocation:', error);
       // Return empty array instead of throwing to allow fallback
       return { success: false, error: error.message, data: null };
     }
@@ -178,7 +173,6 @@ export const dataAPI = {
     try {
       return await makeRequest(`${API_ENDPOINTS.DATA.CHECK_AVAILABILITY}/${locationId}?planId=${planId}&startDate=${startDate}`, null, 'GET');
     } catch (error) {
-      console.error('Error in checkAvailability:', error);
       return { success: false, error: error.message, data: null };
     }
   },
@@ -191,7 +185,6 @@ export const dataAPI = {
         durationDays 
       });
     } catch (error) {
-      console.error('Error in precheckPlanAvailability:', error);
       return { success: false, error: error.message, data: null };
     }
   }

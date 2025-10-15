@@ -67,7 +67,6 @@ export default function Footer() {
             <ul className={styles.footerLinks}>
               <li><Link to="/contact">Contact</Link></li>
               <li><Link to="/faq">FAQs</Link></li>
-              <li><Link to="/help">Help Center</Link></li>
             </ul>
           </div>
 

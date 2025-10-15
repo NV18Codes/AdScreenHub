@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { generateOrderId, manageStorageQuota } from '../utils/validation';
 import { ordersAPI } from '../config/api';
 import { useAuth } from '../contexts/AuthContext';
+import { ORDER_STATUS } from '../config/orderStatuses';
 
 // Helper function to process orders data from different API response structures
 const processOrdersData = (data) => {
@@ -221,9 +222,8 @@ const createOrder = async (orderData) => {
   try {
     // Get current user ID
     const userId = user?.id || user?.userId || 'unknown';
-    console.log("Order Data:", orderData);
-    // Determine the final, user-facing amount for the order
-    const finalAmount = orderData.baseAmount ;// Use baseAmount as the final amount to send to backend
+    // Determine the final, user-facing amount for the order (GST-inclusive)
+    const finalAmount = orderData.totalAmount || orderData.total_cost || orderData.final_amount || orderData.baseAmount;
 
     // Prepare the API payload with all required fields
     const apiPayload = {
@@ -234,9 +234,9 @@ const createOrder = async (orderData) => {
       startDate: orderData.startDate || orderData.displayDate || '',
       displayDate: orderData.startDate || orderData.displayDate || '', // Keep for compatibility
       
-      // Price fields - Send the final, user-facing amount.
-      // The backend is responsible for any tax breakdown (e.g., calculating base amount from total).
-      // This avoids frontend/backend calculation mismatches and passes the original amount to the payment gateway.
+      // Price fields - Send the GST-inclusive amount.
+      // The backend receives the total amount including GST for payment processing.
+      // This ensures the payment gateway gets the correct total amount the customer pays.
       baseAmount: finalAmount,
       price: finalAmount,
       totalAmount: finalAmount,
@@ -281,36 +281,39 @@ const createOrder = async (orderData) => {
       discountAmount: orderData.discountAmount || 0,
       
       // Status
-      status: 'Payment Pending'
+      status: ORDER_STATUS.PENDING_PAYMENT
     };
 
-    // Debug: Log the exact payload being sent
-    console.log('📤 Sending order data to API:', apiPayload);
-    console.log('📤 API endpoint:', '/orders/initiate');
+    // Validate required fields before API call
+    if (!apiPayload.planId || apiPayload.planId === '') {
+      console.error('❌ Missing planId:', apiPayload.planId);
+      return { success: false, error: 'Plan ID is required' };
+    }
     
-    // Keep this log for frontend debugging to verify its own calculations
-    console.log('Frontend Price Breakdown (for debugging):', {
-      originalTotal: orderData.totalAmount || orderData.price || 0,
-      discount: orderData.discountAmount || 0,
-      // Note: These values are for frontend reference and NOT sent to the API payload directly
-      subtotal: (orderData.totalAmount || orderData.price || 0) - calculateGSTAmount(orderData),
-      gstAmount: calculateGSTAmount(orderData),
-      totalAmount: finalAmount,
-      state: orderData.state || 'Karnataka',
-      gstType: (orderData.state || 'Karnataka') === 'Karnataka' ? 'CGST+SGST (9%+9%)' : 'IGST (18%)'
-    });
+    if (!apiPayload.locationId || apiPayload.locationId === '') {
+      console.error('❌ Missing locationId:', apiPayload.locationId);
+      return { success: false, error: 'Location ID is required' };
+    }
     
-    console.log('📤 API Price fields being sent:', {
-      baseAmount: apiPayload.baseAmount,
-      price: apiPayload.price,
-      totalAmount: apiPayload.totalAmount
-    });
+    if (!apiPayload.startDate || apiPayload.startDate === '') {
+      console.error('❌ Missing startDate:', apiPayload.startDate);
+      return { success: false, error: 'Start date is required' };
+    }
+    
+    if (!apiPayload.totalAmount || apiPayload.totalAmount <= 0) {
+      console.error('❌ Invalid totalAmount:', apiPayload.totalAmount);
+      return { success: false, error: 'Valid total amount is required' };
+    }
+
+    // Debug: Log the payload being sent to API
+    console.log('🔍 API Payload being sent:', JSON.stringify(apiPayload, null, 2));
     
     // Call the API to initiate the order
     // NOTE: Inventory should NOT be decreased here - only after successful payment verification
     const response = await ordersAPI.initiateOrder(apiPayload);
     
-    console.log('📥 API response:', response);
+    // Debug: Log the API response
+    console.log('🔍 API Response:', response);
     
     if (response.success && response.data) {
       // Extract order data from nested structure
@@ -322,7 +325,7 @@ const createOrder = async (orderData) => {
         id: apiOrderId || generateOrderId(),
         userId: userId,
         orderDate: new Date().toISOString().split('T')[0],
-        status: 'Payment Failed',
+        status: ORDER_STATUS.PAYMENT_FAILED,
         screenName: orderData.screenName || 'Unknown Screen',
         location: orderData.location || 'Unknown Location',
         adminProofImage: null,
@@ -364,60 +367,28 @@ const createOrder = async (orderData) => {
 
       return { success: true, order: newOrder, apiResponse: response.data };
     } else {
-      // Create a local order as fallback when API fails
-      const fallbackOrderId = generateOrderId();
-      const fallbackOrder = {
-        id: fallbackOrderId,
-        userId: userId,
-        orderDate: new Date().toISOString().split('T')[0],
-        status: 'Payment Failed',
-        orderUid: fallbackOrderId,
-        order_uid: fallbackOrderId,
-        screenName: orderData.screenName || 'Unknown Screen',
-        location: orderData.location || 'Unknown Location',
-        adminProofImage: null,
-        ...orderData,
-        // Use original data for fallback
-        totalAmount: finalAmount,
-        amount: finalAmount,
-        price: finalAmount,
-        createdAt: new Date().toISOString(),
-        apiSyncPending: true, // Mark for later sync
-        apiError: response.error || 'API call failed'
-      };
-
-      // Update local state
-      const updatedOrders = [...orders, fallbackOrder];
-      setOrders(updatedOrders);
+      // API call failed - return the error instead of creating fallback
+      console.error('❌ API call failed:', response.error);
+      console.error('❌ Status code:', response.statusCode);
       
-      try {
-        localStorage.setItem('adscreenhub_orders', JSON.stringify(updatedOrders));
-      } catch (error) {
-        // Silently fail if storage is not available for fallback
-      }
-
-      return { success: true, order: fallbackOrder, apiResponse: null, isFallback: true };
+      return { 
+        success: false, 
+        error: response.error || 'API call failed',
+        statusCode: response.statusCode,
+        details: response
+      };
     }
   } catch (error) {
-    console.error('❌ Error creating order:', error);
-    console.error('❌ Error details:', {
-      message: error.message,
-      status: error.status,
-      statusCode: error.statusCode,
-      response: error.response
-    });
+    // Debug: Log the full error details
+    console.error('❌ Order creation error:', error);
+    console.error('❌ Error status:', error.status || error.statusCode);
+    console.error('❌ Error message:', error.message);
+    console.error('❌ Error details:', error.error || error.details);
     
     // Handle specific error types
     if (error.status === 400 || error.statusCode === 400) {
-      console.error('❌ 400 Bad Request - Invalid data sent to API');
-      console.error('❌ Check the API payload structure and required fields');
-      console.error('❌ API Error Message:', error.error || error.message);
-      console.error('❌ Full API Error Response:', error);
-      
       if (error.error && error.error.includes('Price mismatch')) {
-        console.error('💰 PRICE MISMATCH ERROR DETECTED');
-        console.error('💰 Frontend total:', orderData.totalAmount || orderData.price);
-        console.error('💰 Backend rejected this amount.');
+        // Silent handling for price mismatch - backend will handle
       }
       
       return { 
@@ -433,7 +404,7 @@ const createOrder = async (orderData) => {
       id: fallbackOrderId,
       userId: userId,
       orderDate: new Date().toISOString().split('T')[0],
-      status: 'Payment Pending',
+      status: ORDER_STATUS.PENDING_PAYMENT,
       orderUid: fallbackOrderId,
       order_uid: fallbackOrderId,
       screenName: orderData.screenName || 'Unknown Screen',
@@ -490,7 +461,7 @@ const createOrder = async (orderData) => {
         ...order, 
         designFile: newDesignFile,
         supportingDoc: newSupportingDoc,
-        status: 'Pending Approval'
+        status: ORDER_STATUS.PENDING_APPROVAL
       } : order
     );
     
@@ -554,7 +525,7 @@ const createOrder = async (orderData) => {
           order.id === orderId 
             ? { 
                 ...order, 
-                status: 'Pending Approval', 
+                status: ORDER_STATUS.PENDING_APPROVAL, 
                 paymentVerified: true, 
                 paymentId: razorpayPaymentId,
                 razorpayPaymentId: razorpayPaymentId,
@@ -571,7 +542,7 @@ const createOrder = async (orderData) => {
           order.id === orderId 
             ? { 
                 ...order, 
-                status: 'Payment Failed',
+                status: ORDER_STATUS.PAYMENT_FAILED,
                 paymentVerified: false
               }
             : order
@@ -587,7 +558,7 @@ const createOrder = async (orderData) => {
         order.id === orderId 
           ? { 
               ...order, 
-              status: 'Payment Failed',
+              status: ORDER_STATUS.PAYMENT_FAILED,
               paymentVerified: false
             }
           : order
@@ -629,7 +600,7 @@ const createOrder = async (orderData) => {
           // Update order with API response
           const updatedOrders = orders.map(o => 
             o.id === order.id 
-              ? { ...o, ...result.data, apiSyncPending: false, status: result.data.status || 'Pending Approval' }
+              ? { ...o, ...result.data, apiSyncPending: false, status: result.data.status || ORDER_STATUS.PENDING_APPROVAL }
               : o
           );
           setOrders(updatedOrders);

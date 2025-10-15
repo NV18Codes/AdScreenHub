@@ -3,6 +3,7 @@ import { useOrders } from '../hooks/useOrders';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { getUserDisplayName } from '../utils/userUtils';
+import { ORDER_STATUS, isPaidOrder } from '../config/orderStatuses';
 import styles from '../styles/DashboardOverview.module.css';
 
 export default function DashboardOverview() {
@@ -12,14 +13,15 @@ export default function DashboardOverview() {
 
   // Calculate stats from ALL orders - exclude cancelled orders from total spent
   const totalOrders = orders.length;
-  const pendingOrders = orders.filter(order => order.status === 'Pending Approval').length;
-  const activeOrders = orders.filter(order => order.status === 'In Display').length;
-  const completedOrders = orders.filter(order => order.status === 'Completed Display' || order.status === 'Completed').length;
-  // Calculate total spent from PAID orders only
-  const paidStatuses = ['Pending Approval', 'In Display', 'Completed', 'Design Revise'];
+  const pendingOrders = orders.filter(order => order.status === ORDER_STATUS.PENDING_APPROVAL).length;
+  const activeOrders = orders.filter(order => order.status === ORDER_STATUS.IN_DISPLAY).length;
+  const completedOrders = orders.filter(order => order.status === ORDER_STATUS.COMPLETED).length;
+  // Calculate total spent from PAID orders only (excludes Pending Payment = failed orders)
+  // Include GST in total as these are the final amounts customers paid
+  const paidStatuses = [ORDER_STATUS.PENDING_APPROVAL, ORDER_STATUS.IN_DISPLAY, ORDER_STATUS.COMPLETED, ORDER_STATUS.DESIGN_REVISE];
   const totalSpent = orders
     .filter(order => paidStatuses.includes(order.status))
-    .reduce((sum, order) => sum + (order.totalAmount || order.total_cost || order.final_amount || 0), 0);
+    .reduce((sum, order) => sum + (order.total_cost || order.final_amount || order.totalAmount || 0), 0);
 
 
   // Get recent orders (last 3)
@@ -82,6 +84,32 @@ export default function DashboardOverview() {
               <p className={styles.statNumber}>₹{totalSpent.toLocaleString('en-IN')}</p>
             </div>
           </div>
+
+          <div className={styles.statCard}>
+            <div className={styles.statIcon}>
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+              </svg>
+            </div>
+            <div className={styles.statContent}>
+              <h3>Total Revenue</h3>
+              <p className={styles.statNumber}>₹{totalSpent.toLocaleString('en-IN')}</p>
+              <p className={styles.statSubtext}>(Including GST)</p>
+            </div>
+          </div>
+
+          <div className={styles.statCard}>
+            <div className={styles.statIcon}>
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <div className={styles.statContent}>
+              <h3>Billed Amount</h3>
+              <p className={styles.statNumber}>₹{totalSpent.toLocaleString('en-IN')}</p>
+              <p className={styles.statSubtext}>(With GST)</p>
+            </div>
+          </div>
         </div>
 
         {/* Quick Actions */}
@@ -125,7 +153,11 @@ export default function DashboardOverview() {
                     <p className={styles.orderDate}>
                       {new Date(order.orderDate).toLocaleDateString()}
                     </p>
-                    <p className={styles.orderAmount}>₹{order.totalAmount}</p>
+                    <div className={styles.priceBreakdown}>
+                      <p className={styles.basePrice}>Base: ₹{(order.baseAmount || order.price || order.plans?.price || 7999).toLocaleString('en-IN')}</p>
+                      <p className={styles.gstPrice}>GST: ₹{Math.round((order.baseAmount || order.price || order.plans?.price || 7999) * 0.18).toLocaleString('en-IN')}</p>
+                      <p className={styles.orderAmount}>Total: ₹{(order.total_cost || order.final_amount || order.totalAmount || 0).toLocaleString('en-IN')}</p>
+                    </div>
                   </div>
                   <div className={styles.orderStatus}>
                     <span className={`${styles.status} ${styles[`status${order.status.replace(/\s+/g, '')}`]}`}>

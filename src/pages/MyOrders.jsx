@@ -3,6 +3,7 @@ import { useOrders } from '../hooks/useOrders';
 import { formatDate, formatCurrency, validateFile, compressImage, manageStorageQuota } from '../utils/validation';
 import { useNavigate } from 'react-router-dom';
 import { filesAPI } from '../config/api';
+import { ORDER_STATUS, ALL_ORDER_STATUSES, canReviseOrder } from '../config/orderStatuses';
 import Toast from '../components/Toast';
 import styles from '../styles/MyOrders.module.css';
 
@@ -52,9 +53,9 @@ export default function MyOrders() {
     }
   };
 
-  // Check if order can be revised (only if status is "Revise Your Design" and not within 12 hours of start date)
-  const canReviseOrder = (order) => {
-    if (order.status !== 'Revise Your Design') {
+  // Check if order can be revised (only if status is "Design Revise" and not within 12 hours of start date)
+  const canReviseOrderLocal = (order) => {
+    if (!canReviseOrder(order)) {
       return false;
     }
 
@@ -68,15 +69,15 @@ export default function MyOrders() {
     return hoursDiff >= 12;
   };
 
-  // Check if order can be revised (only if status is "Revise Your Design")
+  // Check if order can be revised (only if status is "Design Revise")
   const canRevisePendingOrder = (order) => {
-    return order.status === 'Revise Your Design';
+    return order.status === ORDER_STATUS.DESIGN_REVISE;
   };
 
 
   const canReuploadCreative = (order) => {
     // Allow re-upload for Design Revise orders
-    return order.status === 'Design Revise';
+    return order.status === ORDER_STATUS.DESIGN_REVISE;
   };
 
 
@@ -84,7 +85,7 @@ export default function MyOrders() {
   const handleReviseOrder = (orderId) => {
     const order = orders.find(o => o.id === orderId);
     
-    if (!canReviseOrder(order)) {
+    if (!canReviseOrderLocal(order)) {
       showToast('This order cannot be revised. Please check the status and timing requirements.', 'error');
       return;
     }
@@ -138,7 +139,7 @@ export default function MyOrders() {
     reviseOrder(reviseOrderId, {
       designFile: newDesignFile.name,
       thumbnail: newDesignPreview,
-      status: 'Pending Approval'
+      status: ORDER_STATUS.PENDING_APPROVAL
     });
 
     // Close modal and reset
@@ -294,7 +295,7 @@ export default function MyOrders() {
       
       // Update the order status locally to "Pending Approval" immediately
       // This will cause the button to disappear as it only shows for "Design Revise" status
-      updateOrderStatus(reuploadOrderId, 'Pending Approval');
+      updateOrderStatus(reuploadOrderId, ORDER_STATUS.PENDING_APPROVAL);
       
       // Refresh orders to get updated status and creative URL from backend
       await refreshOrders();
@@ -319,17 +320,7 @@ export default function MyOrders() {
   };
 
   // All possible statuses (matching admin module)
-  const allStatuses = [
-    'All',
-    'Pending Payment',
-    'Pending Approval',
-    'In Display',
-    'Completed',
-    'Cancelled',
-    'Design Revise',
-    'Cancelled - Refunded',
-    'Payment Failed'
-  ];
+  const allStatuses = ['All', ...ALL_ORDER_STATUSES];
 
   // Filter orders based on search term and status
   const getFilteredOrders = () => {
@@ -394,24 +385,28 @@ export default function MyOrders() {
 
 
 
-  const getStatusColor = (status) => {
+  const getStatusColorClass = (status) => {
     switch (status) {
-      case 'Pending Payment':
+      case ORDER_STATUS.PENDING_PAYMENT:
         return styles.statusPending;
-      case 'Pending Approval':
+      case ORDER_STATUS.PAYMENT_FAILED:
+        return styles.statusPaymentFailed;
+      case ORDER_STATUS.PENDING_APPROVAL:
         return styles.statusPending;
-      case 'In Display':
+      case ORDER_STATUS.DESIGN_REVISE:
+        return styles.statusRevision;
+      case ORDER_STATUS.PENDING_DISPLAY_APPROVAL:
+        return styles.statusPendingDisplayApproval;
+      case ORDER_STATUS.IN_DISPLAY:
         return styles.statusActive;
-      case 'Completed':
+      case ORDER_STATUS.COMPLETED:
         return styles.statusCompleted;
-      case 'Cancelled':
+      case ORDER_STATUS.CANCELLED_FORFEITED:
+        return styles.statusCancelledForfeited;
+      case ORDER_STATUS.CANCELLED:
         return styles.statusCancelled;
-      case 'Design Revise':
-        return styles.statusRevision;
-      case 'Cancelled - Refunded':
+      case ORDER_STATUS.CANCELLED_REFUNDED:
         return styles.statusRefund;
-      case 'Payment Failed':
-        return styles.statusRevision;
       default:
         return styles.statusPending;
     }
@@ -581,7 +576,7 @@ export default function MyOrders() {
                         <h3>Order #{order.orderUid || order.order_uid || `ORD-${order.id}`}</h3>
                         <p className={styles.orderUid}>{order.orderUid || order.order_uid || `ORD-${order.id}`}</p>
                       </div>
-                      <div className={`${styles.orderStatus} ${getStatusColor(order.status)}`}>
+                      <div className={`${styles.orderStatus} ${getStatusColorClass(order.status)}`}>
                         {order.status}
                       </div>
                     </div>
@@ -608,6 +603,14 @@ export default function MyOrders() {
                         <span className={styles.infoValue}>{order.plans?.duration_days || order.planDuration || order.duration_days || (order.plans?.name === 'IMPACT' ? 3 : order.plans?.name === 'THRIVE' ? 5 : 1)} day(s)</span>
                       </div>
                       <div className={styles.infoRow}>
+                        <span className={styles.infoLabel}>Base Price:</span>
+                        <span className={styles.infoValue}>{formatCurrency(order.baseAmount || order.price || order.plans?.price || 7999)}</span>
+                      </div>
+                      <div className={styles.infoRow}>
+                        <span className={styles.infoLabel}>GST (18%):</span>
+                        <span className={styles.infoValue}>{formatCurrency(Math.round((order.baseAmount || order.price || order.plans?.price || 7999) * 0.18))}</span>
+                      </div>
+                      <div className={styles.infoRow}>
                         <span className={styles.infoLabel}>Total Amount:</span>
                         <span className={styles.infoValue}><strong>{formatCurrency(order.total_cost || order.final_amount || order.totalAmount || order.amount || 0)}</strong></span>
                       </div>
@@ -631,7 +634,7 @@ export default function MyOrders() {
 
                     <div className={styles.orderActions}>
                       {/* Revise Design Button */}
-                      {canReviseOrder(order) && (
+                      {canReviseOrderLocal(order) && (
                         <button
                           onClick={() => handleReviseOrder(order.id)}
                           className={`${styles.btn} ${styles.btnSecondary}`}

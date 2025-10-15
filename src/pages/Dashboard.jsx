@@ -4,6 +4,7 @@ import { isDateDisabled, validateFile, generateOrderId, compressImage, manageSto
 import { getUserDisplayName, getUserEmail } from '../utils/userUtils';
 import { useNavigate } from 'react-router-dom';
 import { couponsAPI, dataAPI } from '../config/api';
+import { ORDER_STATUS } from '../config/orderStatuses';
 import LoadingSpinner from '../components/LoadingSpinner';
 import Toast from '../components/Toast';
 import styles from '../styles/Dashboard.module.css';
@@ -257,7 +258,7 @@ export default function Dashboard() {
       // Update order status to show payment pending
       const updatedOrder = {
         ...result.order,
-        status: 'Payment Pending'
+        status: ORDER_STATUS.PENDING_PAYMENT
       };
       setNewOrder(updatedOrder);
       setShowConfirmation(true);
@@ -402,7 +403,7 @@ export default function Dashboard() {
   const getTotalSpent = () => {
     const orders = JSON.parse(localStorage.getItem('adscreenhub_orders') || '[]');
     const total = orders
-      .filter(order => order.status !== 'Cancelled Display')
+      .filter(order => order.status !== ORDER_STATUS.CANCELLED)
       .reduce((sum, order) => sum + (order.amount || order.price || 0), 0);
     return (total || 0).toLocaleString('en-IN');
   };
@@ -410,13 +411,13 @@ export default function Dashboard() {
   const getActiveOrders = () => {
     const orders = JSON.parse(localStorage.getItem('adscreenhub_orders') || '[]');
     return orders.filter(order => 
-      order.status === 'In Display' || order.status === 'Pending Approval'
+      order.status === ORDER_STATUS.IN_DISPLAY || order.status === ORDER_STATUS.PENDING_APPROVAL
     ).length;
   };
 
   const getCompletedOrders = () => {
     const orders = JSON.parse(localStorage.getItem('adscreenhub_orders') || '[]');
-    return orders.filter(order => order.status === 'Completed Display').length;
+    return orders.filter(order => order.status === ORDER_STATUS.COMPLETED).length;
   };
 
   const getRecentOrders = () => {
@@ -428,16 +429,26 @@ export default function Dashboard() {
 
   const getStatusClass = (status) => {
     switch (status) {
-      case 'Pending Approval':
+      case ORDER_STATUS.PENDING_PAYMENT:
         return styles.statusPending;
-      case 'In Display':
-        return styles.statusActive;
-      case 'Completed Display':
-        return styles.statusCompleted;
-      case 'Cancelled Display':
-        return styles.statusCancelled;
-      case 'Revise Your Design':
+      case ORDER_STATUS.PAYMENT_FAILED:
+        return styles.statusPaymentFailed;
+      case ORDER_STATUS.PENDING_APPROVAL:
+        return styles.statusPending;
+      case ORDER_STATUS.DESIGN_REVISE:
         return styles.statusRevision;
+      case ORDER_STATUS.PENDING_DISPLAY_APPROVAL:
+        return styles.statusPendingDisplayApproval;
+      case ORDER_STATUS.IN_DISPLAY:
+        return styles.statusActive;
+      case ORDER_STATUS.COMPLETED:
+        return styles.statusCompleted;
+      case ORDER_STATUS.CANCELLED_FORFEITED:
+        return styles.statusCancelledForfeited;
+      case ORDER_STATUS.CANCELLED:
+        return styles.statusCancelled;
+      case ORDER_STATUS.CANCELLED_REFUNDED:
+        return styles.statusRefund;
       default:
         return styles.statusPending;
     }
@@ -543,7 +554,7 @@ export default function Dashboard() {
                     <span className={`${styles.statusBadge} ${getStatusClass(order.status)}`}>
                       {order.status}
                     </span>
-                    <p className={styles.orderAmount}>₹{order.amount}</p>
+                    <p className={styles.orderAmount}>₹{(order.total_cost || order.final_amount || order.totalAmount || order.amount || 0).toLocaleString('en-IN')}</p>
                   </div>
                 </div>
               ))
@@ -1026,8 +1037,16 @@ export default function Dashboard() {
                     <span>{formatDate(newOrder.displayDate)}</span>
                   </div>
                   <div className={styles.orderItem}>
+                    <span>Base Price:</span>
+                    <span className={styles.orderAmount}>₹{(newOrder.baseAmount || newOrder.price || 7999).toLocaleString('en-IN')}</span>
+                  </div>
+                  <div className={styles.orderItem}>
+                    <span>GST (18%):</span>
+                    <span className={styles.orderAmount}>₹{Math.round((newOrder.baseAmount || newOrder.price || 7999) * 0.18).toLocaleString('en-IN')}</span>
+                  </div>
+                  <div className={styles.orderItem}>
                     <span>Total Amount:</span>
-                    <span className={styles.orderAmount}>₹{newOrder.totalAmount.toLocaleString('en-IN')}</span>
+                    <span className={styles.orderAmount}>₹{(newOrder.total_cost || newOrder.final_amount || newOrder.totalAmount || 0).toLocaleString('en-IN')}</span>
                   </div>
                   <div className={styles.orderItem}>
                     <span>Status:</span>

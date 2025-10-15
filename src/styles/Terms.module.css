@@ -48,7 +48,8 @@
   color: #1319B3;
   word-wrap: break-word;
   overflow-wrap: break-word;
-  hyphens: auto;
+  hyphens: none;
+  word-break: keep-all;
   max-width: 100%;
   box-sizing: border-box;
 }
@@ -203,6 +204,11 @@
   .title {
     font-size: 1.8rem;
     margin-bottom: 15px;
+    hyphens: none;
+    word-break: keep-all;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
   
   .section h2 {

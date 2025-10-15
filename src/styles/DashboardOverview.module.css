@@ -90,6 +90,14 @@
   margin: 0;
 }
 
+.statSubtext {
+  color: var(--text-light);
+  font-size: 0.75rem;
+  font-weight: 500;
+  margin: 0.25rem 0 0 0;
+  opacity: 0.8;
+}
+
 /* Quick Actions */
 .quickActions {
   background-color: var(--white);
@@ -207,6 +215,24 @@
   color: var(--primary-color);
   font-weight: 600;
   font-size: 1rem;
+  margin: 0;
+}
+
+.priceBreakdown {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.basePrice {
+  color: var(--text-light);
+  font-size: 0.75rem;
+  margin: 0;
+}
+
+.gstPrice {
+  color: var(--text-light);
+  font-size: 0.75rem;
   margin: 0;
 }
 
@@ -337,6 +363,10 @@
     font-size: 1.5rem;
   }
   
+  .statSubtext {
+    font-size: 0.7rem;
+  }
+  
   .quickActions,
   .recentOrders {
     padding: 1.5rem;
@@ -395,6 +425,10 @@
   
   .statNumber {
     font-size: 1.25rem;
+  }
+  
+  .statSubtext {
+    font-size: 0.65rem;
   }
   
   .quickActions,

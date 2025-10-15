@@ -80,39 +80,10 @@
   margin: 0 auto;
 }
 
-.checkmarkCircle {
-  position: absolute;
-  left: 0;
-  top: 0;
-  width: 80px;
-  height: 80px;
-  background: #4CAF50;
-  border-radius: 50%;
-  box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
-}
-
-.checkmarkStem {
-  position: absolute;
-  left: 24px;
-  top: 40px;
-  width: 6px;
-  height: 24px;
-  background: white;
-  border-radius: 3px;
-  transform: rotate(45deg);
-  transform-origin: bottom center;
-}
-
-.checkmarkKick {
-  position: absolute;
-  left: 38px;
-  top: 32px;
-  width: 6px;
-  height: 16px;
-  background: white;
-  border-radius: 3px;
-  transform: rotate(-45deg);
-  transform-origin: bottom center;
+.checkmarkSvg {
+  width: 100%;
+  height: 100%;
+  filter: drop-shadow(0 4px 15px rgba(76, 175, 80, 0.3));
 }
 
 @keyframes checkmarkPulse {
@@ -278,30 +249,14 @@
     height: 60px;
   }
   
-  .checkmarkCircle {
-    width: 60px;
-    height: 60px;
-  }
-  
-  .checkmarkStem {
-    left: 18px;
-    top: 30px;
-    width: 5px;
-    height: 18px;
-  }
-  
-  .checkmarkKick {
-    left: 28px;
-    top: 24px;
-    width: 5px;
-    height: 12px;
-  }
-  
   .successCard h1 {
     font-size: 2rem;
     line-height: 1.2;
     word-wrap: break-word;
-    hyphens: auto;
+    hyphens: none;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
   
   .detailsGrid {
@@ -333,32 +288,16 @@
     font-size: 1.8rem;
     line-height: 1.1;
     word-wrap: break-word;
-    hyphens: auto;
+    hyphens: none;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
     padding: 0 0.5rem;
   }
   
   .checkmark {
     width: 50px;
     height: 50px;
-  }
-  
-  .checkmarkCircle {
-    width: 50px;
-    height: 50px;
-  }
-  
-  .checkmarkStem {
-    left: 15px;
-    top: 25px;
-    width: 4px;
-    height: 15px;
-  }
-  
-  .checkmarkKick {
-    left: 23px;
-    top: 20px;
-    width: 4px;
-    height: 10px;
   }
   
   .successMessage {
