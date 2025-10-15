@@ -374,6 +374,18 @@ export default function BookingFlow() {
 
   // Handle date selection
   const handleDateSelect = async (date) => {
+    // Block invalid dates - don't allow selection
+    if (date) {
+      const selectedDateObj = new Date(date);
+      const today = new Date();
+      const minDate = new Date(today.getTime() + 2 * 24 * 60 * 60 * 1000); // +2 days
+      
+      if (selectedDateObj < minDate) {
+        // Don't set the date, don't process, just return
+        return;
+      }
+    }
+    
     setSelectedDate(date);
     setSelectedScreen(null);
     setSelectedPlan(null);
@@ -605,6 +617,21 @@ export default function BookingFlow() {
     if (!selectedDate) {
       setIncompleteStep('date-selection');
       setError('Please select a date to continue');
+      setConfirmingOrder(false);
+      setTimeout(() => {
+        document.querySelector('[data-step="1"]')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 100);
+      return;
+    }
+    
+    // Validate date is at least 2 days from today
+    const selectedDateObj = new Date(selectedDate);
+    const today = new Date();
+    const minDate = new Date(today.getTime() + 2 * 24 * 60 * 60 * 1000); // +2 days
+    
+    if (selectedDateObj < minDate) {
+      setIncompleteStep('date-selection');
+      setError('Please select a date at least 2 days from today');
       setConfirmingOrder(false);
       setTimeout(() => {
         document.querySelector('[data-step="1"]')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -991,9 +1018,6 @@ export default function BookingFlow() {
                 </svg>
               </div>
             </div>
-            <p className={styles.dateHint}>
-              📅 Select a date at least 2 days from today
-            </p>
           </div>
         </div>
 
