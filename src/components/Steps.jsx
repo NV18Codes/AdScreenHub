@@ -156,7 +156,7 @@ export default function Steps() {
                   setVideoLoading(false);
                 }}
               >
-                <source src="public\About AdScreenHub (1).mp4" type="video/mp4" />
+                <source src="/About AdScreenHub (1).mp4" type="video/mp4" />
                 <div style={{ 
                   padding: '2rem', 
                   textAlign: 'center', 
