@@ -25,6 +25,7 @@ const BookingSuccess = () => {
       // Find order by ID from useOrders hook
       const foundOrder = orders.find(o => o.id.toString() === orderId.toString());
       if (foundOrder) {
+        console.log('Found order by ID:', foundOrder);
         setOrder(foundOrder);
         setError('');
         setLoading(false);
@@ -36,6 +37,7 @@ const BookingSuccess = () => {
       // Try to get the most recent order from useOrders hook
       if (orders && orders.length > 0) {
         const mostRecentOrder = orders[orders.length - 1];
+        console.log('Most recent order:', mostRecentOrder);
         setOrder(mostRecentOrder);
         setError('');
         setLoading(false);
@@ -142,14 +144,21 @@ const BookingSuccess = () => {
               <div className={styles.detailItem}>
                 <span className={styles.label}>₹ Total Cost:</span>
                 <span className={styles.value}>
-                  ₹{(order.baseAmount || order.total_cost || 0).toLocaleString('en-IN')}
+                  ₹{(order.total_cost || order.baseAmount || 0).toLocaleString('en-IN')}
+                </span>
+              </div>
+              
+              <div className={styles.detailItem}>
+                <span className={styles.label}>GST (18%):</span>
+                <span className={styles.value}>
+                  ₹{(order.gstAmount || 0).toLocaleString('en-IN')}
                 </span>
               </div>
               
               <div className={styles.detailItem}>
                 <span className={styles.label}>💳 Final Amount:</span>
                 <span className={styles.value}>
-                  ₹{(order.final_amount || order.totalAmount || (order.baseAmount || 0) + (order.gstAmount || 0)).toLocaleString('en-IN')}
+                  ₹{((order.total_cost || 0) + (order.gstAmount || 0)).toLocaleString('en-IN')}
                 </span>
               </div>
             </div>

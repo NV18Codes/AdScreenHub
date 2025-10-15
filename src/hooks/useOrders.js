@@ -42,9 +42,9 @@ const processOrdersData = (data) => {
     amount: order.final_amount || order.total_cost, // For backward compatibility
     price: order.final_amount || order.total_cost, // For backward compatibility
     
-    // Backend pricing - calculate base amount from total_cost (which includes GST)
-    baseAmount: order.total_cost ? Math.round(order.total_cost / 1.18) : 0, // Calculate base price by removing GST
-    gstAmount: order.total_cost ? Math.round(order.total_cost - (order.total_cost / 1.18)) : 0, // Calculate GST amount
+    // Backend pricing - total_cost is the base amount, calculate GST at 18%
+    baseAmount: order.total_cost || 0, // total_cost is the base amount
+    gstAmount: order.total_cost ? Math.round(order.total_cost * 0.18) : 0, // GST = 18% of total_cost
     status: order.status,
     razorpayOrderId: order.razorpay_order_id,
     razorpay_order_id: order.razorpay_order_id, // For backward compatibility
