@@ -117,46 +117,45 @@ export default function Steps() {
               MINUTES.
             </p>
 
-            <div
-              className="relative rounded-xl overflow-hidden shadow-2xl bg-gray-100 flex items-center justify-center"
-              style={{ minHeight: "500px" }}
-            >
-              {/* Loading / Error / Video */}
-              {videoError ? (
-                <div className="flex flex-col items-center justify-center text-gray-600">
-                  <div className="text-5xl mb-3">🎥</div>
-                  <p className="font-semibold">Video unavailable</p>
-                  <p className="text-sm mt-1">Will be available soon.</p>
-                </div>
-              ) : videoLoading ? (
-                <div className="flex flex-col items-center justify-center text-gray-600">
-                  <div className="text-5xl mb-3 animate-pulse">⏳</div>
-                  <p>Loading video...</p>
-                </div>
-              ) : (
-                <video
-                  ref={videoRef}
-                  className="w-full h-full object-cover"
-                  controls
-                  playsInline
-                  preload="metadata"
-                  poster="/Banner.png"
-                  onLoadStart={() => {
-                    setVideoLoading(true);
-                    setVideoError(false);
-                  }}
-                  onLoadedData={() => setVideoLoading(false)}
-                  onCanPlay={() => setVideoLoading(false)}
-                  onError={() => {
-                    console.error("Video failed to load.");
-                    setVideoError(true);
-                    setVideoLoading(false);
-                  }}
-                >
-                  <source src="/About AdScreenHub (1).mp4" type="video/mp4" />
-                </video>
-              )}
-            </div>
+             <div
+               className="relative rounded-xl overflow-hidden shadow-2xl"
+               style={{ minHeight: "500px" }}
+             >
+               {videoError ? (
+                 <div className="flex flex-col items-center justify-center text-gray-600 bg-gray-100 h-full">
+                   <div className="text-5xl mb-3">🎥</div>
+                   <p className="font-semibold">Video unavailable</p>
+                   <p className="text-sm mt-1">Will be available soon.</p>
+                 </div>
+               ) : videoLoading ? (
+                 <div className="flex flex-col items-center justify-center text-gray-600 bg-gray-100 h-full">
+                   <div className="text-5xl mb-3 animate-pulse">⏳</div>
+                   <p>Loading video...</p>
+                 </div>
+               ) : (
+                 <video
+                   ref={videoRef}
+                   className="w-full h-full object-cover"
+                   controls
+                   playsInline
+                   preload="metadata"
+                   poster="/Banner.png"
+                   onLoadStart={() => {
+                     setVideoLoading(true);
+                     setVideoError(false);
+                   }}
+                   onLoadedData={() => setVideoLoading(false)}
+                   onCanPlay={() => setVideoLoading(false)}
+                   onError={() => {
+                     console.log("Video failed to load");
+                     setVideoError(true);
+                     setVideoLoading(false);
+                   }}
+                 >
+                   <source src="/About AdScreenHub (1) (1).mp4" type="video/mp4" />
+                 </video>
+               )}
+             </div>
           </div>
         </div>
       </div>
