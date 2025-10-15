@@ -103,9 +103,17 @@ export default function BookingFlow() {
       // Handle the specific API response structure: plan.features.features
       let features = [];
       if (plan.features && plan.features.features && Array.isArray(plan.features.features)) {
-        features = plan.features.features;
+        features = plan.features.features.filter(feature => 
+          !feature.toLowerCase().includes('day plan') && 
+          !feature.toLowerCase().includes('day display') &&
+          !feature.toLowerCase().includes('duration')
+        );
       } else if (Array.isArray(plan.features)) {
-        features = plan.features;
+        features = plan.features.filter(feature => 
+          !feature.toLowerCase().includes('day plan') && 
+          !feature.toLowerCase().includes('day display') &&
+          !feature.toLowerCase().includes('duration')
+        );
       } else if (typeof plan.features === 'string') {
         features = [plan.features];
       }

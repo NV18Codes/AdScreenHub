@@ -65,7 +65,11 @@ export default function Dashboard() {
       adSlots: plan.features.slots,
       features: [
         `${plan.features.slots} ad slots (${plan.features.duration_sec} sec/slot)`,
-        ...plan.features.features
+        ...plan.features.features.filter(feature => 
+          !feature.toLowerCase().includes('day plan') && 
+          !feature.toLowerCase().includes('day display') &&
+          !feature.toLowerCase().includes('duration')
+        )
       ]
     }));
   };

@@ -63,6 +63,29 @@ export default function Steps() {
   const videoRef = useRef(null);
   const [videoError, setVideoError] = useState(false);
   const [videoLoading, setVideoLoading] = useState(true);
+  const [currentVideoSource, setCurrentVideoSource] = useState(0);
+  
+  const videoSources = [
+    "/About AdScreenHub.mp4",
+    "./About AdScreenHub.mp4", 
+    "About AdScreenHub.mp4",
+    "/About AdScreenHub (1).mp4",
+    "./About AdScreenHub (1).mp4"
+  ];
+
+  const tryNextVideoSource = () => {
+    if (currentVideoSource < videoSources.length - 1) {
+      setCurrentVideoSource(prev => prev + 1);
+      setVideoError(false);
+      setVideoLoading(true);
+      if (videoRef.current) {
+        videoRef.current.load();
+      }
+    } else {
+      setVideoError(true);
+      setVideoLoading(false);
+    }
+  };
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -156,12 +179,11 @@ export default function Steps() {
                   console.error('Video error details:', e.target.error);
                   console.error('Video network state:', e.target.networkState);
                   console.error('Video ready state:', e.target.readyState);
-                  setVideoError(true);
-                  setVideoLoading(false);
+                  console.log(`Trying next video source (${currentVideoSource + 1}/${videoSources.length})`);
+                  tryNextVideoSource();
                 }}
               >
-                <source src="/About AdScreenHub.mp4" type="video/mp4; codecs=avc1.42E01E,mp4a.40.2" />
-                <source src="./About AdScreenHub.mp4" type="video/mp4" />
+                <source src={videoSources[currentVideoSource]} type="video/mp4" />
                 <div style={{ 
                   padding: '2rem', 
                   textAlign: 'center', 
@@ -183,7 +205,30 @@ export default function Steps() {
                     <>
                       <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>❌</div>
                       <p>Video failed to load</p>
-                      <p style={{ fontSize: '0.875rem', marginTop: '0.5rem' }}>Please try refreshing the page</p>
+                      <p style={{ fontSize: '0.875rem', marginTop: '0.5rem', marginBottom: '1rem' }}>
+                        Tried {videoSources.length} different sources
+                      </p>
+                      <button 
+                        onClick={() => {
+                          setCurrentVideoSource(0);
+                          setVideoError(false);
+                          setVideoLoading(true);
+                          if (videoRef.current) {
+                            videoRef.current.load();
+                          }
+                        }}
+                        style={{
+                          padding: '0.5rem 1rem',
+                          backgroundColor: '#3b82f6',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '0.375rem',
+                          cursor: 'pointer',
+                          fontSize: '0.875rem'
+                        }}
+                      >
+                        Retry
+                      </button>
                     </>
                   )}
                   {!videoLoading && !videoError && (
