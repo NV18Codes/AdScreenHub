@@ -381,6 +381,12 @@ export default function BookingFlow() {
       const minDate = new Date(today.getTime() + 2 * 24 * 60 * 60 * 1000); // +2 days
       
       if (selectedDateObj < minDate) {
+        // Show toast for invalid date selection
+        setToast({
+          show: true,
+          message: 'Please select a date at least 2 days from today',
+          type: 'error'
+        });
         // Don't set the date, don't process, just return
         return;
       }

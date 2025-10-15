@@ -123,10 +123,33 @@ export default function Steps() {
                 className="w-full h-full object-cover"
                 controls
                 playsInline
+                preload="metadata"
                 poster="/Banner.png"
                 style={{ minHeight: '500px' }}
+                onLoadStart={() => console.log('Video loading started')}
+                onCanPlay={() => console.log('Video can play')}
+                onError={(e) => {
+                  console.error('Video error:', e);
+                  console.error('Video src:', e.target.src);
+                  console.error('Video error details:', e.target.error);
+                }}
               >
                 <source src="/About AdScreenHub.mp4" type="video/mp4" />
+                <div style={{ 
+                  padding: '2rem', 
+                  textAlign: 'center', 
+                  background: '#f3f4f6',
+                  color: '#6b7280',
+                  minHeight: '500px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexDirection: 'column'
+                }}>
+                  <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🎥</div>
+                  <p>About AdScreenHub Video</p>
+                  <p style={{ fontSize: '0.875rem', marginTop: '0.5rem' }}>Click play to watch</p>
+                </div>
                 Your browser does not support the video tag.
               </video>
             </div>
