@@ -121,39 +121,49 @@ export default function Steps() {
                className="relative rounded-xl overflow-hidden shadow-2xl"
                style={{ minHeight: "500px" }}
              >
-               {videoError ? (
-                 <div className="flex flex-col items-center justify-center text-gray-600 bg-gray-100 h-full">
-                   <div className="text-5xl mb-3">🎥</div>
-                   <p className="font-semibold">Video unavailable</p>
-                   <p className="text-sm mt-1">Will be available soon.</p>
+               <video
+                 ref={videoRef}
+                 className="w-full h-full object-cover"
+                 controls
+                 playsInline
+                 preload="auto"
+                 poster="/Banner.png"
+                 onLoadStart={() => {
+                   console.log("Video loading started");
+                   setVideoLoading(true);
+                   setVideoError(false);
+                 }}
+                 onCanPlay={() => {
+                   console.log("Video can play");
+                   setVideoLoading(false);
+                 }}
+                 onError={(e) => {
+                   console.log("Video error:", e);
+                   setVideoError(true);
+                   setVideoLoading(false);
+                 }}
+               >
+                 <source src="/About AdScreenHub (1) (1) (1).mp4" type="video/mp4" />
+                 Your browser does not support the video tag.
+               </video>
+               
+               {videoLoading && (
+                 <div className="absolute inset-0 bg-gray-100 flex items-center justify-center">
+                   <div className="text-center">
+                     <div className="text-5xl mb-3 animate-pulse">⏳</div>
+                     <p className="text-gray-600">Loading video...</p>
+                   </div>
                  </div>
-               ) : videoLoading ? (
-                 <div className="flex flex-col items-center justify-center text-gray-600 bg-gray-100 h-full">
-                   <div className="text-5xl mb-3 animate-pulse">⏳</div>
-                   <p>Loading video...</p>
+               )}
+               
+               {videoError && (
+                 <div className="absolute inset-0 bg-gray-100 flex items-center justify-center">
+                   <div className="text-center">
+                     <div className="text-5xl mb-3">🎥</div>
+                     <p className="text-gray-600 font-semibold">Video unavailable</p>
+                     <p className="text-sm text-gray-500 mt-1">Please try again later</p>
+                   </div>
                  </div>
-               ) : (
-                 <video
-                   ref={videoRef}
-                   className="w-full h-full object-cover"
-                   controls
-                   playsInline
-                   preload="metadata"
-                   poster="/Banner.png"
-                   onLoadStart={() => {
-                     setVideoLoading(true);
-                     setVideoError(false);
-                   }}
-                   onLoadedData={() => setVideoLoading(false)}
-                   onCanPlay={() => setVideoLoading(false)}
-                   onError={() => {
-                     console.log("Video failed to load");
-                     setVideoError(true);
-                     setVideoLoading(false);
-                   }}
-                 >
-                   <source src="/About AdScreenHub (1) (1) (1).mp4" type="video/mp4" />
-                 </video>
                )}
              </div>
           </div>
