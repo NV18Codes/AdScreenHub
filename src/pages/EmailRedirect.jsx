@@ -72,9 +72,9 @@ export default function EmailRedirect() {
               <button
                 onClick={() => navigate('/auth?step=phone')}
                 className="w-full text-white py-3 px-4 rounded-lg font-medium"
-                style={{ backgroundColor: '#1319b3' }}
-                onMouseEnter={(e) => e.target.style.backgroundColor = '#0f1599'}
-                onMouseLeave={(e) => e.target.style.backgroundColor = '#1319b3'}
+                style={{ backgroundColor: '#1319b3 !important' }}
+                onMouseEnter={(e) => e.target.style.setProperty('background-color', '#0f1599', 'important')}
+                onMouseLeave={(e) => e.target.style.setProperty('background-color', '#1319b3', 'important')}
               >
                 Continue to Phone Verification
               </button>
@@ -91,9 +91,9 @@ export default function EmailRedirect() {
               <button
                 onClick={() => navigate('/auth')}
                 className="w-full text-white py-3 px-4 rounded-lg font-medium"
-                style={{ backgroundColor: '#1319b3' }}
-                onMouseEnter={(e) => e.target.style.backgroundColor = '#0f1599'}
-                onMouseLeave={(e) => e.target.style.backgroundColor = '#1319b3'}
+                style={{ backgroundColor: '#1319b3 !important' }}
+                onMouseEnter={(e) => e.target.style.setProperty('background-color', '#0f1599', 'important')}
+                onMouseLeave={(e) => e.target.style.setProperty('background-color', '#1319b3', 'important')}
               >
                 Try Again
               </button>
