@@ -489,89 +489,35 @@ export default function Profile() {
 
     try {
       setIsDeleting(true);
+      setPasswordError('');
       
-      // Try the API endpoint first
-      try {
-        const response = await authAPI.deleteAccount(deletePassword);
+      // Call the delete account API
+      const response = await authAPI.deleteAccount(deletePassword);
+      
+      if (response.success) {
+        // Account deleted successfully on backend
+        showToast('Account deleted successfully. Signing out...', 'success');
         
-        if (response.success) {
-          // Account deleted successfully on backend
-          showToast('Account deleted. Signing out...', 'info');
-          
-          // Call signout API to ensure proper session termination
-          try {
-            await authAPI.signout();
-            console.log('Signout API called successfully');
-            showToast('Session terminated successfully.', 'success');
-          } catch (signoutError) {
-            console.warn('Signout API failed, but continuing with logout:', signoutError);
-            showToast('Signing out locally...', 'info');
-          }
-          
-          // Now logout locally
-          await logout();
-          showToast('Account deleted successfully. You have been signed out.', 'success');
-          
-          // Redirect to home page after a short delay
-          setTimeout(() => {
-            window.location.href = '/';
-          }, 2000);
-          return;
-        } else {
-          throw new Error(response.error || 'Failed to delete account');
-        }
-      } catch (apiError) {
-        // If API endpoint doesn't exist (404), provide fallback
-        if (apiError.message.includes('404') || apiError.message.includes('Not Found')) {
-          // Mark account as deleted locally and prevent future logins
-          const deletedAccountData = {
-            ...user,
-            accountDeleted: true,
-            deletedAt: new Date().toISOString()
-          };
-          
-          // Store deleted account info to prevent future logins
-          localStorage.setItem('deletedAccount', JSON.stringify(deletedAccountData));
-          
-          // Call signout API to ensure proper session termination
-          showToast('Account deleted. Signing out...', 'info');
-          
-          try {
-            await authAPI.signout();
-            console.log('Signout API called successfully (fallback)');
-            showToast('Session terminated successfully.', 'success');
-          } catch (signoutError) {
-            console.warn('Signout API failed, but continuing with logout:', signoutError);
-            showToast('Signing out locally...', 'info');
-          }
-          
-          // Clear all auth data
-          localStorage.removeItem('user');
-          localStorage.removeItem('token');
-          localStorage.removeItem('emailToken');
-          localStorage.removeItem('phoneToken');
-          localStorage.removeItem('authToken');
-          localStorage.removeItem('pendingEmail');
-          localStorage.removeItem('adscreenhub_orders');
-          
-          // Logout and redirect
-          await logout();
-          
-          // Show success message and redirect
-          showToast('Account deleted successfully. You have been signed out.', 'success');
-          
-          // Redirect to home page after a short delay
-          setTimeout(() => {
-            window.location.href = '/';
-          }, 2000);
-          
-          return;
+        // Call signout API to ensure proper session termination
+        try {
+          await authAPI.signout();
+          console.log('Signout API called successfully');
+        } catch (signoutError) {
+          console.warn('Signout API failed, but continuing with logout:', signoutError);
         }
         
-        // Re-throw other API errors
-        throw apiError;
+        // Now logout locally
+        await logout();
+        
+        // Redirect to home page after a short delay
+        setTimeout(() => {
+          window.location.href = '/';
+        }, 2000);
+      } else {
+        throw new Error(response.error || 'Failed to delete account');
       }
     } catch (error) {
+      console.error('Delete account error:', error);
       setPasswordError(error.message || 'Failed to delete account. Please try again.');
     } finally {
       setIsDeleting(false);
@@ -952,7 +898,7 @@ export default function Profile() {
           {/* Danger Zone Section - Full Width */}
           <div className={`${styles.dangerZone} ${styles.fullWidthSection}`}>
               <h2>Danger Zone</h2>
-              <p>Deleting your account is permanent and cannot be undone. All your data will be removed.</p>
+              <p>Deleting your account is permanent and cannot be undone. All your data will be permanently removed from our servers.</p>
               <button
                 onClick={() => setShowDeleteModal(true)}
                 className={styles.deleteButton}
@@ -967,7 +913,7 @@ export default function Profile() {
           <div className={styles.modalOverlay}>
             <div className={styles.modal}>
               <h3>Confirm Account Deletion</h3>
-              <p>Are you absolutely sure you want to delete your account? This will clear your local data and log you out. Contact support for complete account removal.</p>
+              <p>Are you absolutely sure you want to delete your account? This action will permanently delete your account from our servers and cannot be undone.</p>
 
               <div className={styles.modalFields}>
                 <div className={styles.field}>

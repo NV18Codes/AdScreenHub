@@ -316,10 +316,10 @@
 }
 
 .statusRefund {
-  background: #D1FAE5;
-  color: #047857;
-  border: 1px solid #10B981;
-  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.2);
+  background: #FEE2E2;
+  color: #B91C1C;
+  border: 1px solid #EF4444;
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.2);
 }
 
 .statusPendingApproval {
@@ -355,7 +355,7 @@
 }
 
 .startCampaignBtn {
-  background: #3b82f6;
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
   color: white;
   border: none;
   padding: 1rem 2rem;
@@ -367,7 +367,7 @@
 }
 
 .startCampaignBtn:hover {
-  background: #2563eb;
+  background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
 }
@@ -656,14 +656,6 @@
   text-align: center;
 }
 
-.availableSlots {
-  background-color: #d1fae5;
-  color: #065f46;
-  padding: 0.25rem 0.5rem;
-  border-radius: 0.25rem;
-  font-size: 0.75rem;
-  font-weight: 600;
-}
 
 .screenImage {
   width: 100%;

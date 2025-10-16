@@ -407,10 +407,6 @@
   border-top: 1px solid #e2e8f0;
 }
 
-.availableSlots {
-  color: #059669;
-  font-weight: 700;
-}
 
 .noSlots {
   color: #dc2626;
@@ -531,17 +527,6 @@
   opacity: 0.7;
 }
 
-.availableSlots {
-  color: #10b981;
-  font-weight: 600;
-  margin-top: 0.5rem;
-}
-
-.unavailableSlots {
-  color: #ef4444;
-  font-weight: 600;
-  margin-top: 0.5rem;
-}
 
 /* Removed - using selectedBadge instead */
 /* .planCard.selected::before {

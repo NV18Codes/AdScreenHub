@@ -1230,9 +1230,6 @@ export default function BookingFlow() {
                       <p>Orientation: {location.orientation}</p>
                       <p>Resolution: {location.pixels} px</p>
                       <p>Aspect Ratio: {location.aspect_ratio}</p>
-                      <p className={hasAvailableSlots ? styles.availableSlots : styles.unavailableSlots}>
-                        Available Slots: {location.available_slots || 0}
-                      </p>
                   </div>
                   </div>
                   );
