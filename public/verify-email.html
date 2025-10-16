@@ -70,6 +70,18 @@
         .button:hover {
             background: #0f1599;
         }
+        .start-over-btn {
+            background: #2563eb !important;
+            transition: all 0.2s ease;
+        }
+        .start-over-btn:hover {
+            background: #1d4ed8 !important;
+            transform: translateY(-1px);
+        }
+        .start-over-btn:focus {
+            outline: 2px solid #3b82f6;
+            outline-offset: 2px;
+        }
         .info-box {
             background: #e8f4fd;
             border: 1px solid #bee5eb;
@@ -109,8 +121,8 @@
                 • Network connection issue
             </div>
             <div style="margin-top: 20px;">
-                <a href="/auth" class="button">Start Over</a>
-                <button onclick="location.reload()" class="button" style="background: #95a5a6; margin-left: 10px;">Retry</button>
+                <a href="/auth" class="button start-over-btn">Start Over</a>
+                <button onclick="location.reload()" class="button retry-btn" style="background: #95a5a6; margin-left: 10px;">Retry</button>
             </div>
         </div>
     </div>
