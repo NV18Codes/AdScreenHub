@@ -19,28 +19,10 @@ export const AuthProvider = ({ children }) => {
     // Check if user is logged in
     const token = localStorage.getItem('token');
     const userData = localStorage.getItem('user');
-    const deletedAccount = localStorage.getItem('deletedAccount');
     
     if (token && userData) {
       try {
         const parsedUser = JSON.parse(userData);
-        
-        // Check if this account was previously deleted
-        if (deletedAccount) {
-          const deletedData = JSON.parse(deletedAccount);
-          if (deletedData.email === parsedUser.email || deletedData.id === parsedUser.id) {
-            // Account was deleted, clear auth data
-            localStorage.removeItem('token');
-            localStorage.removeItem('user');
-            localStorage.removeItem('emailToken');
-            localStorage.removeItem('phoneToken');
-            localStorage.removeItem('authToken');
-            localStorage.removeItem('pendingEmail');
-            setUser(null);
-            setLoading(false);
-            return;
-          }
-        }
         
         // Check for different possible name fields
         const possibleNames = [
@@ -87,16 +69,6 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const login = (userData, token) => {
-    // Check if this account was previously deleted
-    const deletedAccount = localStorage.getItem('deletedAccount');
-    if (deletedAccount) {
-      const deletedData = JSON.parse(deletedAccount);
-      // Check if the email matches a deleted account
-      if (deletedData.email === userData.email || deletedData.id === userData.id) {
-        return false;
-      }
-    }
-    
     // Clear any existing orders to prevent showing other users' data
     localStorage.removeItem('adscreenhub_orders');
     

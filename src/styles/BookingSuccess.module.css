@@ -100,6 +100,12 @@
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+  word-wrap: break-word;
+  hyphens: none;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: unset;
+  line-height: 1.2;
 }
 
 .successMessage {
@@ -107,6 +113,8 @@
   color: #666;
   margin-bottom: 2rem;
   line-height: 1.6;
+  word-wrap: break-word;
+  hyphens: none;
 }
 
 .orderDetails {

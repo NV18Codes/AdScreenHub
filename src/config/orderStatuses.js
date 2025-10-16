@@ -37,15 +37,15 @@ export const STATUS_CATEGORIES = {
 
 // Status colors for UI display
 export const STATUS_COLORS = {
-  [ORDER_STATUS.PENDING_PAYMENT]: '#f59e0b', // amber
-  [ORDER_STATUS.PAYMENT_FAILED]: '#ef4444', // red
-  [ORDER_STATUS.PENDING_APPROVAL]: '#3b82f6', // blue
-  [ORDER_STATUS.DESIGN_REVISE]: '#f59e0b', // amber
-  [ORDER_STATUS.PENDING_DISPLAY_APPROVED]: '#8b5cf6', // purple
-  [ORDER_STATUS.IN_DISPLAY]: '#10b981', // green
-  [ORDER_STATUS.COMPLETED]: '#059669', // emerald
-  [ORDER_STATUS.CANCELLED_FORFEITED]: '#6b7280', // gray
-  [ORDER_STATUS.CANCELLED_REFUNDED]: '#6b7280' // gray
+  [ORDER_STATUS.PENDING_PAYMENT]: '#ef4444', // red - Payment Pending
+  [ORDER_STATUS.PAYMENT_FAILED]: '#ef4444', // red - Payment Failed
+  [ORDER_STATUS.PENDING_APPROVAL]: '#eab308', // yellow - Pending Approval
+  [ORDER_STATUS.DESIGN_REVISE]: '#f97316', // orange - Design Review
+  [ORDER_STATUS.PENDING_DISPLAY_APPROVED]: '#22c55e', // green - Pending Display (Approved)
+  [ORDER_STATUS.IN_DISPLAY]: '#22c55e', // green - In Display
+  [ORDER_STATUS.COMPLETED]: '#22c55e', // green - Completed
+  [ORDER_STATUS.CANCELLED_FORFEITED]: '#ef4444', // red - Cancelled-Forfeited
+  [ORDER_STATUS.CANCELLED_REFUNDED]: '#ef4444' // red - Cancelled-Refunded
 };
 
 // Helper functions

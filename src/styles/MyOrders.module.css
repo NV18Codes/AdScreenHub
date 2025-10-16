@@ -520,17 +520,17 @@
 }
 
 .statusPending {
-  background: #FEF3C7;
-  color: #92400E;
-  border: 1px solid #F59E0B;
-  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.2);
+  background: #FEE2E2;
+  color: #B91C1C;
+  border: 1px solid #EF4444;
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.2);
 }
 
 .statusActive {
-  background: #CFFAFE;
-  color: #0E7490;
-  border: 1px solid #06B6D4;
-  box-shadow: 0 2px 8px rgba(6, 182, 212, 0.2);
+  background: #DCFCE7;
+  color: #15803D;
+  border: 1px solid #22C55E;
+  box-shadow: 0 2px 8px rgba(34, 197, 94, 0.2);
 }
 
 .statusCompleted {
@@ -562,24 +562,24 @@
 }
 
 .statusRefund {
-  background: #D1FAE5;
-  color: #047857;
-  border: 1px solid #10B981;
-  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.2);
+  background: #FEE2E2;
+  color: #B91C1C;
+  border: 1px solid #EF4444;
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.2);
 }
 
 .statusPendingApproval {
-  background: #DBEAFE;
-  color: #1D4ED8;
-  border: 1px solid #3B82F6;
-  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
+  background: #FEF3C7;
+  color: #92400E;
+  border: 1px solid #EAB308;
+  box-shadow: 0 2px 8px rgba(234, 179, 8, 0.2);
 }
 
 .statusDesignRevise {
-  background: #EDE9FE;
-  color: #6D28D9;
-  border: 1px solid #8B5CF6;
-  box-shadow: 0 2px 8px rgba(139, 92, 246, 0.2);
+  background: #FED7AA;
+  color: #C2410C;
+  border: 1px solid #F97316;
+  box-shadow: 0 2px 8px rgba(249, 115, 22, 0.2);
 }
 
 .statusPaymentFailed {
@@ -590,10 +590,10 @@
 }
 
 .statusPendingDisplayApproval {
-  background: #E0E7FF;
-  color: #4338CA;
-  border: 1px solid #6366F1;
-  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.2);
+  background: #DCFCE7;
+  color: #15803D;
+  border: 1px solid #22C55E;
+  box-shadow: 0 2px 8px rgba(34, 197, 94, 0.2);
 }
 
 .statusCancelledForfeited {

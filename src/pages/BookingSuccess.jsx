@@ -97,7 +97,7 @@ const BookingSuccess = () => {
           </div>
         </div>
         
-        <h1>🎉 Payment Successful!</h1>
+        <h1>🎉 Payment&nbsp;Successful!</h1>
         <p className={styles.successMessage}>
           Your payment has been processed successfully. Your ad campaign is now pending approval and will be reviewed within 24 hours.
         </p>

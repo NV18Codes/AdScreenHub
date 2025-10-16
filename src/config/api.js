@@ -137,7 +137,7 @@ export const authAPI = {
 
   deleteAccount: (password) => {
     console.log('Calling delete account API with password:', password ? '***' : 'undefined');
-    return makeRequest('/auth/delete-account', { password });
+    return makeRequest('/auth/delete-account', { password }, 'DELETE');
   },
 
   signout: () => {
