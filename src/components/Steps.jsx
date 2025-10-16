@@ -62,6 +62,7 @@ export default function Steps() {
   const videoRef = useRef(null);
   const [isVideoVisible, setIsVideoVisible] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [showVideo, setShowVideo] = useState(false);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -97,6 +98,11 @@ export default function Steps() {
   }, [isPlaying]);
 
   const handleVideoClick = () => {
+    if (!showVideo) {
+      setShowVideo(true);
+      return;
+    }
+
     const video = videoRef.current;
     if (!video) return;
 
@@ -149,17 +155,34 @@ export default function Steps() {
                      className="relative rounded-xl overflow-hidden shadow-2xl"
                      style={{ minHeight: "500px" }}
                    >
-                     <video 
-                       ref={videoRef}
-                       src="https://ecyfovxtjczaugmsszih.supabase.co/storage/v1/object/public/ad-creatives/FRONTEND%20IMAGES/About%20AdScreenHub%20(1).mp4"
-                       alt="AdScreenHub - LED Advertising Screens"
-                       className="w-full h-full object-contain cursor-pointer"
-                       onClick={handleVideoClick}
-                       controls
-                       loop
-                       playsInline
-                       preload="metadata"
-                     />
+                     {!showVideo ? (
+                       <div className="relative w-full h-full cursor-pointer" onClick={handleVideoClick}>
+                         <img 
+                           src="/video-thumbnail.png"
+                           alt="AdScreenHub - LED Advertising Screens"
+                           className="w-full h-full object-contain"
+                         />
+                         <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-30 hover:bg-opacity-40 transition-all duration-300">
+                           <div className="w-20 h-20 bg-white bg-opacity-90 rounded-full flex items-center justify-center hover:bg-opacity-100 transition-all duration-300">
+                             <svg className="w-8 h-8 text-blue-600 ml-1" fill="currentColor" viewBox="0 0 24 24">
+                               <path d="M8 5v14l11-7z"/>
+                             </svg>
+                           </div>
+                         </div>
+                       </div>
+                     ) : (
+                       <video 
+                         ref={videoRef}
+                         src="https://ecyfovxtjczaugmsszih.supabase.co/storage/v1/object/public/ad-creatives/FRONTEND%20IMAGES/About%20AdScreenHub%20(1).mp4"
+                         alt="AdScreenHub - LED Advertising Screens"
+                         className="w-full h-full object-contain cursor-pointer"
+                         onClick={handleVideoClick}
+                         controls
+                         loop
+                         playsInline
+                         preload="metadata"
+                       />
+                     )}
                    </div>
                  </div>
         </div>
