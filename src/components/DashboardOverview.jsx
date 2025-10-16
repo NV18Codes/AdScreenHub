@@ -43,9 +43,9 @@ export default function DashboardOverview() {
   const pendingOrders = orders.filter(order => order.status === ORDER_STATUS.PENDING_APPROVAL).length;
   const activeOrders = orders.filter(order => order.status === ORDER_STATUS.IN_DISPLAY).length;
   const completedOrders = orders.filter(order => order.status === ORDER_STATUS.COMPLETED).length;
-  // Calculate total spent from PAID orders only (excludes Pending Payment = failed orders)
+  // Calculate total spent from PAID orders only (excludes Pending Payment and Payment Failed)
   // Include GST in total as these are the final amounts customers paid
-  const paidStatuses = [ORDER_STATUS.PENDING_APPROVAL, ORDER_STATUS.IN_DISPLAY, ORDER_STATUS.COMPLETED, ORDER_STATUS.DESIGN_REVISE];
+  const paidStatuses = [ORDER_STATUS.IN_DISPLAY, ORDER_STATUS.COMPLETED];
   const totalSpent = orders
     .filter(order => paidStatuses.includes(order.status))
     .reduce((sum, order) => sum + (order.final_amount || order.total_cost || order.totalAmount || 0), 0);

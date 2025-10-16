@@ -421,6 +421,12 @@ export default function AuthFlow() {
         
         // Force a small delay to ensure state updates
         await new Promise(resolve => setTimeout(resolve, 100));
+        
+        // Show success message and redirect to dashboard
+        setSuccess("Registration successful! Redirecting to dashboard...");
+        setTimeout(() => {
+          navigate("/dashboard");
+        }, 1500);
       } else {
         setError("Registration failed. Please try again.");
         setLoading(false);
@@ -808,7 +814,7 @@ export default function AuthFlow() {
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Phone Number <span className="text-red-500">*</span>
                 </label>
-                <div className="flex w-full">
+                <div className="flex w-full min-w-0">
                   <span className="inline-flex items-center px-3 rounded-l-lg border border-r-0 border-gray-300 bg-gray-50 text-gray-500 text-sm min-w-[60px] flex-shrink-0">
                     +91
                   </span>
@@ -823,7 +829,7 @@ export default function AuthFlow() {
                       }
                     }}
                     placeholder="Enter 10-digit phone number"
-                    className="flex-1 px-4 py-3 border border-gray-300 rounded-r-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent min-w-0 w-full"
+                    className="flex-1 px-4 py-3 border border-gray-300 rounded-r-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full min-w-[200px]"
                     maxLength="10"
                     required
                   />

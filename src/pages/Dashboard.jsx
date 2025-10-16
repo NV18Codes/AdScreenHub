@@ -420,7 +420,8 @@ export default function Dashboard() {
   const getTotalSpent = () => {
     const orders = JSON.parse(localStorage.getItem('adscreenhub_orders') || '[]');
     const total = orders
-      .filter(order => !['Cancelled - Forfeited', 'Cancelled - Refunded'].includes(order.status))
+      .filter(order => !['Cancelled - Forfeited', 'Cancelled - Refunded', 'Pending Payment', 'Payment Failed'].includes(order.status))
+      .filter(order => ['In Display', 'Completed'].includes(order.status))
       .reduce((sum, order) => sum + (order.amount || order.price || 0), 0);
     return (total || 0).toLocaleString('en-IN');
   };
