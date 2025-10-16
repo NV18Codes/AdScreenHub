@@ -12,15 +12,10 @@ export default function MyOrders() {
   const navigate = useNavigate();
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [showImageModal, setShowImageModal] = useState(false);
-  const [showReviseModal, setShowReviseModal] = useState(false);
   const [showReuploadModal, setShowReuploadModal] = useState(false);
-  const [reviseOrderId, setReviseOrderId] = useState(null);
   const [reuploadOrderId, setReuploadOrderId] = useState(null);
-  const [newDesignFile, setNewDesignFile] = useState(null);
-  const [newDesignPreview, setNewDesignPreview] = useState(null);
   const [reuploadFile, setReuploadFile] = useState(null);
   const [reuploadPreview, setReuploadPreview] = useState(null);
-  const [uploadError, setUploadError] = useState('');
   const [reuploadError, setReuploadError] = useState('');
   const [reuploading, setReuploading] = useState(false);
   const [reuploadSuccess, setReuploadSuccess] = useState(false);
@@ -53,21 +48,6 @@ export default function MyOrders() {
     }
   };
 
-  // Check if order can be revised (only if status is "Design Revise" and not within 12 hours of start date)
-  const canReviseOrderLocal = (order) => {
-    if (!canReviseOrder(order)) {
-      return false;
-    }
-
-    // Check if less than 12 hours left before start date (IST)
-    const now = new Date();
-    const startDate = new Date(order.displayDate);
-    const timeDiff = startDate.getTime() - now.getTime();
-    const hoursDiff = timeDiff / (1000 * 60 * 60);
-    
-    // If less than 12 hours left, cannot revise
-    return hoursDiff >= 12;
-  };
 
   // Check if order can be revised (only if status is "Design Revise")
   const canRevisePendingOrder = (order) => {
@@ -82,73 +62,8 @@ export default function MyOrders() {
 
 
 
-  const handleReviseOrder = (orderId) => {
-    const order = orders.find(o => o.id === orderId);
-    
-    if (!canReviseOrderLocal(order)) {
-      showToast('This order cannot be revised. Please check the status and timing requirements.', 'error');
-      return;
-    }
 
-    setReviseOrderId(orderId);
-    setShowReviseModal(true);
-    setNewDesignFile(null);
-    setNewDesignPreview(null);
-    setUploadError('');
-  };
 
-  const handleFileUpload = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png'];
-    const maxSize = 15 * 1024 * 1024; // 15MB
-
-    const validation = validateFile(file, allowedTypes, maxSize);
-    
-    if (!validation.isValid) {
-      setUploadError(validation.errors.type || validation.errors.size);
-      return;
-    }
-
-    setUploadError('');
-    setNewDesignFile(file);
-
-    try {
-      // Check storage quota before processing
-      if (!manageStorageQuota()) {
-        setUploadError('Storage space is full. Please clear some data and try again.');
-        return;
-      }
-
-      // Compress image for storage
-      const compressedPreview = await compressImage(file, 800, 0.7);
-      setNewDesignPreview(compressedPreview);
-    } catch (error) {
-      setUploadError('Error processing image. Please try again.');
-    }
-  };
-
-  const handleSubmitRevision = () => {
-    if (!newDesignFile) {
-      setUploadError('Please upload a new design file');
-      return;
-    }
-
-    // Update the order with new design
-    reviseOrder(reviseOrderId, {
-      designFile: newDesignFile.name,
-      thumbnail: newDesignPreview,
-      status: ORDER_STATUS.PENDING_APPROVAL
-    });
-
-    // Close modal and reset
-    setShowReviseModal(false);
-    setReviseOrderId(null);
-    setNewDesignFile(null);
-    setNewDesignPreview(null);
-    setUploadError('');
-  };
 
   const handleReuploadCreative = (orderId) => {
     const order = orders.find(o => o.id === orderId);
@@ -634,16 +549,6 @@ export default function MyOrders() {
                     </div>
 
                     <div className={styles.orderActions}>
-                      {/* Revise Design Button */}
-                      {canReviseOrderLocal(order) && (
-                        <button
-                          onClick={() => handleReviseOrder(order.id)}
-                          className={`${styles.btn} ${styles.btnSecondary}`}
-                        >
-                          Upload New Design
-                        </button>
-                      )}
-
                       {/* Re-upload Creative Button - Only shows for "Design Revise" status */}
                       {canReuploadCreative(order) && !(reuploadSuccess && order.id === reuploadOrderId) && (
                         <button
@@ -881,76 +786,6 @@ export default function MyOrders() {
                 className={`${styles.btn} ${styles.btnPrimary}`}
               >
                 Download Image
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Revise Order Modal */}
-      {showReviseModal && (
-        <div className={styles.modalOverlay} onClick={() => setShowReviseModal(false)}>
-          <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
-            <button
-              className={styles.modalClose}
-              onClick={() => setShowReviseModal(false)}
-            >
-              ×
-            </button>
-            
-            <div className={styles.modalHeader}>
-              <h2>Revise Your Design</h2>
-              <p>Upload a new design for Order #{reviseOrder?.orderUid || reviseOrder?.order_uid || `ORD-${reviseOrderId}`}</p>
-            </div>
-
-            <div className={styles.uploadSection}>
-              <input
-                type="file"
-                accept=".jpg,.jpeg,.png"
-                onChange={handleFileUpload}
-                className={styles.fileInput}
-                id="revise-upload"
-              />
-              <label htmlFor="revise-upload" className={styles.fileInputLabel}>
-                <div className={styles.uploadArea}>
-                  <svg className={styles.uploadIcon} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                  </svg>
-                  <p>Click to upload or drag and drop</p>
-                  <p className={styles.fileTypes}>JPG, PNG (max 15MB)</p>
-                </div>
-              </label>
-
-              {uploadError && (
-                <div className={styles.errorMessage}>
-                  {uploadError}
-                </div>
-              )}
-
-              {newDesignPreview && (
-                <div className={styles.previewSection}>
-                  <h3>New Design Preview</h3>
-                  <img src={newDesignPreview} alt="New Design Preview" className={styles.previewImage} />
-                  <p className={styles.fileInfo}>
-                    File: {newDesignFile?.name} ({(newDesignFile?.size / 1024 / 1024).toFixed(2)} MB)
-                  </p>
-                </div>
-              )}
-            </div>
-
-            <div className={styles.modalActions}>
-              <button
-                onClick={() => setShowReviseModal(false)}
-                className={`${styles.btn} ${styles.btnSecondary}`}
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleSubmitRevision}
-                disabled={!newDesignFile}
-                className={`${styles.btn} ${styles.btnPrimary}`}
-              >
-                Submit Revision
               </button>
             </div>
           </div>

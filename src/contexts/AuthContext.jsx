@@ -129,10 +129,12 @@ export const AuthProvider = ({ children }) => {
 
   const logout = async () => {
     try {
-      // Call signout API
-      await authAPI.signout();
+      // Call signout API to terminate session on server
+      const signoutResponse = await authAPI.signout();
+      console.log('Signout API response:', signoutResponse);
     } catch (error) {
       // Continue with logout even if API fails
+      console.warn('Signout API failed, but continuing with local logout:', error);
     }
     
     // Clear local state and storage
@@ -144,6 +146,9 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('authToken');
     localStorage.removeItem('pendingEmail');
     localStorage.removeItem('adscreenhub_orders'); // Clear orders on logout
+    
+    // Dispatch logout event for other components to listen
+    window.dispatchEvent(new CustomEvent('auth:logout-success'));
   };
 
   const isAuthenticated = () => {

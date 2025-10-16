@@ -1053,15 +1053,15 @@ export default function Dashboard() {
                   </div>
                   <div className={styles.orderItem}>
                     <span>Base Price:</span>
-                    <span className={styles.orderAmount}>₹{(newOrder.baseAmount || newOrder.total_cost || 0).toLocaleString('en-IN')}</span>
+                    <span className={styles.orderAmount}>₹{(newOrder.baseAmount || newOrder.total_cost || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                   </div>
                   <div className={styles.orderItem}>
                     <span>GST (18%):</span>
-                    <span className={styles.orderAmount}>₹{(newOrder.gstAmount || 0).toLocaleString('en-IN')}</span>
+                    <span className={styles.orderAmount}>₹{(newOrder.gstAmount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                   </div>
                   <div className={styles.orderItem}>
                     <span>Total Amount:</span>
-                    <span className={styles.orderAmount}>₹{(newOrder.final_amount || newOrder.totalAmount || 0).toLocaleString('en-IN')}</span>
+                    <span className={styles.orderAmount}>₹{(newOrder.final_amount || newOrder.totalAmount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                   </div>
                   <div className={styles.orderItem}>
                     <span>Status:</span>

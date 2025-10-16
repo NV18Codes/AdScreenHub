@@ -1764,23 +1764,23 @@ export default function BookingFlow() {
                   </div>
                   <div className={styles.summaryItem}>
                 <span>Base Price:</span>
-                <span>₹{(selectedPlan?.price || 0).toLocaleString('en-IN')}</span>
+                <span>₹{(selectedPlan?.price || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                   </div>
               {discountAmount > 0 && (
                   <div className={styles.summaryItem}>
                 <span>Discount:</span>
-                  <span>-₹{discountAmount.toLocaleString('en-IN')}</span>
+                  <span>-₹{discountAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                   </div>
               )}
               <div className={styles.summaryItem}>
                 <span>
                   {state === 'Karnataka' ? 'GST (CGST 9% + SGST 9%):' : 'GST (IGST 18%):'}
                 </span>
-                <span>₹{calculateGST().toLocaleString('en-IN')}</span>
+                <span>₹{calculateGST().toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
               </div>
               <div className={`${styles.summaryItem} ${styles.total}`}>
                 <span>Total:</span>
-                <span>₹{calculateTotal().toLocaleString('en-IN')}</span>
+                <span>₹{calculateTotal().toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                   </div>
                 </div>
 

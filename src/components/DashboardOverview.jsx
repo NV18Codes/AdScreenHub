@@ -181,9 +181,9 @@ export default function DashboardOverview() {
                       {new Date(order.orderDate).toLocaleDateString()}
                     </p>
                     <div className={styles.priceBreakdown}>
-                      <p className={styles.basePrice}>Base: ₹{(order.baseAmount || order.total_cost || 0).toLocaleString('en-IN')}</p>
-                      <p className={styles.gstPrice}>GST: ₹{(order.gstAmount || 0).toLocaleString('en-IN')}</p>
-                      <p className={styles.orderAmount}>Total: ₹{(order.final_amount || order.totalAmount || 0).toLocaleString('en-IN')}</p>
+                      <p className={styles.basePrice}>Base: ₹{(order.baseAmount || order.total_cost || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                      <p className={styles.gstPrice}>GST: ₹{(order.gstAmount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                      <p className={styles.orderAmount}>Total: ₹{(order.final_amount || order.totalAmount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
                     </div>
                   </div>
                   <div className={styles.orderStatus}>

@@ -135,11 +135,15 @@ export const authAPI = {
   resetPassword: (email, otp, password) => 
     makeRequest('/auth/reset-password', { email, otp, password }),
 
-  deleteAccount: (password) => 
-    makeRequest('/auth/delete-account', { password }),
+  deleteAccount: (password) => {
+    console.log('Calling delete account API with password:', password ? '***' : 'undefined');
+    return makeRequest('/auth/delete-account', { password });
+  },
 
-  signout: () => 
-    makeRequest('/auth/signout', {})
+  signout: () => {
+    console.log('Calling signout API');
+    return makeRequest('/auth/signout', {});
+  }
 };
 
 export const dataAPI = {

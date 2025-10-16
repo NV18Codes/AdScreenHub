@@ -144,21 +144,21 @@ const BookingSuccess = () => {
               <div className={styles.detailItem}>
                 <span className={styles.label}>₹ Total Cost:</span>
                 <span className={styles.value}>
-                  ₹{(order.total_cost || order.baseAmount || 0).toLocaleString('en-IN')}
+                  ₹{(order.total_cost || order.baseAmount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </span>
               </div>
               
               <div className={styles.detailItem}>
                 <span className={styles.label}>GST (18%):</span>
                 <span className={styles.value}>
-                  ₹{(order.gstAmount || 0).toLocaleString('en-IN')}
+                  ₹{(order.gstAmount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </span>
               </div>
               
               <div className={styles.detailItem}>
                 <span className={styles.label}>💳 Final Amount:</span>
                 <span className={styles.value}>
-                  ₹{((order.total_cost || 0) + (order.gstAmount || 0)).toLocaleString('en-IN')}
+                  ₹{((order.total_cost || 0) + (order.gstAmount || 0)).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </span>
               </div>
             </div>

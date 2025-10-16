@@ -496,8 +496,26 @@ export default function Profile() {
         
         if (response.success) {
           // Account deleted successfully on backend
-          logout();
-          showToast('Account deleted successfully.', 'success');
+          showToast('Account deleted. Signing out...', 'info');
+          
+          // Call signout API to ensure proper session termination
+          try {
+            await authAPI.signout();
+            console.log('Signout API called successfully');
+            showToast('Session terminated successfully.', 'success');
+          } catch (signoutError) {
+            console.warn('Signout API failed, but continuing with logout:', signoutError);
+            showToast('Signing out locally...', 'info');
+          }
+          
+          // Now logout locally
+          await logout();
+          showToast('Account deleted successfully. You have been signed out.', 'success');
+          
+          // Redirect to home page after a short delay
+          setTimeout(() => {
+            window.location.href = '/';
+          }, 2000);
           return;
         } else {
           throw new Error(response.error || 'Failed to delete account');
@@ -515,6 +533,18 @@ export default function Profile() {
           // Store deleted account info to prevent future logins
           localStorage.setItem('deletedAccount', JSON.stringify(deletedAccountData));
           
+          // Call signout API to ensure proper session termination
+          showToast('Account deleted. Signing out...', 'info');
+          
+          try {
+            await authAPI.signout();
+            console.log('Signout API called successfully (fallback)');
+            showToast('Session terminated successfully.', 'success');
+          } catch (signoutError) {
+            console.warn('Signout API failed, but continuing with logout:', signoutError);
+            showToast('Signing out locally...', 'info');
+          }
+          
           // Clear all auth data
           localStorage.removeItem('user');
           localStorage.removeItem('token');
@@ -525,12 +555,15 @@ export default function Profile() {
           localStorage.removeItem('adscreenhub_orders');
           
           // Logout and redirect
-          logout();
+          await logout();
           
-          // Show success message
+          // Show success message and redirect
+          showToast('Account deleted successfully. You have been signed out.', 'success');
+          
+          // Redirect to home page after a short delay
           setTimeout(() => {
-            showToast('Account deleted successfully.', 'success');
-          }, 100);
+            window.location.href = '/';
+          }, 2000);
           
           return;
         }
