@@ -392,10 +392,21 @@ export default function AuthFlow() {
       // Registration successful - use the API response data
       if (registrationResponse.data && registrationResponse.data.success) {
         const responseData = registrationResponse.data.data;
-        const userData = responseData.user || responseData;
-        const token = responseData.token || responseData.accessToken || responseData.authToken;
         
-        if (!userData || !token) {
+        // Create user data from the response
+        const userData = {
+          id: responseData.userId,
+          userId: responseData.userId,
+          email: email,
+          fullName: name,
+          phoneNumber: phone,
+          phone: phone
+        };
+        
+        // Generate a temporary token for the session
+        const token = `reg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        
+        if (!userData.id) {
           setError("Invalid response from server. Please try again.");
           setLoading(false);
           return;

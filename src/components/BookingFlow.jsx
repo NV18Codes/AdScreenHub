@@ -1216,12 +1216,13 @@ export default function BookingFlow() {
         return (
                   <div
                     key={location.id}
-                    className={`${styles.screenCard} ${isSelected ? styles.selectedCard : ''}`}
-                    onClick={() => handleScreenSelect(location)}
-                    style={{ cursor: 'pointer' }}
+                    className={`${styles.screenCard} ${isSelected ? styles.selectedCard : ''} ${!hasAvailableSlots ? styles.unavailableCard : ''}`}
+                    onClick={() => hasAvailableSlots ? handleScreenSelect(location) : null}
+                    style={{ cursor: hasAvailableSlots ? 'pointer' : 'not-allowed' }}
                   >
                     {isSelected && <div className={styles.selectedBadge}>✓ Selected</div>}
-                    <img src={location.image} alt={location.name} className={styles.screenImage} />
+                    {!hasAvailableSlots && <div className={styles.unavailableBadge}>No Slots Available</div>}
+                    <img src={location.image} alt={location.name} className={`${styles.screenImage} ${!hasAvailableSlots ? styles.unavailableImage : ''}`} />
                     <div className={styles.screenInfo}>
                     <h3>{location.name}</h3>
                       <p>{location.location}</p>
@@ -1229,6 +1230,9 @@ export default function BookingFlow() {
                       <p>Orientation: {location.orientation}</p>
                       <p>Resolution: {location.pixels} px</p>
                       <p>Aspect Ratio: {location.aspect_ratio}</p>
+                      <p className={hasAvailableSlots ? styles.availableSlots : styles.unavailableSlots}>
+                        Available Slots: {location.available_slots || 0}
+                      </p>
                   </div>
                   </div>
                   );
