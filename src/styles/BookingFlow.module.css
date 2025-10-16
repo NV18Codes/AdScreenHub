@@ -400,6 +400,15 @@
   margin-bottom: 0.25rem;
 }
 
+.locationDescription {
+  color: #4b5563 !important;
+  font-size: 0.9rem !important;
+  font-style: italic !important;
+  margin-bottom: 0.5rem !important;
+  line-height: 1.4 !important;
+  font-weight: 500 !important;
+}
+
 .slotsInfo {
   font-weight: 600;
   margin-top: 0.5rem !important;

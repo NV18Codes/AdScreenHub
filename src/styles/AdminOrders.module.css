@@ -416,6 +416,59 @@
   border: 1px solid #EF4444;
 }
 
+/* RED statuses */
+.statusPaymentPending {
+  background: #FEE2E2;
+  color: #B91C1C;
+  border: 1px solid #EF4444;
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.2);
+}
+
+.statusCancelledForfeited {
+  background: #FEE2E2;
+  color: #B91C1C;
+  border: 1px solid #EF4444;
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.2);
+}
+
+.statusCancelledRefunded {
+  background: #FEE2E2;
+  color: #B91C1C;
+  border: 1px solid #EF4444;
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.2);
+}
+
+/* YELLOW statuses */
+.statusPendingApproval {
+  background: #FEF3C7;
+  color: #92400E;
+  border: 1px solid #F59E0B;
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.2);
+}
+
+/* ORANGE statuses */
+.statusDesignRevise {
+  background: #FED7AA;
+  color: #C2410C;
+  border: 1px solid #F97316;
+  box-shadow: 0 2px 8px rgba(249, 115, 22, 0.2);
+}
+
+/* GREEN statuses */
+.statusPendingDisplayApproval {
+  background: #DCFCE7;
+  color: #15803D;
+  border: 1px solid #22C55E;
+  box-shadow: 0 2px 8px rgba(34, 197, 94, 0.2);
+}
+
+.statusInDisplay {
+  background: #DCFCE7;
+  color: #15803D;
+  border: 1px solid #22C55E;
+  box-shadow: 0 2px 8px rgba(34, 197, 94, 0.2);
+}
+
 /* Order Details */
 .orderDetails {
   display: flex;

@@ -302,6 +302,16 @@
   content: '📍 ';
 }
 
+.locationDescription {
+  color: #4b5563 !important;
+  font-size: 0.85rem !important;
+  font-style: italic !important;
+  margin-bottom: 0.5rem !important;
+  line-height: 1.4 !important;
+  font-weight: 500 !important;
+  text-align: left !important;
+}
+
 .screenSize {
   color: #1f2937;
   font-size: 0.9rem;

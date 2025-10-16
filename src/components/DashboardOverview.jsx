@@ -16,25 +16,25 @@ export default function DashboardOverview() {
     
     switch (trimmedStatus) {
       case 'Pending Payment':
-        return styles.statusPendingApproval;
+        return styles.statusPaymentPending; // RED
       case 'Payment Failed':
-        return styles.statusCancelledDisplay;
+        return styles.statusPaymentFailed; // RED
       case 'Pending Approval':
-        return styles.statusPendingApproval;
+        return styles.statusPendingApproval; // YELLOW
       case 'Design Revise':
-        return styles.statusReviseYourDesign;
+        return styles.statusDesignRevise; // ORANGE
       case 'Pending Display (Approved)':
-        return styles.statusPendingApproval;
+        return styles.statusPendingDisplayApproval; // GREEN
       case 'In Display':
-        return styles.statusInDisplay;
+        return styles.statusInDisplay; // GREEN
       case 'Completed':
-        return styles.statusCompletedDisplay;
+        return styles.statusCompleted; // GREEN
       case 'Cancelled - Forfeited':
-        return styles.statusCancelledDisplay;
+        return styles.statusCancelledForfeited; // RED
       case 'Cancelled - Refunded':
-        return styles.statusCancelledDisplay;
+        return styles.statusCancelledRefunded; // RED
       default:
-        return styles.statusPendingApproval;
+        return styles.statusPendingApproval; // YELLOW default
     }
   };
 

@@ -28,25 +28,25 @@ export default function AdminOrders() {
     
         switch (trimmedStatus) {
           case 'Pending Payment':
-            return styles.statusPendingPayment;
+            return styles.statusPaymentPending; // RED
           case 'Payment Failed':
-            return styles.statusPaymentFailed;
+            return styles.statusPaymentFailed; // RED
           case 'Pending Approval':
-            return styles.statusPendingApproval;
+            return styles.statusPendingApproval; // YELLOW
           case 'Design Revise':
-            return styles.statusDesignRevise;
+            return styles.statusDesignRevise; // ORANGE
           case 'Pending Display (Approved)':
-            return styles.statusPendingDisplay;
+            return styles.statusPendingDisplayApproval; // GREEN
           case 'In Display':
-            return styles.statusInDisplay;
+            return styles.statusInDisplay; // GREEN
           case 'Completed':
-            return styles.statusCompleted;
+            return styles.statusCompleted; // GREEN
           case 'Cancelled - Forfeited':
-            return styles.statusCancelledDisplay;
+            return styles.statusCancelledForfeited; // RED
           case 'Cancelled - Refunded':
-            return styles['statusCancelled-Refunded'];
+            return styles.statusCancelledRefunded; // RED
           default:
-            return styles.statusPendingPayment;
+            return styles.statusPendingApproval; // YELLOW default
         }
   };
 

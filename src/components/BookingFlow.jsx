@@ -1221,11 +1221,10 @@ export default function BookingFlow() {
                     style={{ cursor: hasAvailableSlots ? 'pointer' : 'not-allowed' }}
                   >
                     {isSelected && <div className={styles.selectedBadge}>✓ Selected</div>}
-                    {!hasAvailableSlots && <div className={styles.unavailableBadge}>No Slots Available</div>}
                     <img src={location.image} alt={location.name} className={`${styles.screenImage} ${!hasAvailableSlots ? styles.unavailableImage : ''}`} />
                     <div className={styles.screenInfo}>
                     <h3>{location.name}</h3>
-                      <p>{location.location}</p>
+                      <p className={styles.locationDescription}>{location.description}</p>
                       <p>Size: {location.size} ft</p>
                       <p>Orientation: {location.orientation}</p>
                       <p>Resolution: {location.pixels} px</p>

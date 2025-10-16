@@ -448,25 +448,25 @@ export default function Dashboard() {
   const getStatusClass = (status) => {
     switch (status) {
       case ORDER_STATUS.PENDING_PAYMENT:
-        return styles.statusPending;
+        return styles.statusPaymentPending; // RED
       case ORDER_STATUS.PAYMENT_FAILED:
-        return styles.statusPaymentFailed;
+        return styles.statusPaymentFailed; // RED
       case ORDER_STATUS.PENDING_APPROVAL:
-        return styles.statusPending;
+        return styles.statusPendingApproval; // YELLOW
       case ORDER_STATUS.DESIGN_REVISE:
-        return styles.statusRevision;
+        return styles.statusDesignRevise; // ORANGE
       case ORDER_STATUS.PENDING_DISPLAY_APPROVED:
-        return styles.statusPendingDisplayApproval;
+        return styles.statusPendingDisplayApproval; // GREEN
       case ORDER_STATUS.IN_DISPLAY:
-        return styles.statusActive;
+        return styles.statusInDisplay; // GREEN
       case ORDER_STATUS.COMPLETED:
-        return styles.statusCompleted;
+        return styles.statusCompleted; // GREEN
       case ORDER_STATUS.CANCELLED_FORFEITED:
-        return styles.statusCancelledForfeited;
+        return styles.statusCancelledForfeited; // RED
       case ORDER_STATUS.CANCELLED_REFUNDED:
-        return styles.statusRefund;
+        return styles.statusCancelledRefunded; // RED
       default:
-        return styles.statusPending;
+        return styles.statusPendingApproval; // YELLOW default
     }
   };
 

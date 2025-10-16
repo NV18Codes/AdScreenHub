@@ -275,6 +275,55 @@
   color: #C2410C;
 }
 
+/* RED statuses */
+.statusPaymentPending {
+  background-color: #FEE2E2;
+  color: #B91C1C;
+}
+
+.statusPaymentFailed {
+  background-color: #FEE2E2;
+  color: #B91C1C;
+}
+
+.statusCancelledForfeited {
+  background-color: #FEE2E2;
+  color: #B91C1C;
+}
+
+.statusCancelledRefunded {
+  background-color: #FEE2E2;
+  color: #B91C1C;
+}
+
+/* YELLOW statuses */
+.statusPendingApproval {
+  background-color: #FEF3C7;
+  color: #92400E;
+}
+
+/* ORANGE statuses */
+.statusDesignRevise {
+  background-color: #FED7AA;
+  color: #C2410C;
+}
+
+/* GREEN statuses */
+.statusPendingDisplayApproval {
+  background-color: #DCFCE7;
+  color: #15803D;
+}
+
+.statusInDisplay {
+  background-color: #DCFCE7;
+  color: #15803D;
+}
+
+.statusCompleted {
+  background-color: #DCFCE7;
+  color: #15803D;
+}
+
 /* Empty State */
 .emptyState {
   text-align: center;

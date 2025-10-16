@@ -561,6 +561,7 @@ export default function BookingCalendar() {
                       <img src={screen.image} alt={screen.name} className={styles.screenImage} />
                       <div className={styles.screenInfo}>
                         <h3>{screen.name}</h3>
+                        <p className={styles.locationDescription}>{screen.description}</p>
                         <p className={styles.screenLocation}>{screen.location}</p>
                         <p className={styles.screenSize}>{screen.size}</p>
                         <p className={styles.screenPixels}>{screen.pixels}</p>
